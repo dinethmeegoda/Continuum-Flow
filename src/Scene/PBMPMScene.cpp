@@ -400,9 +400,15 @@ void PBMPMScene::constructScene() {
 	auto computeId = g2p2gPipeline.getCommandListID();
 
 	// Create Constant Data
-	constants = { {64, 64, 64}, 0.01, 9.8, 0.2, 0.02,
+	//liquid
+	/*constants = { {64, 64, 64}, 0.01, 9.8, 0.2, 0.02,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2 };
+		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2 };*/
+
+	//sand
+	constants = { {64, 64, 64}, 0.01, 9.8, 0.2, 0.001,
+		(unsigned int)std::ceil(std::pow(10, 7)),
+		1, 3,15, 1, 0, 0, 0, 0, 0, 0, 5, 0.4 };
 
 	// Create Model Matrix
 	modelMat *= XMMatrixTranslation(0.0f, 0.0f, 0.0f);
@@ -448,7 +454,7 @@ void PBMPMScene::constructScene() {
 	// Shape Buffer
 	std::vector<SimShape> shapes;
 	shapes.push_back(SimShape(0, { 16, 40, 16}, 0, { 2, 2, 2 },
-		0, 0, 0, 1, 100));
+		0, 0, 2, 1, 100));
 	shapeBuffer = StructuredBuffer(shapes.data(), shapes.size(), sizeof(SimShape));
 
 	//Temp tile data buffer
