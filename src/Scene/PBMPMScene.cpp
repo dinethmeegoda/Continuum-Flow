@@ -399,17 +399,41 @@ void PBMPMScene::constructScene() {
 
 	auto computeId = g2p2gPipeline.getCommandListID();
 
+	//sand
+	constants = { {64, 64, 64}, 0.01,9.8, 1.5, 0.0,
+		(unsigned int)std::ceil(std::pow(10, 7)),
+		1, 3,60, 1, 0, 0, 0, 0, 0, 0, 5, 0.4 };
+
+	//XMUINT3 gridSize; //2 -> 3
+	//float deltaTime;
+	//float gravityStrength;
+
+	//float liquidRelaxation;
+	//float liquidViscosity;
+	//unsigned int fixedPointMultiplier;
+
+	//unsigned int useGridVolumeForLiquid;
+	//unsigned int particlesPerCellAxis;
+
+	//float frictionAngle;
+	//unsigned int shapeCount;
+	//unsigned int simFrame;
+
+	//unsigned int bukkitCount;
+	//unsigned int bukkitCountX;
+	//unsigned int bukkitCountY;
+	//unsigned int bukkitCountZ; //added
+	//unsigned int iteration;
+	//unsigned int iterationCount;
+	//float borderFriction;
+	// 
 	// Create Constant Data
 	//liquid
 	/*constants = { {64, 64, 64}, 0.01, 9.8, 0.2, 0.02,
 		(unsigned int)std::ceil(std::pow(10, 7)),
 		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2 };*/
 
-	//sand
-	constants = { {64, 64, 64}, 0.01, 9.8, 0.2, 0.001,
-		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 3,15, 1, 0, 0, 0, 0, 0, 0, 5, 0.4 };
-
+	
 	// Create Model Matrix
 	modelMat *= XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
