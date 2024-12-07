@@ -25,7 +25,7 @@ public:
 	void setRenderScene(RenderScene renderScene);
 	void compute();
 	void draw();
-	void drawFluid();
+	void drawFluid(unsigned int renderMeshlets);
 
 	void releaseResources();
 

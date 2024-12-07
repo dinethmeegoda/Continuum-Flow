@@ -19,7 +19,7 @@ struct MeshShadingConstants {
     XMINT3 dimensions;
     float resolution;
     XMFLOAT3 minBounds;
-    float padding;
+    unsigned int renderMeshlets;
     XMFLOAT3 cameraPos;
 };
 
@@ -49,7 +49,7 @@ public:
         StructuredBuffer* positionsBuffer,
         int numParticles
     );
-    void draw(Camera* camera);
+    void draw(Camera* camera, unsigned int renderMeshlets);
     void constructScene();
     void computeBilevelUniformGrid();
     void computeSurfaceBlockDetection();

@@ -22,9 +22,9 @@ FluidScene::FluidScene(DXContext* context,
 }
 
 // In this pipeline, drawing is done via a mesh shader
-void FluidScene::draw(Camera* camera) {
+void FluidScene::draw(Camera* camera, unsigned int renderMeshlets) {
     auto cmdList = fluidMeshPipeline->getCommandList();
-    MeshShadingConstants meshShadingConstants = { camera->getViewProjMat(), gridConstants.gridDim, gridConstants.resolution, gridConstants.minBounds, 0.0, camera->getPosition() };
+    MeshShadingConstants meshShadingConstants = { camera->getViewProjMat(), gridConstants.gridDim, gridConstants.resolution, gridConstants.minBounds, renderMeshlets, camera->getPosition()};
     cmdList->SetPipelineState(fluidMeshPipeline->getPSO());
     cmdList->SetGraphicsRootSignature(fluidMeshPipeline->getRootSignature());
 

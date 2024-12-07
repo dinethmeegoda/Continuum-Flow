@@ -48,7 +48,7 @@ struct MeshShadingConstants {
     int3 dimensions;
     float resolution;
     float3 minBounds;
-    float padding;
+    unsigned int renderMeshlets;
     float3 cameraPos;
 };
 #endif

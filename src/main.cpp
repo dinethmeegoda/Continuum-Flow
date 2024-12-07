@@ -29,6 +29,8 @@ int main() {
         1, 8, 30, 0, 0,  0, 0, 0, 0, 5, 0.9F };
     PBMPMConstants pbmpmTempConstants = pbmpmConstants;
 
+    unsigned int renderMeshlets = 0;
+
     while (!Window::get().getShouldClose()) {
         //update window
         Window::get().update();
@@ -124,7 +126,7 @@ int main() {
         //mesh render pass
         Window::get().setRT(meshPipeline->getCommandList());
         Window::get().setViewport(vp, meshPipeline->getCommandList());
-        scene.drawFluid();
+        scene.drawFluid(renderMeshlets);
         context.executeCommandList(meshPipeline->getCommandListID());
 
         //first render pass
@@ -138,7 +140,7 @@ int main() {
         ImGui::NewFrame();
 
         //draw ImGUI
-        drawImGUIWindow(pbmpmTempConstants, io);
+        drawImGUIWindow(pbmpmTempConstants, io, &renderMeshlets);
 
         //render ImGUI
         ImGui::Render();

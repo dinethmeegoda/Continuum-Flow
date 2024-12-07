@@ -79,8 +79,8 @@ void Scene::draw() {
 	}
 }
 
-void Scene::drawFluid() {
-	fluidScene.draw(camera);
+void Scene::drawFluid(unsigned int renderMeshlets) {
+	fluidScene.draw(camera, renderMeshlets);
 }
 
 void Scene::releaseResources() {
