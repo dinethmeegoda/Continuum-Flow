@@ -32,6 +32,10 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 	currentCP()
 {}
 
+RenderPipeline* Scene::getObjectPipeline() {
+	return &objectRP;
+}
+
 RenderPipeline* Scene::getPBMPMRenderPipeline() {
 	return &pbmpmRP;
 }
@@ -54,6 +58,10 @@ void Scene::drawPBMPM() {
 
 void Scene::drawFluid(unsigned int renderMeshlets) {
 	fluidScene.draw(camera, renderMeshlets);
+}
+
+void Scene::drawObject() {
+	objectScene.draw(camera);
 }
 
 void Scene::releaseResources() {

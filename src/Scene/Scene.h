@@ -12,12 +12,14 @@ public:
 	Scene() = delete;
 	Scene(Camera* camera, DXContext* context);
 
+	RenderPipeline* getObjectPipeline();
 	RenderPipeline* getPBMPMRenderPipeline();
 	MeshPipeline* getFluidMeshPipeline();
 
 	void compute();
 	void drawPBMPM();
 	void drawFluid(unsigned int renderMeshlets);
+	void drawObject();
 
 	void releaseResources();
 

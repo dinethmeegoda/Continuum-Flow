@@ -11,23 +11,18 @@ void ObjectScene::constructScene()
 	renderPipeline->createPSOD();
 	renderPipeline->createPipelineState(context->getDevice());
 
-	inputStrings.push_back("objs\\wolf.obj");
-    inputStrings.push_back("objs\\saulgoodman.obj");
+	inputStrings.push_back("objs\\cube.obj");
 
     XMFLOAT4X4 m1;
-    XMStoreFloat4x4(&m1, XMMatrixTranslation(0, 0, 0));
+    XMStoreFloat4x4(&m1, XMMatrixScaling(64, 64, 64));
     modelMatrices.push_back(m1);
-
-    XMFLOAT4X4 m2;
-    XMStoreFloat4x4(&m2, XMMatrixScaling(0.2f, 0.2f, 0.2f) * XMMatrixTranslation(-10, -8, 0));
-    modelMatrices.push_back(m2);
 
     for (int i = 0; i < inputStrings.size(); i++) {
         auto string = inputStrings.at(i);
         auto m = modelMatrices.at(i);
-		/*Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m);
+		Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true);
 		meshes.push_back(newMesh);
-		sceneSize += newMesh.getNumTriangles();*/
+		sceneSize += newMesh.getNumTriangles();
 	}
 }
 
@@ -37,7 +32,8 @@ void ObjectScene::draw(Camera* camera) {
         auto cmdList = renderPipeline->getCommandList();
         cmdList->IASetVertexBuffers(0, 1, m.getVBV());
         cmdList->IASetIndexBuffer(m.getIBV());
-        cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        //cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
         // == RS ==
         //NO NEED TO RESET VIEWPORT??
         // == PSO ==
