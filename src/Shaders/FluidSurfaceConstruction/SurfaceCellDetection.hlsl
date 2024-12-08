@@ -2,7 +2,6 @@
 #include "../constants.h"
 #include "utils.hlsl"
 
-// TODO: should this be a constant? If not, what happens if we change it from frame to frame? Do we have to resize and reset buffers as well?
 struct Uniforms {
     int3 gridCellDimensions;
 };
@@ -13,7 +12,7 @@ ConstantBuffer<Uniforms> cb : register(b0);
 // SRV for surface block indices
 StructuredBuffer<int> surfaceBlockIndices : register(t0);
 // SRV for the surface cells
-StructuredBuffer<Cell> cells : register(t1);
+StructuredBuffer<int> cellParticleCounts : register(t1);
 // SRV for the surface block dispatch
 StructuredBuffer<int3> surfaceBlockDispatch : register(t2);
 
@@ -23,7 +22,7 @@ RWStructuredBuffer<int> surfaceVertices : register(u0);
 RWStructuredBuffer<int3> surfaceHalfBlockDispatch : register(u1); // piggy-backing off this pass to set up an indirect dispatch for the mesh shading step
 
 // At a typical value of FILLED_BLOCK = 216, (4 + 2)^3, this is well within the limits of shared memory. 
-groupshared int cellParticleCounts[FILLED_BLOCK];
+groupshared int s_cellParticleCounts[FILLED_BLOCK];
 
 // Since surface cells share vertices, keep track of whether the verts are surface verts in shared memory first,
 // then write them to the output buffer. This avoids excess global memory writes.
@@ -73,25 +72,28 @@ void setVertGlobalMemory(int index, int value) {
     surfaceVertices[index] = value;
 }
 
-// NOTE: the logic in this shader RELIES on the number of threads per workgroup equalling the number of cells in a single block. 
+// NOTE: the logic in this shader RELIES on the number of threads per workgroup equaling the number of cells in a single block. 
 // (it can be changed not to, but doing so avoids the use of a modulo operation)
-// TODO: should change dispatch to 3D for ease of indexing / avoid to3D call which use modulo
-[numthreads(SURFACE_CELL_DETECTION_THREADS_X, 1, 1)]
-void main(uint3 globalThreadId : SV_DispatchThreadID, uint3 localThreadId : SV_GroupThreadID) {
-    if (globalThreadId.x >= surfaceBlockDispatch[0].x * CELLS_PER_BLOCK) {
+[numthreads(SURFACE_CELL_DETECTION_THREADS, SURFACE_CELL_DETECTION_THREADS, SURFACE_CELL_DETECTION_THREADS)]
+void main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID) {
+    // The built-in global thread ID indexes in a different order than we want for our grid, so calculate it ourselves as such:
+    uint globalThreadId = to1D(localThreadId, int3(SURFACE_CELL_DETECTION_THREADS, SURFACE_CELL_DETECTION_THREADS, SURFACE_CELL_DETECTION_THREADS))
+                            + (groupId.x * SURFACE_CELL_DETECTION_THREADS * SURFACE_CELL_DETECTION_THREADS * SURFACE_CELL_DETECTION_THREADS);
+
+    if (globalThreadId >= surfaceBlockDispatch[0].x * CELLS_PER_BLOCK) {
         return;
     }
 
     // Piggy-backing off this pass to set up an indirect dispatch for the mesh shading step
-    if (globalThreadId.x == 0) {
+    if (globalThreadId == 0) {
         surfaceHalfBlockDispatch[0] = int3(surfaceBlockDispatch[0].x * 2, 1, 1);
     }
 
     // First order of business: we launched a thread for each cell within surface blocks. We need to figure out the global index for this thread's cell. 
-    int surfaceBlockIdx1d = surfaceBlockIndices[globalThreadId.x / CELLS_PER_BLOCK];
+    int surfaceBlockIdx1d = surfaceBlockIndices[globalThreadId / CELLS_PER_BLOCK];
     // By aligning the number of threads per workgroup with the number of threads in a block, we can use the local thread ID as a proxy for the local cell index.
     int3 surfaceBlockIdx3d = to3D(surfaceBlockIdx1d, cb.gridCellDimensions / CELLS_PER_BLOCK_EDGE);
-    int3 localCellIndex3d = to3D(localThreadId.x, CELLS_PER_BLOCK_EDGE * int3(1, 1, 1));
+    int3 localCellIndex3d = int3(localThreadId.x, localThreadId.y, localThreadId.z);
     int3 globalCellIndex3d = surfaceBlockIdx3d * CELLS_PER_BLOCK_EDGE + localCellIndex3d;
 
     // Prefetch and store the particle count for this cell. Since shared memory will store (N + 2)^3 cells, not just N^3 cells, in order for all cells to be contiguous,
@@ -99,7 +101,7 @@ void main(uint3 globalThreadId : SV_DispatchThreadID, uint3 localThreadId : SV_G
     // (Skip the cells on edges, we'll get them later)
     int offsetLocalCellIdx1d = to1D(localCellIndex3d + int3(1, 1, 1), CELLS_PER_BLOCK_EDGE + 2);
     if (all(localCellIndex3d < (CELLS_PER_BLOCK_EDGE - 1) * int3(1, 1, 1)) && all(localCellIndex3d > int3(0, 0, 0))) {
-        cellParticleCounts[offsetLocalCellIdx1d] = cells[globalThreadId.x].particleCount;
+        s_cellParticleCounts[offsetLocalCellIdx1d] = cellParticleCounts[globalThreadId];
     }
 
     // We also need the particle counts for the cells surrounding the surface block. Let each edge cell in the surface block
@@ -123,7 +125,7 @@ void main(uint3 globalThreadId : SV_DispatchThreadID, uint3 localThreadId : SV_G
                 int3 localNeighborCellIndex3d = globalNeighborCellIndex3d - globalNeighborCellOrigin;
                 int localNeighborCellIndex1d = to1D(localNeighborCellIndex3d, CELLS_PER_BLOCK_EDGE + 2);
                 
-                cellParticleCounts[localNeighborCellIndex1d] = cells[globalNeighborCellIndex1d].particleCount;
+                s_cellParticleCounts[localNeighborCellIndex1d] = cellParticleCounts[globalNeighborCellIndex1d];
             }
         }
     }
@@ -141,7 +143,7 @@ void main(uint3 globalThreadId : SV_DispatchThreadID, uint3 localThreadId : SV_G
     // It CAN be a surface cell EVEN if it has no particles itself.
     // As we iterate over all neighbors, if any one of them is different from the previous ones, the cell is a surface cell.
     // To track this, initialize firstCellEmpty to the state of the current cell, from shared memory.
-    bool firstCellEmpty = (cellParticleCounts[offsetLocalCellIdx1d] == 0);
+    bool firstCellEmpty = (s_cellParticleCounts[offsetLocalCellIdx1d] == 0);
     bool isSurfaceCell = false;
     for (int z = minSearchBounds.z; z <= maxSearchBounds.z; z++) {
         for (int y = minSearchBounds.y; y <= maxSearchBounds.y; y++) {
@@ -151,7 +153,7 @@ void main(uint3 globalThreadId : SV_DispatchThreadID, uint3 localThreadId : SV_G
                 int3 localNeighborCellIndex3d = globalNeighborCellIndex3d - globalNeighborCellOrigin;
                 int localNeighborCellIndex1d = to1D(localNeighborCellIndex3d, CELLS_PER_BLOCK_EDGE + 2);
 
-                bool isCellEmpty = (cellParticleCounts[localNeighborCellIndex1d] == 0);
+                bool isCellEmpty = (s_cellParticleCounts[localNeighborCellIndex1d] == 0);
                 if (isCellEmpty != firstCellEmpty) {
                     isSurfaceCell = true;
                     break;
