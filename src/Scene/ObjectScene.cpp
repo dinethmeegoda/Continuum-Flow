@@ -1,4 +1,5 @@
 #include "ObjectScene.h"
+#include "GridConstants.h"
 
 ObjectScene::ObjectScene(DXContext* context, RenderPipeline* pipeline)
 	: Drawable(context, pipeline)
@@ -14,7 +15,7 @@ void ObjectScene::constructScene()
 	inputStrings.push_back("objs\\cube.obj");
 
     XMFLOAT4X4 m1;
-    XMStoreFloat4x4(&m1, XMMatrixScaling(64, 64, 64));
+    XMStoreFloat4x4(&m1, XMMatrixScaling(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH));
     modelMatrices.push_back(m1);
 
     for (int i = 0; i < inputStrings.size(); i++) {

@@ -118,7 +118,7 @@ int main() {
         //object render pass
         Window::get().setRT(objectPipeline->getCommandList());
         Window::get().setViewport(vp, objectPipeline->getCommandList());
-        scene.drawObject();
+        if (renderGrid) scene.drawObject();
         context.executeCommandList(objectPipeline->getCommandListID());
 
         //end frame
