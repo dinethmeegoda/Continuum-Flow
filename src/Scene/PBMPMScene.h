@@ -23,22 +23,22 @@ const unsigned int maxTimestampCount = 2048;
 struct PBMPMConstants {
 	XMUINT3 gridSize; //2 -> 3
 	float deltaTime;
-	float gravityStrength;
 
+	float gravityStrength;
 	float liquidRelaxation;
 	float liquidViscosity;
 	unsigned int fixedPointMultiplier;
 
 	unsigned int useGridVolumeForLiquid;
 	unsigned int particlesPerCellAxis;
-
 	float frictionAngle;
 	unsigned int shapeCount;
-	unsigned int simFrame;
 
+	unsigned int simFrame;
 	unsigned int bukkitCount;
 	unsigned int bukkitCountX;
 	unsigned int bukkitCountY;
+
 	unsigned int bukkitCountZ; //added
 	unsigned int iteration;
 	unsigned int iterationCount;
@@ -46,10 +46,11 @@ struct PBMPMConstants {
 
 	//mouse stuff
 	XMFLOAT4 mousePosition;
+	XMFLOAT4 mouseDirection;
 	unsigned int mouseActivation;
 	unsigned int mouseRadius;
 	unsigned int mouseFunction;
-	unsigned int mouseVelocity;
+	float mouseVelocity;
 };
 
 struct SimShape {

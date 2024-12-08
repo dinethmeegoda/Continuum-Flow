@@ -459,22 +459,22 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 
                 // Mouse Iteraction
                 if (g_simConstants.mouseActivation == 1) {
-                    //float t;
-                    //bool intersected = intersectRaySphere(g_simConstants.mousePosition.xyz, float3(0, 0, 1), p, 10.f, t);
+                    float t;
+                    bool intersected = intersectRaySphere(g_simConstants.mousePosition.xyz, g_simConstants.mouseDirection.xyz, p, g_simConstants.mouseRadius, t);
                     float3 offset = p - float3(g_simConstants.mousePosition.xyz);
                     float lenOffset = max(length(offset), 0.0001);
 
-                    if (lenOffset < g_simConstants.mouseRadius)
+                    if (intersected)
                     {
                         float3 normOffset = offset / lenOffset;
 
                         if (g_simConstants.mouseFunction == 0)
                         {
-                            particle.displacement += normOffset * 500.f;
+                            particle.displacement += normOffset * g_simConstants.mouseActivation;
                         }
                         else if (g_simConstants.mouseFunction == 1)
                         {
-                            particle.displacement = g_simConstants.mouseVelocity * g_simConstants.deltaTime;
+                            particle.displacement = -offset * g_simConstants.deltaTime * 1.5f;
                         }
                     }
                 }

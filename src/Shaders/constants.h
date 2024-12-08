@@ -4,7 +4,7 @@ static const float PI = 3.1415926f;
 
 /* ================== Constants for the mesh shading pipeline ================== */ 
 
-static const int MAX_PARTICLES_PER_CELL = 8;
+static const int MAX_PARTICLES_PER_CELL = 4;
 // This really should not be changed. Mesh shaders have very hard limits on how many verts and primitives they can output.
 // If this is made any bigger, the mesh shader will have vertex overflow.
 static const int CELLS_PER_BLOCK_EDGE = 4; // each block has 4x4x4 cells
@@ -21,9 +21,9 @@ static const int SURFACE_VERTEX_COMPACTION_THREADS_X = 64;
 // we no longer have block-level coherency of vertices anyway. But use this as a starting point - can adjust it later.
 static const int SURFACE_VERTEX_DENSITY_THREADS_X = SURFACE_VERTEX_COMPACTION_THREADS_X;
 static const int SURFACE_VERTEX_NORMAL_THREADS_X = SURFACE_VERTEX_COMPACTION_THREADS_X;
-static const int KERNEL_SCALE = 1; // not exactly sure what the significance of this is, copied from paper's repo. (it can vary between 0.05 and 20.0f via a UI in the repo)
+static const int KERNEL_SCALE = 1.f; // not exactly sure what the significance of this is, copied from paper's repo. (it can vary between 0.05 and 20.0f via a UI in the repo)
 // Given the method of mesh shading half-blocks, we can place these upper limits on the outputs of each mesh shader workgroup:
-static const float ISOVALUE = 0.03f; // also copied from the paper
+static const float ISOVALUE = 0.5f; // also copied from the paper
 static const float EPSILON = 0.00001f;
 static const int MAX_PRIMITIVES = 128;
 static const int MAX_VERTICES = 170;

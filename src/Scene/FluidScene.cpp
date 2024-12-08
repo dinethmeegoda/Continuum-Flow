@@ -109,7 +109,7 @@ float getRandomFloatInRange(float min, float max) {
 
 void FluidScene::constructScene() {
     int blocksPerEdge = 32;
-    gridConstants = { 0, {blocksPerEdge * CELLS_PER_BLOCK_EDGE, blocksPerEdge * CELLS_PER_BLOCK_EDGE, blocksPerEdge * CELLS_PER_BLOCK_EDGE}, {0.f, 0.f, 0.f}, 2.0f };
+    gridConstants = { 0, {blocksPerEdge * CELLS_PER_BLOCK_EDGE, blocksPerEdge * CELLS_PER_BLOCK_EDGE, blocksPerEdge * CELLS_PER_BLOCK_EDGE}, {0.f, 0.f, 0.f}, 0.85f };
 
     // Create cells and blocks buffers
     int numCells = gridConstants.gridDim.x * gridConstants.gridDim.y * gridConstants.gridDim.z;

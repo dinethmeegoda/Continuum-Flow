@@ -86,6 +86,14 @@ int main() {
         }
 
         if (mState.rightButton) {
+
+            if (kState.LeftShift) {
+				pbmpmTempConstants.mouseFunction = 1;
+			}
+            else {
+				pbmpmTempConstants.mouseFunction = 0;
+			}
+
             //enable mouse force
 			bool previousMouseActivation = pbmpmTempConstants.mouseActivation > 0;
 
@@ -100,22 +108,17 @@ int main() {
             float ndcY = 1.0f - (2.0f * mousePos.y / clientHeight);
 
 			XMFLOAT4 prevMousePos = pbmpmTempConstants.mousePosition;
-            pbmpmTempConstants.mousePosition = GetMouseWorldPositionAtDepth(Window::get().getHWND(), ndcX, ndcY, camera->getProjMat(), camera->getViewMat(), 70);
+			ComputeMouseRay(
+				Window::get().getHWND(),
+				ndcX,
+				ndcY,
+				camera->getProjMat(),
+				camera->getViewMat(),
+				pbmpmTempConstants.mousePosition,
+				pbmpmTempConstants.mouseDirection
+			);
 
-			// print the previous mouse position and the current mouse position
-			std::cout << "Previous Mouse Position: " << prevMousePos.x << ", " << prevMousePos.y << ", " << prevMousePos.z << std::endl;
-			std::cout << "Current Mouse Position: " << pbmpmTempConstants.mousePosition.x << ", " << pbmpmTempConstants.mousePosition.y << ", " << pbmpmTempConstants.mousePosition.z << std::endl;
-
-            pbmpmTempConstants.mouseFunction = 0;
-            pbmpmTempConstants.mouseRadius = 100;
-
-			// If the mouse was previously activated, update the velocity
-			if (previousMouseActivation) {
-				pbmpmTempConstants.mouseVelocity = XMVectorGetX(XMVector3Length(XMLoadFloat4(&pbmpmTempConstants.mousePosition) - XMLoadFloat4(&prevMousePos))) * pbmpmTempConstants.deltaTime;
-            }
-            else {
-				pbmpmTempConstants.mouseVelocity = pbmpmTempConstants.deltaTime;
-			}
+            pbmpmTempConstants.mouseRadius = 5.0;
 
             scene.updatePBMPMConstants(pbmpmTempConstants);
         }
@@ -152,7 +155,7 @@ int main() {
         //first render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
-        scene.draw();
+        //scene.draw();
 
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();

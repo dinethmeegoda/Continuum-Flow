@@ -91,24 +91,44 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io) {
     
 }
 
-// Function to calculate the 3D position of the mouse 30 units forward in world space
-XMFLOAT4 GetMouseWorldPositionAtDepth(HWND hwnd, float ndcX, float ndcY, const XMMATRIX& projectionMatrix, const XMMATRIX& viewMatrix, float forwardDistance = 30.0f) {
-    // Get the inverse of the projection and view matrices
+void ComputeMouseRay(
+    HWND hwnd,
+    float ndcX,
+    float ndcY,
+    const XMMATRIX& projectionMatrix,
+    const XMMATRIX& viewMatrix,
+    XMFLOAT4& rayOrigin,
+    XMFLOAT4& rayDirection
+) {
+    // Invert the projection and view matrices
     XMMATRIX invProj = XMMatrixInverse(nullptr, projectionMatrix);
     XMMATRIX invView = XMMatrixInverse(nullptr, viewMatrix);
 
-    // Define NDC position with a Z value corresponding to the near plane
-    XMVECTOR ndcPoint = XMVectorSet(ndcX, ndcY, 0.0f, 1.0f);
+    // Define the mouse's NDC position on the near and far planes
+    XMVECTOR ndcNear = XMVectorSet(ndcX, ndcY, 0.0f, 1.0f); // Near plane
+    XMVECTOR ndcFar = XMVectorSet(ndcX, ndcY, 1.0f, 1.0f);   // Far plane
 
-    // Unproject from NDC to view space
-    XMVECTOR viewPoint = XMVector3TransformCoord(ndcPoint, invProj);
+    // Unproject the NDC points to view space
+    XMVECTOR viewNear = XMVector3TransformCoord(ndcNear, invProj);
+    XMVECTOR viewFar = XMVector3TransformCoord(ndcFar, invProj);
 
-    // Scale the view space point to the desired distance
-    viewPoint = XMVector3Normalize(viewPoint) * forwardDistance;
+    // Transform the points from view space to world space
+    XMVECTOR worldNear = XMVector3TransformCoord(viewNear, invView);
+    XMVECTOR worldFar = XMVector3TransformCoord(viewFar, invView);
 
-    // Transform the scaled view space point to world space
-    XMVECTOR worldPoint = XMVector3TransformCoord(viewPoint, invView);
+    // Calculate the ray origin (camera position) and direction
+    rayOrigin = XMFLOAT4(
+        XMVectorGetX(worldNear),
+        XMVectorGetY(worldNear),
+        XMVectorGetZ(worldNear),
+        1.0f
+    );
 
-    // Return the world space position as XMFLOAT3
-    return XMFLOAT4(XMVectorGetX(worldPoint), XMVectorGetY(worldPoint), XMVectorGetZ(worldPoint), 0.f);
+    XMVECTOR rayDir = XMVector3Normalize(XMVectorSubtract(worldFar, worldNear));
+    rayDirection = XMFLOAT4(
+        XMVectorGetX(rayDir),
+        XMVectorGetY(rayDir),
+        XMVectorGetZ(rayDir),
+        0.0f
+    );
 }
