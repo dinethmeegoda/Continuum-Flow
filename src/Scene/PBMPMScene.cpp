@@ -388,26 +388,14 @@ void PBMPMScene::bukkitizeParticles() {
 void PBMPMScene::constructScene() {
 
 	auto computeId = g2p2gPipeline.getCommandListID();
-
-	// Create Constant Data
-
-	//liquid
 	
 	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01, 9.8, 0.2, 0.02,
 		(unsigned int)std::ceil(std::pow(10, 7)),
 		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2, 0, 0};
 	
-	// Create Model Matrix
-	modelMat *= XMMatrixTranslation(0.0f, 0.0f, 0.0f);
-
-	float radius = 1;
 	// Create Vertex & Index Buffer
-	auto circleData = generateSphere(radius, 16, 16);
-	indexCount = (unsigned int)circleData.second.size();
-	//float spacing = radius * 2.1;
-
-	//int particlesPerRow = (int)sqrt(instanceCount);
-	//int particlesPerCol = (instanceCount - 1) / particlesPerRow + 1;
+	auto sphereData = generateSphere(PARTICLE_RADIUS, 16, 16);
+	indexCount = (unsigned int)sphereData.second.size();
 
 	std::vector<XMFLOAT4> positions;
 	positions.resize(maxParticles);
@@ -492,9 +480,6 @@ void PBMPMScene::constructScene() {
 	gridBuffers[2].createSRV(*context, g2p2gPipeline.getDescriptorHeap());
 
 	// Create Vertex & Index Buffer
-	auto sphereData = generateSphere(radius, 16, 16);
-	indexCount = (unsigned int)sphereData.second.size();
-
 	vertexBuffer = VertexBuffer(sphereData.first, (UINT)(sphereData.first.size() * sizeof(XMFLOAT3)), (UINT)sizeof(XMFLOAT3));
 	vbv = vertexBuffer.passVertexDataToGPU(*context, renderPipeline->getCommandList());
 
@@ -642,25 +627,7 @@ void PBMPMScene::compute() {
 
 			// Reinitialize command list
 			context->resetCommandList(g2p2gPipeline.getCommandListID());
-
-			//// Clear nextNextGrid
-			//bufferClearPipeline.getCommandList()->SetPipelineState(bufferClearPipeline.getPSO());
-			//bufferClearPipeline.getCommandList()->SetComputeRootSignature(bufferClearPipeline.getRootSignature());
-
-			//bufferClearPipeline.getCommandList()->SetDescriptorHeaps(_countof(computeDescriptorHeaps), computeDescriptorHeaps);
-
-			//UINT THREAD_GROUP_SIZE = 256;
-			//UINT numGridInts = constants.gridSize.x * constants.gridSize.y * constants.gridSize.z * sizeof(UINT); // The total number of elements in the buffers
-			//bufferClearPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 1, &numGridInts, 0);
-			//bufferClearPipeline.getCommandList()->SetComputeRootDescriptorTable(1, nextNextGrid->getUAVGPUDescriptorHandle());
-			//bufferClearPipeline.getCommandList()->Dispatch((numGridInts + THREAD_GROUP_SIZE - 1) / THREAD_GROUP_SIZE, 1, 1);
-
-			//context->executeCommandList(bufferClearPipeline.getCommandListID());
-			//context->signalAndWaitForFence(fence, fenceValue);
-			//context->resetCommandList(bufferClearPipeline.getCommandListID());
 		}
-
-		// TODO: Add Emission function
 		doEmission(currentGrid);
 		bukkitizeParticles();
 
@@ -714,11 +681,6 @@ void PBMPMScene::draw(Camera* cam) {
 		D3D12_RESOURCE_STATE_UNORDERED_ACCESS
 	);
 	cmdList->ResourceBarrier(1, &indirectBarrierBack);
-
-	// Run command list, wait for fence, and reset
-	//context->executeCommandList(renderPipeline->getCommandListID());
-	//context->signalAndWaitForFence(fence, fenceValue);
-	//context->resetCommandList(renderPipeline->getCommandListID());
 
 }
 
