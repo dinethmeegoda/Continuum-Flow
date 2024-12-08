@@ -28,7 +28,6 @@ void ObjectScene::constructSceneWire() {
         inputStrings.push_back("objs\\cube.obj");
         XMFLOAT4X4 simShapeMatrix;
         XMStoreFloat4x4(&simShapeMatrix, XMMatrixMultiply(
-
             XMMatrixScaling(shape.halfSize.x * 2, shape.halfSize.y * 2, shape.halfSize.z * 2),
             XMMatrixTranslation(shape.position.x - shape.halfSize.x, shape.position.y - shape.halfSize.y, shape.position.z - shape.halfSize.z)
         ));

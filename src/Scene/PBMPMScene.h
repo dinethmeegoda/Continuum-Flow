@@ -17,6 +17,8 @@ const unsigned int BukkitSize = 2;
 const unsigned int BukkitHaloSize = 1;
 const unsigned int GuardianSize = 3;
 
+const float PARTICLE_RADIUS = 0.5f;
+
 const unsigned int maxParticles = 500000;
 const unsigned int maxTimestampCount = 2048;
 
