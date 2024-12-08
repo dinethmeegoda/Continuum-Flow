@@ -35,8 +35,8 @@ float P(float d, float h)
 
 float isotropicKernel(float3 r, float h)
 {
-    r *= KERNEL_SCALE;
-    h *= KERNEL_SCALE;
+    r *= cb.kernelScale;
+    h *= cb.kernelScale;
     float d = length(r);
     return P(d / h, h) / cubic(h);
 }
