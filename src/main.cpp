@@ -22,11 +22,9 @@ int main() {
     mouse->SetWindow(Window::get().getHWND());
 
     //initialize scene
-    Scene scene{PBMPM, camera.get(), &context};
+    Scene scene{camera.get(), &context};
 
-    PBMPMConstants pbmpmConstants{ {512, 512, 512}, 0.01F, 2.5F, 1.5F, 0.01F,
-        (unsigned int)std::ceil(std::pow(10, 7)),
-        1, 8, 30, 0, 0,  0, 0, 0, 0, 5, 0.9F };
+    PBMPMConstants pbmpmConstants = scene.getPBMPMConstants();
     PBMPMConstants pbmpmTempConstants = pbmpmConstants;
 
     unsigned int renderMeshlets = 0;
@@ -100,8 +98,8 @@ int main() {
         camera->updateViewMat();
 
         //get pipelines
-        auto renderPipeline = scene.getRenderPipeline();
-        auto meshPipeline = scene.getMeshPipeline();
+        auto renderPipeline = scene.getPBMPMRenderPipeline();
+        auto meshPipeline = scene.getFluidMeshPipeline();
         //whichever pipeline renders first should begin and end the frame
         auto firstPipeline = meshPipeline;
 
@@ -124,7 +122,7 @@ int main() {
         //first render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
-        if (renderMode != 0) scene.draw();
+        if (renderMode != 0) scene.drawPBMPM();
 
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();

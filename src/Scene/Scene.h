@@ -7,28 +7,21 @@
 #include "../D3D/Pipeline/ComputePipeline.h"
 #include "../D3D/Pipeline/MeshPipeline.h"
 
-enum RenderScene {
-	Object,
-	PBMPM,
-	Physics,
-	Fluid
-};
-
 class Scene {
 public:
 	Scene() = delete;
-	Scene(RenderScene renderScene, Camera* camera, DXContext* context);
+	Scene(Camera* camera, DXContext* context);
 
-	RenderPipeline* getRenderPipeline();
-	MeshPipeline* getMeshPipeline();
+	RenderPipeline* getPBMPMRenderPipeline();
+	MeshPipeline* getFluidMeshPipeline();
 
-	void setRenderScene(RenderScene renderScene);
 	void compute();
-	void draw();
+	void drawPBMPM();
 	void drawFluid(unsigned int renderMeshlets);
 
 	void releaseResources();
 
+	PBMPMConstants getPBMPMConstants() { return pbmpmScene.getConstants(); }
 	void updatePBMPMConstants(PBMPMConstants& newConstants);
 
 private:
@@ -51,8 +44,6 @@ private:
 	ComputePipeline bufferClearCP;
 	MeshPipeline fluidMeshPipeline;
 	FluidScene fluidScene;
-
-	RenderScene scene;
 
 	RenderPipeline* currentRP;
 	ComputePipeline* currentCP;

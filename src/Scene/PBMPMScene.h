@@ -120,6 +120,8 @@ public:
 
 	int getParticleCount();
 
+	PBMPMConstants getConstants() { return constants; }
+
 private:
 	DXContext* context;
 	RenderPipeline* renderPipeline;
