@@ -61,6 +61,10 @@ static const float3 baseColor = float3(0.7, 0.9, 1);
 [RootSignature(ROOTSIG)]
 float4 main(PSInput input) : SV_Target
 {
+    if (cb.renderMeshlets == 1) {
+        return float4(getMeshletColor(input.meshletIndex), 1.0);
+    }
+
     // refract
     float3 pos = input.worldPos;
     float3 dir = normalize(pos - cb.cameraPos);

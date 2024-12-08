@@ -22,6 +22,7 @@
 
 static ImGUIDescriptorHeapAllocator imguiHeapAllocator;
 static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
+static bool meshletRenderType = false;
 
 ImGuiIO& initImGUI(DXContext& context) {
     IMGUI_CHECKVERSION();
@@ -60,7 +61,7 @@ ImGuiIO& initImGUI(DXContext& context) {
     return io;
 }
 
-void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io) {
+void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets) {
     ImGui::Begin("Parameters");
 
     // General parameters
@@ -82,6 +83,9 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io) {
     ImGui::Checkbox("Use Grid Volume for Liquid", (bool*)&pbmpmConstants.useGridVolumeForLiquid);
 
     ImGui::SliderFloat("Border Friction", &pbmpmConstants.borderFriction, 0.0f, 1.0f);
+
+    ImGui::Checkbox("Render Meshlets", &meshletRenderType);
+    *renderMeshlets = meshletRenderType ? 1 : 0;
 
     // Optional display of FPS and frame info
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
