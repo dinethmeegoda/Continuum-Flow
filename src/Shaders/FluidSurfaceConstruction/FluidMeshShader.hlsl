@@ -76,25 +76,25 @@ float3 getVertexNormals(int3 vertexIndices[2])[2] {
 }
 
 // In marching cubes, we place new vertices along edges according to the density values at the endpoints, using linear interpolation.
-float interpolateDensity(float d0, float d1) {
-    return clamp((ISOVALUE - d0) / (d1 - d0), 0.0, 1.0);
+float interpolateDensity(float d0, float d1, float isovalue) {
+    return clamp((isovalue - d0) / (d1 - d0), 0.0, 1.0);
 }
 
 // In marching cubes, we draw triangles in a cube depending on which of the 8 vertices are above the isovalue. With 8 vertices in a cube,
 // there are 2^8 = 256 possible cases. We can compute which case we're in as a bitfield by comparing the density values at each vertex to the isovalue and bitshifting.
-int computeMarchingCubesCase(int3 globalCellIndices) {
+int computeMarchingCubesCase(int3 globalCellIndices, float isovalue) {
     // TODO: this is a LOT of global memory reads... (and redundant ones at that)
     int mcCase = 0;
     int3 globalVertDims = (cb.dimensions + int3(1, 1, 1));
     
-    mcCase += (vertexDensities[to1D(globalCellIndices + int3(0, 0, 0), globalVertDims)] > ISOVALUE) << 0;
-    mcCase += (vertexDensities[to1D(globalCellIndices + int3(1, 0, 0), globalVertDims)] > ISOVALUE) << 1;
-    mcCase += (vertexDensities[to1D(globalCellIndices + int3(0, 0, 1), globalVertDims)] > ISOVALUE) << 2;
-    mcCase += (vertexDensities[to1D(globalCellIndices + int3(1, 0, 1), globalVertDims)] > ISOVALUE) << 3;
-    mcCase += (vertexDensities[to1D(globalCellIndices + int3(0, 1, 0), globalVertDims)] > ISOVALUE) << 4;
-    mcCase += (vertexDensities[to1D(globalCellIndices + int3(1, 1, 0), globalVertDims)] > ISOVALUE) << 5;
-    mcCase += (vertexDensities[to1D(globalCellIndices + int3(0, 1, 1), globalVertDims)] > ISOVALUE) << 6;
-    mcCase += (vertexDensities[to1D(globalCellIndices + int3(1, 1, 1), globalVertDims)] > ISOVALUE) << 7;
+    mcCase += (vertexDensities[to1D(globalCellIndices + int3(0, 0, 0), globalVertDims)] > isovalue) << 0;
+    mcCase += (vertexDensities[to1D(globalCellIndices + int3(1, 0, 0), globalVertDims)] > isovalue) << 1;
+    mcCase += (vertexDensities[to1D(globalCellIndices + int3(0, 0, 1), globalVertDims)] > isovalue) << 2;
+    mcCase += (vertexDensities[to1D(globalCellIndices + int3(1, 0, 1), globalVertDims)] > isovalue) << 3;
+    mcCase += (vertexDensities[to1D(globalCellIndices + int3(0, 1, 0), globalVertDims)] > isovalue) << 4;
+    mcCase += (vertexDensities[to1D(globalCellIndices + int3(1, 1, 0), globalVertDims)] > isovalue) << 5;
+    mcCase += (vertexDensities[to1D(globalCellIndices + int3(0, 1, 1), globalVertDims)] > isovalue) << 6;
+    mcCase += (vertexDensities[to1D(globalCellIndices + int3(1, 1, 1), globalVertDims)] > isovalue) << 7;
 
     return mcCase;
 }
@@ -162,7 +162,7 @@ void main(
             density0 = vertexDensities[to1D(vertexIndices[0], (cb.dimensions + int3(1, 1, 1)))];
             density1 = vertexDensities[to1D(vertexIndices[1], (cb.dimensions + int3(1, 1, 1)))];
 
-            needVertex = ((density0 > ISOVALUE) ^ (density1 > ISOVALUE));
+            needVertex = ((density0 > cb.isovalue) ^ (density1 > cb.isovalue));
         }
 
         // To get an offset into shared memory, each thread can get the partial sum number of verts
@@ -175,7 +175,7 @@ void main(
         
         float3 vertexNormals[2] = getVertexNormals(vertexIndices);
         
-        float t = interpolateDensity(density0, density1);
+        float t = interpolateDensity(density0, density1, cb.isovalue);
         float3 vertPosWorld = cb.minBounds + cb.resolution * lerp(float3(vertexIndices[0]), float3(vertexIndices[1]), t);
         float4 vertPosClip = mul(cb.viewProj, float4(vertPosWorld, 1.0));
         float3 vertNormal = normalize(lerp(vertexNormals[0], vertexNormals[1], t));
@@ -208,7 +208,7 @@ void main(
         mcCase = 0;
         numTris = 0;
     } else {
-        mcCase = computeMarchingCubesCase(globalCellIdx3d);
+        mcCase = computeMarchingCubesCase(globalCellIdx3d, cb.isovalue);
         numTris = triangleCounts[mcCase];
     }
     

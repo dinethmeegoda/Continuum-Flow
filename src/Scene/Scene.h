@@ -24,6 +24,9 @@ public:
 	PBMPMConstants getPBMPMConstants() { return pbmpmScene.getConstants(); }
 	void updatePBMPMConstants(PBMPMConstants& newConstants);
 
+	float* getFluidIsovalue() { return fluidScene.getIsovalue(); }
+	float* getFluidKernelScale() { return fluidScene.getKernelScale(); }
+
 private:
 	Camera* camera;
 

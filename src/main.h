@@ -22,10 +22,13 @@
 
 static ImGUIDescriptorHeapAllocator imguiHeapAllocator;
 static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
+
 static bool meshletRenderType = false;
 static unsigned int renderModeType = 0; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
 static int fixedPointExponent = 7;
 static bool useGridVolume = true;
+
+const char* modes[] = { "Mesh Shaded Fluid", "Particles", "Mesh Shaded Fluid with Particles" };
 
 ImGuiIO& initImGUI(DXContext& context) {
     IMGUI_CHECKVERSION();
@@ -64,7 +67,7 @@ ImGuiIO& initImGUI(DXContext& context) {
     return io;
 }
 
-void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, unsigned int* renderMode) {
+void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, unsigned int* renderMode, float* isovalue, float* kernelScale) {
     ImGui::Begin("Scene Options");
 
     ImGui::Text("Simulation Parameters");
@@ -82,18 +85,21 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
     ImGui::SliderFloat("Border Friction", &pbmpmConstants.borderFriction, 0.0f, 1.0f);
 
     ImGui::Checkbox("Use Grid Volume for Liquid", (bool*)&useGridVolume);
-    pbmpmConstants.useGridVolumeForLiquid = useGridVolume ? 1 : 0;
+    pbmpmConstants.useGridVolumeForLiquid = useGridVolume;
+
+    ImGui::Text("Mesh Shading Parameters");
+    ImGui::SliderFloat("Isovalue", isovalue, 0.0f, 1.0f);
+    ImGui::SliderFloat("Kernel Scale", kernelScale, 0.5f, 20.f);
 
     ImGui::Text("Render Parameters");
 
-    const char* modes[] = { "Mesh Shaded Fluid", "Particles", "Mesh Shaded Fluid with Particles" };
     if (ImGui::Combo("Select Render Mode", (int*)&renderModeType, modes, IM_ARRAYSIZE(modes)))
     {
         *renderMode = renderModeType;
     }
 
     ImGui::Checkbox("Render Meshlets", &meshletRenderType);
-    *renderMeshlets = meshletRenderType ? 1 : 0;
+    *renderMeshlets = meshletRenderType;
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 

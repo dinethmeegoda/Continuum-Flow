@@ -100,7 +100,7 @@ int main() {
         ImGui::NewFrame();
 
         //draw ImGUI
-        drawImGUIWindow(pbmpmIterConstants, io, &renderMeshlets, &renderMode);
+        drawImGUIWindow(pbmpmIterConstants, io, &renderMeshlets, &renderMode, scene.getFluidIsovalue(), scene.getFluidKernelScale());
 
         //render ImGUI
         ImGui::Render();

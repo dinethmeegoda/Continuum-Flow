@@ -11,6 +11,7 @@ struct GridConstants {
     XMINT3 gridDim;
     XMFLOAT3 minBounds;
     float resolution;
+    float kernelScale;
 };
 
 // TODO: can just combine this with grid constants
@@ -21,6 +22,7 @@ struct MeshShadingConstants {
     XMFLOAT3 minBounds;
     unsigned int renderMeshlets;
     XMFLOAT3 cameraPos;
+    float isovalue;
 };
 
 struct Cell {
@@ -60,6 +62,9 @@ public:
     void computeSurfaceVertexNormal();
     void releaseResources();
 
+    float* getIsovalue() { return &isovalue; }
+    float* getKernelScale() { return &kernelScale; }
+
 private:
     void transitionBuffers(ID3D12GraphicsCommandList6* cmdList, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
     void resetBuffers();
@@ -94,4 +99,7 @@ private:
     StructuredBuffer surfaceVertDensityDispatch;
     StructuredBuffer surfaceVertDensityBuffer;
     StructuredBuffer surfaceVertexNormalBuffer;
+
+    float isovalue{ 0.03f };
+    float kernelScale{ 1.0f };
 };
