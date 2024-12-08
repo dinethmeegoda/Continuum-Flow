@@ -2,13 +2,16 @@
 
 Scene::Scene(Camera* p_camera, DXContext* context)
 	:  camera(p_camera),
-	objectRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::OBJECT_RENDER_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	objectScene(context, &objectRP),
 	pbmpmRP("PBMPMVertexShader.cso", "PixelShader.cso", "PBMPMVertexRootSignature.cso", *context, CommandListID::PBMPM_RENDER_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	pbmpmIC(100),
 	pbmpmScene(context, &pbmpmRP, pbmpmIC),
+	objectRPWire("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::OBJECT_RENDER_WIRE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	objectSceneWire(context, &objectRPWire, pbmpmScene.getSimShapes(), true), 
+	objectRPSolid("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::OBJECT_RENDER_SOLID_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	objectSceneSolid(context, &objectRPSolid, pbmpmScene.getSimShapes(), false),
 	fluidRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::FLUID_RENDER_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	bilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::BILEVEL_UNIFORM_GRID_COMPUTE_ID, 
@@ -31,6 +34,14 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 	currentRP(),
 	currentCP()
 {}
+
+RenderPipeline* Scene::getObjectWirePipeline() {
+	return &objectRPWire;
+}
+
+RenderPipeline* Scene::getObjectSolidPipeline() {
+	return &objectRPSolid;
+}
 
 RenderPipeline* Scene::getPBMPMRenderPipeline() {
 	return &pbmpmRP;
@@ -56,8 +67,17 @@ void Scene::drawFluid(unsigned int renderMeshlets) {
 	fluidScene.draw(camera, renderMeshlets);
 }
 
+void Scene::drawWireObjects() {
+	objectSceneWire.draw(camera);
+}
+
+void Scene::drawSolidObjects() {
+	objectSceneSolid.draw(camera);
+}
+
 void Scene::releaseResources() {
-	objectScene.releaseResources();
+	objectSceneWire.releaseResources();
+	objectSceneSolid.releaseResources();
 	pbmpmScene.releaseResources();
 	fluidScene.releaseResources();
 }

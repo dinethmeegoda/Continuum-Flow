@@ -67,14 +67,16 @@ int main() {
             pbmpmIterConstants.mouseActivation = 0;
         }
 
+        //compute pbmpm + mesh shader
+        scene.compute();
+
         //get pipelines
         auto renderPipeline = scene.getPBMPMRenderPipeline();
         auto meshPipeline = scene.getFluidMeshPipeline();
+        auto objectWirePipeline = scene.getObjectWirePipeline();
+        auto objectSolidPipeline = scene.getObjectSolidPipeline();
         //whichever pipeline renders first should begin and end the frame
-        auto firstPipeline = meshPipeline;
-
-        //compute pbmpm + mesh shader
-        scene.compute();
+        auto firstPipeline = objectWirePipeline;
 
         //begin frame
         Window::get().beginFrame(firstPipeline->getCommandList());
@@ -83,13 +85,25 @@ int main() {
         D3D12_VIEWPORT vp;
         Window::get().createViewport(vp, firstPipeline->getCommandList());
 
+        //wire object render pass
+        Window::get().setRT(objectWirePipeline->getCommandList());
+        Window::get().setViewport(vp, objectWirePipeline->getCommandList());
+        if (renderGrid) scene.drawWireObjects();
+        context.executeCommandList(objectWirePipeline->getCommandListID());
+
+        //solid object render pass
+        Window::get().setRT(objectSolidPipeline->getCommandList());
+        Window::get().setViewport(vp, objectSolidPipeline->getCommandList());
+        scene.drawSolidObjects();
+        context.executeCommandList(objectSolidPipeline->getCommandListID());
+
         //mesh render pass
         Window::get().setRT(meshPipeline->getCommandList());
         Window::get().setViewport(vp, meshPipeline->getCommandList());
         if (renderMode != 1) scene.drawFluid(renderMeshlets);
         context.executeCommandList(meshPipeline->getCommandListID());
 
-        //first render pass
+        //particles + imgui render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
         if (renderMode != 0) scene.drawPBMPM();
@@ -120,6 +134,8 @@ int main() {
         Window::get().present();
 		context.resetCommandList(renderPipeline->getCommandListID());
         context.resetCommandList(meshPipeline->getCommandListID());
+        context.resetCommandList(objectWirePipeline->getCommandListID());
+        context.resetCommandList(objectSolidPipeline->getCommandListID());
     }
 
     // Scene should release all resources, including their pipelines

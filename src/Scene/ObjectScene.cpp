@@ -1,34 +1,69 @@
 #include "ObjectScene.h"
+#include "GridConstants.h"
 
-ObjectScene::ObjectScene(DXContext* context, RenderPipeline* pipeline)
-	: Drawable(context, pipeline)
+ObjectScene::ObjectScene(DXContext* context, RenderPipeline* pipeline, std::vector<SimShape>& shapes, bool isWireframeScene)
+	: Drawable(context, pipeline), shapes(shapes)
 {
-	constructScene();
+    if (isWireframeScene) {
+        constructSceneWire();
+    }
+    else {
+        constructSceneSolid();
+    }
 }
 
-void ObjectScene::constructScene()
-{
+void ObjectScene::constructSceneWire() {
 	renderPipeline->createPSOD();
 	renderPipeline->createPipelineState(context->getDevice());
 
-	inputStrings.push_back("objs\\wolf.obj");
-    inputStrings.push_back("objs\\saulgoodman.obj");
+	inputStrings.push_back("objs\\cube.obj");
 
-    XMFLOAT4X4 m1;
-    XMStoreFloat4x4(&m1, XMMatrixTranslation(0, 0, 0));
-    modelMatrices.push_back(m1);
+    //cube for grid
+    XMFLOAT4X4 gridModelMatrix;
+    XMStoreFloat4x4(&gridModelMatrix, XMMatrixScaling(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH));
+    modelMatrices.push_back(gridModelMatrix);
+    
+    //cubes for shapes
+    for (const auto& shape : shapes) {
+        inputStrings.push_back("objs\\cube.obj");
+        XMFLOAT4X4 simShapeMatrix;
+        XMStoreFloat4x4(&simShapeMatrix, XMMatrixMultiply(
 
-    XMFLOAT4X4 m2;
-    XMStoreFloat4x4(&m2, XMMatrixScaling(0.2f, 0.2f, 0.2f) * XMMatrixTranslation(-10, -8, 0));
-    modelMatrices.push_back(m2);
+            XMMatrixScaling(shape.halfSize.x * 2, shape.halfSize.y * 2, shape.halfSize.z * 2),
+            XMMatrixTranslation(shape.position.x - shape.halfSize.x, shape.position.y - shape.halfSize.y, shape.position.z - shape.halfSize.z)
+        ));
+        modelMatrices.push_back(simShapeMatrix);
+    }
 
-    for (int i = 0; i < inputStrings.size(); i++) {
+    auto string = inputStrings.front();
+    auto m = modelMatrices.front();
+    Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true, {0, 1, 0});
+    meshes.push_back(newMesh);
+    sceneSize += newMesh.getNumTriangles();
+
+    //push shapes as wireframe
+    for (int i = 1; i < inputStrings.size(); i++) {
         auto string = inputStrings.at(i);
         auto m = modelMatrices.at(i);
-		/*Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m);
+		Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true, { 1, 0, 0 });
 		meshes.push_back(newMesh);
-		sceneSize += newMesh.getNumTriangles();*/
+		sceneSize += newMesh.getNumTriangles();
 	}
+}
+
+void ObjectScene::constructSceneSolid() {
+    //cube for ground
+    inputStrings.push_back("objs\\cube.obj");
+    XMFLOAT4X4 groundModelMatrix;
+    XMStoreFloat4x4(&groundModelMatrix, XMMatrixScaling(GRID_WIDTH, -5.0f, GRID_DEPTH));
+    modelMatrices.push_back(groundModelMatrix);
+
+    //push ground as solid
+    auto string = inputStrings.back();
+    auto m = modelMatrices.back();
+    Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m);
+    meshes.push_back(newMesh);
+    sceneSize += newMesh.getNumTriangles();
 }
 
 void ObjectScene::draw(Camera* camera) {
@@ -37,14 +72,19 @@ void ObjectScene::draw(Camera* camera) {
         auto cmdList = renderPipeline->getCommandList();
         cmdList->IASetVertexBuffers(0, 1, m.getVBV());
         cmdList->IASetIndexBuffer(m.getIBV());
-        cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        // == RS ==
-        //NO NEED TO RESET VIEWPORT??
+
+        if (m.getIsWireframe()) {
+            cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+        }
+        else {
+            cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        }
+
         // == PSO ==
         cmdList->SetPipelineState(renderPipeline->getPSO());
         cmdList->SetGraphicsRootSignature(renderPipeline->getRootSignature());
+        
         // == ROOT ==
-
         ID3D12DescriptorHeap* descriptorHeaps[] = { renderPipeline->getDescriptorHeap()->GetAddress() };
         cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
         cmdList->SetGraphicsRootDescriptorTable(1, renderPipeline->getDescriptorHeap()->GetGPUHandleAt(0)); // Descriptor table slot 1 for CBV
@@ -53,8 +93,8 @@ void ObjectScene::draw(Camera* camera) {
         auto projMat = camera->getProjMat();
         cmdList->SetGraphicsRoot32BitConstants(0, 16, &viewMat, 0);
         cmdList->SetGraphicsRoot32BitConstants(0, 16, &projMat, 16);
-        //model mat for this mesh
         cmdList->SetGraphicsRoot32BitConstants(0, 16, m.getModelMatrix(), 32);
+        cmdList->SetGraphicsRoot32BitConstants(0, 3, m.getColor(), 48);
 
         cmdList->DrawIndexedInstanced(m.getNumTriangles() * 3, 1, 0, 0, 0);
     }

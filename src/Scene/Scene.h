@@ -12,12 +12,16 @@ public:
 	Scene() = delete;
 	Scene(Camera* camera, DXContext* context);
 
+	RenderPipeline* getObjectWirePipeline();
+	RenderPipeline* getObjectSolidPipeline();
 	RenderPipeline* getPBMPMRenderPipeline();
 	MeshPipeline* getFluidMeshPipeline();
 
 	void compute();
 	void drawPBMPM();
 	void drawFluid(unsigned int renderMeshlets);
+	void drawWireObjects();
+	void drawSolidObjects();
 
 	void releaseResources();
 
@@ -30,12 +34,14 @@ public:
 private:
 	Camera* camera;
 
-	RenderPipeline objectRP;
-	ObjectScene objectScene;
-	
 	RenderPipeline pbmpmRP;
 	unsigned int pbmpmIC;
 	PBMPMScene pbmpmScene;
+
+	RenderPipeline objectRPWire;
+	ObjectScene objectSceneWire;
+	RenderPipeline objectRPSolid;
+	ObjectScene objectSceneSolid;
 
 	RenderPipeline fluidRP;
 	ComputePipeline bilevelUniformGridCP;
