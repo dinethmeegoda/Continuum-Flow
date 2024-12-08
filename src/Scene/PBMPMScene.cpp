@@ -399,10 +399,41 @@ void PBMPMScene::constructScene() {
 
 	auto computeId = g2p2gPipeline.getCommandListID();
 
-	//sand
-	constants = { {64, 64, 64}, 0.01,9.8, 1.5, 0.0,
+	// Create Constant Data
+	//liquid
+	/*constants = { {64, 64, 64}, 0.01, 9.8, 0.2, 0.02,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 3,60, 1, 0, 0, 0, 0, 0, 0, 5, 0.4 };
+		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2 };*/
+	//sand
+	/*constants = { {64, 64, 64}, 0.01,9.8, 1.5, 0.0,
+		(unsigned int)std::ceil(std::pow(10, 7)),
+		1, 3,60, 1, 0, 0, 0, 0, 0, 0, 5, 0.4 };*/
+
+	//elastic
+	constants = { {64, 64, 64},       
+	0.01f,             
+	2.0f,              
+	0.8f,              
+	0.1f,              
+	(unsigned int)std::ceil(std::pow(10, 7)), 
+	0,                 
+	3,                  
+	30.0f,              
+	1,                  
+	0,                 
+	0,                 
+	0,                  
+	0,                  
+	0,                  
+	0,                  
+	10,                 
+	0.2f };
+
+
+
+	/*constants = { {64, 64, 64}, 0.01,2.5, 1.5, 0.1,
+		(unsigned int)std::ceil(std::pow(10, 7)),
+		1, 3,40, 1, 0, 0, 0, 0, 0, 0, 5, 0.9 };*/
 
 	//XMUINT3 gridSize; //2 -> 3
 	//float deltaTime;
@@ -427,11 +458,7 @@ void PBMPMScene::constructScene() {
 	//unsigned int iterationCount;
 	//float borderFriction;
 	// 
-	// Create Constant Data
-	//liquid
-	/*constants = { {64, 64, 64}, 0.01, 9.8, 0.2, 0.02,
-		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2 };*/
+	
 
 	
 	// Create Model Matrix
@@ -477,8 +504,8 @@ void PBMPMScene::constructScene() {
 
 	// Shape Buffer
 	std::vector<SimShape> shapes;
-	shapes.push_back(SimShape(0, { 16, 40, 16}, 0, { 2, 2, 2 },
-		0, 0, 2, 1, 100));
+	shapes.push_back(SimShape(0, { 16, 16, 16}, 0, { 2, 2, 2 },
+		0, 0, 1, 1, 100));
 	shapeBuffer = StructuredBuffer(shapes.data(), shapes.size(), sizeof(SimShape));
 
 	//Temp tile data buffer
