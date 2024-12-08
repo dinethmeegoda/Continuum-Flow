@@ -483,7 +483,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
 
 
-                        float elasticityRatio = 0.04f;
+                        float elasticityRatio = g_simConstants.elasticityRatio;
                         if (trace >= 0.0f) {
 
                             svdResult.Sigma = lerp(svdResult.Sigma, float3(1.0f, 1.0f, 1.0f), 0.5f);
@@ -624,8 +624,8 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 
 
 
-                float elasticRelaxation = 1.5f;
-                float elasticityRatio = 0.07;
+                float elasticRelaxation = g_simConstants.elasticRelaxation;
+                float elasticityRatio = g_simConstants.elasticityRatio;
 
                 // Handle initial state
                 if (particle.logJp == 0)
@@ -659,8 +659,8 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
              
                 float3x3 F = mul(Identity + particle.deformationDisplacement, particle.deformationGradient);
                 SVDResult svdResult = svd(F);
-                float elasticRelaxation = 1.5f;
-                float elasticityRatio = 0.07;
+                float elasticRelaxation = g_simConstants.elasticRelaxation;
+                float elasticityRatio = g_simConstants.elasticityRatio;
                 
                 float df = det(F);
                 float cdf = clamp(abs(df), 0.1, 1000.0);
@@ -680,8 +680,8 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
                 float3x3 F = mul(Identity + particle.deformationDisplacement, particle.deformationGradient);
                 SVDResult svdResult = svd(F);
-                float elasticRelaxation = 1.5f;
-                float elasticityRatio = 0.07;
+                float elasticRelaxation = g_simConstants.elasticRelaxation;
+                float elasticityRatio = g_simConstants.elasticityRatio;
 
                 float df = det(F);
                 float cdf = clamp(abs(df), 0.1, 1000.0);

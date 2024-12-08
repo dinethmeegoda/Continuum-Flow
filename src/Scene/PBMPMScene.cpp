@@ -403,13 +403,13 @@ void PBMPMScene::constructScene() {
 	//liquid
 	/*constants = { {64, 64, 64}, 0.01, 9.8, 0.2, 0.02,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2 };*/
+		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2, 0, 0};*/
 	//sand
-	constants = { {64, 64, 64}, 0.01,2.5, 0.4, 0.2,
+	/*constants = { {64, 64, 64}, 0.01,2.5, 0.4, 0.2,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		0, 3,35, 1, 0, 0, 0, 0, 0, 0, 5, 0.3 };
+		0, 3,35, 1, 0, 0, 0, 0, 0, 0, 5, 0.3, 1.5, 0.5};*/
 
-	//elastic
+	//Visco
 	/*constants = { {64, 64, 64},       
 	0.01f,             
 	2.0f,              
@@ -418,7 +418,7 @@ void PBMPMScene::constructScene() {
 	(unsigned int)std::ceil(std::pow(10, 7)), 
 	0,                 
 	3,                  
-	30.0f,              
+	30.0f,               
 	1,                  
 	0,                 
 	0,                 
@@ -427,13 +427,38 @@ void PBMPMScene::constructScene() {
 	0,                  
 	0,                  
 	10,                 
-	0.2f };*/
+	0.2f,
+	1.5,
+	0.8};*/
+
+	//elastic
+	/*constants = { {64, 64, 64},
+	0.01f,
+	2.0f,
+	1.2f,
+	0.3f,
+	(unsigned int)std::ceil(std::pow(10, 7)),
+	0,
+	3,
+	50.0f,
+	1,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	10,
+	0.4f,
+	1.5f,
+	1.7f,
+	};*/
 
 
 
-	/*constants = { {64, 64, 64}, 0.01,2.5, 1.5, 0.1,
+	constants = { {64, 64, 64}, 0.01,2.5, 1.5, 0.1,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 3,40, 1, 0, 0, 0, 0, 0, 0, 5, 0.9 };*/
+		1, 3,40, 1, 0, 0, 0, 0, 0, 0, 5, 0.9 };
 
 	//XMUINT3 gridSize; //2 -> 3
 	//float deltaTime;
@@ -504,8 +529,8 @@ void PBMPMScene::constructScene() {
 
 	// Shape Buffer
 	std::vector<SimShape> shapes;
-	shapes.push_back(SimShape(0, { 16, 16, 16}, 0, { 2, 2, 2 },
-		0, 0, 2, 1, 100));
+	shapes.push_back(SimShape(0, { 32, 32, 32}, 0, { 2, 2, 2 },
+		0, 0, 3, 1, 100));
 	shapeBuffer = StructuredBuffer(shapes.data(), shapes.size(), sizeof(SimShape));
 
 	//Temp tile data buffer
@@ -661,7 +686,7 @@ void PBMPMScene::compute() {
 			cmdList->SetPipelineState(g2p2gPipeline.getPSO());
 			cmdList->SetComputeRootSignature(g2p2gPipeline.getRootSignature());
 
-			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 26, &constants, 0);
+			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 28, &constants, 0);
 
 			ID3D12DescriptorHeap* computeDescriptorHeaps[] = { g2p2gPipeline.getDescriptorHeap()->Get() };
 			cmdList->SetDescriptorHeaps(_countof(computeDescriptorHeaps), computeDescriptorHeaps);
@@ -829,6 +854,8 @@ void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {
 	constants.particlesPerCellAxis = newConstants.particlesPerCellAxis;
 	constants.frictionAngle = newConstants.frictionAngle;
 	constants.borderFriction = newConstants.borderFriction;
+	constants.elasticRelaxation = newConstants.elasticRelaxation;
+	constants.elasticityRatio = newConstants.elasticityRatio;
 }
 
 bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {
@@ -840,4 +867,6 @@ bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {
 		one.particlesPerCellAxis == two.particlesPerCellAxis &&
 		one.frictionAngle == two.frictionAngle &&
 		one.borderFriction == two.borderFriction;
+		one.elasticRelaxation == two.elasticRelaxation;
+		one.elasticityRatio == two.elasticityRatio;
 }
