@@ -154,6 +154,7 @@ private:
 
 	// Particle Buffers
 	StructuredBuffer positionBuffer;
+	StructuredBuffer materialBuffer;
 
 	// Scene Buffers
 	StructuredBuffer particleBuffer;

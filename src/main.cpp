@@ -140,7 +140,7 @@ int main() {
         auto renderPipeline = scene.getRenderPipeline();
         auto meshPipeline = scene.getMeshPipeline();
         //whichever pipeline renders first should begin and end the frame
-        auto firstPipeline = meshPipeline;
+        auto firstPipeline = renderPipeline;
 
         //compute pbmpm + mesh shader
         scene.compute();
@@ -153,15 +153,15 @@ int main() {
         Window::get().createViewport(vp, firstPipeline->getCommandList());
 
         //mesh render pass
-        Window::get().setRT(meshPipeline->getCommandList());
-        Window::get().setViewport(vp, meshPipeline->getCommandList());
-        scene.drawFluid();
-        context.executeCommandList(meshPipeline->getCommandListID());
+        //Window::get().setRT(meshPipeline->getCommandList());
+        //Window::get().setViewport(vp, meshPipeline->getCommandList());
+        //scene.drawFluid();
+        //context.executeCommandList(meshPipeline->getCommandListID());
 
         //first render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
-        //scene.draw();
+        scene.draw();
 
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();
@@ -188,7 +188,7 @@ int main() {
 
         Window::get().present();
 		context.resetCommandList(renderPipeline->getCommandListID());
-        context.resetCommandList(meshPipeline->getCommandListID());
+        //context.resetCommandList(meshPipeline->getCommandListID());
     }
 
     // Scene should release all resources, including their pipelines
