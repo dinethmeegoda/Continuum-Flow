@@ -432,7 +432,7 @@ void PBMPMScene::constructScene() {
 	0.8};*/
 
 	//elastic
-	/*constants = { {64, 64, 64},
+	constants = { {64, 64, 64},
 	0.01f,
 	2.0f,
 	1.2f,
@@ -451,14 +451,14 @@ void PBMPMScene::constructScene() {
 	10,
 	0.4f,
 	1.5f,
-	1.7f,
-	};*/
+	2.0f,
+	};
 
 
 
-	constants = { {64, 64, 64}, 0.01,2.5, 1.5, 0.1,
+	/*constants = { {64, 64, 64}, 0.01,2.5, 1.5, 0.1,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 3,40, 1, 0, 0, 0, 0, 0, 0, 5, 0.9 };
+		1, 3,30, 1, 0, 0, 0, 0, 0, 0, 5, 0.9, 0, 0 };*/
 
 	//XMUINT3 gridSize; //2 -> 3
 	//float deltaTime;
@@ -529,8 +529,8 @@ void PBMPMScene::constructScene() {
 
 	// Shape Buffer
 	std::vector<SimShape> shapes;
-	shapes.push_back(SimShape(0, { 32, 32, 32}, 0, { 2, 2, 2 },
-		0, 0, 3, 1, 100));
+	shapes.push_back(SimShape(0, { 32, 32, 32}, 0, { 10, 10, 10 },
+		0, 3, 1, 1, 100));
 	shapeBuffer = StructuredBuffer(shapes.data(), shapes.size(), sizeof(SimShape));
 
 	//Temp tile data buffer
