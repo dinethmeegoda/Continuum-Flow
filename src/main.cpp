@@ -21,12 +21,17 @@ int main() {
     //set mouse to use the window
     mouse->SetWindow(Window::get().getHWND());
 
+	// Get the client area of the window
+    RECT rect;
+    GetClientRect(Window::get().getHWND(), &rect);
+    float clientWidth = static_cast<float>(rect.right - rect.left);
+    float clientHeight = static_cast<float>(rect.bottom - rect.top);
+
     //initialize scene
     Scene scene{PBMPM, camera.get(), &context};
 
-    PBMPMConstants pbmpmConstants{ {512, 512, 512}, 0.01F, 2.5F, 1.5F, 0.01F,
-        (unsigned int)std::ceil(std::pow(10, 7)),
-        1, 8, 30, 0, 0,  0, 0, 0, 0, 5, 0.9F };
+	//initialize pbmpm constants
+	PBMPMConstants pbmpmConstants = scene.getPBMPMConstants();
     PBMPMConstants pbmpmTempConstants = pbmpmConstants;
 
     while (!Window::get().getShouldClose()) {
@@ -82,24 +87,41 @@ int main() {
 
         if (mState.rightButton) {
             //enable mouse force
+			bool previousMouseActivation = pbmpmTempConstants.mouseActivation > 0;
+
             pbmpmTempConstants.mouseActivation = 1;
 
-            POINT cursorPos;
-            GetCursorPos(&cursorPos);
+            POINT mousePos;
+            GetCursorPos(&mousePos);
 
-            float ndcX = (2.0f * cursorPos.x) / SCREEN_WIDTH - 1.0f;
-            float ndcY = -(2.0f * cursorPos.y) / SCREEN_HEIGHT + 1.0f;
+			ScreenToClient(Window::get().getHWND(), &mousePos);
 
-            XMVECTOR screenCursorPos = XMVectorSet(ndcX, ndcY, 0.0f, 1.0f);
-            XMVECTOR worldCursorPos = XMVector4Transform(screenCursorPos, camera->getInvViewProjMat());
-            XMStoreFloat4(&(pbmpmTempConstants.mousePosition), worldCursorPos);
+            float ndcX = (2.0f * mousePos.x / clientWidth) - 1.0f;
+            float ndcY = 1.0f - (2.0f * mousePos.y / clientHeight);
+
+			XMFLOAT4 prevMousePos = pbmpmTempConstants.mousePosition;
+            pbmpmTempConstants.mousePosition = GetMouseWorldPositionAtDepth(Window::get().getHWND(), ndcX, ndcY, camera->getProjMat(), camera->getViewMat(), 70);
+
+			// print the previous mouse position and the current mouse position
+			std::cout << "Previous Mouse Position: " << prevMousePos.x << ", " << prevMousePos.y << ", " << prevMousePos.z << std::endl;
+			std::cout << "Current Mouse Position: " << pbmpmTempConstants.mousePosition.x << ", " << pbmpmTempConstants.mousePosition.y << ", " << pbmpmTempConstants.mousePosition.z << std::endl;
 
             pbmpmTempConstants.mouseFunction = 0;
-            pbmpmTempConstants.mouseRadius = 1000;
+            pbmpmTempConstants.mouseRadius = 100;
+
+			// If the mouse was previously activated, update the velocity
+			if (previousMouseActivation) {
+				pbmpmTempConstants.mouseVelocity = XMVectorGetX(XMVector3Length(XMLoadFloat4(&pbmpmTempConstants.mousePosition) - XMLoadFloat4(&prevMousePos))) * pbmpmTempConstants.deltaTime;
+            }
+            else {
+				pbmpmTempConstants.mouseVelocity = pbmpmTempConstants.deltaTime;
+			}
+
             scene.updatePBMPMConstants(pbmpmTempConstants);
         }
         else {
             pbmpmTempConstants.mouseActivation = 0;
+			scene.updatePBMPMConstants(pbmpmTempConstants);
         }
 
         //update camera

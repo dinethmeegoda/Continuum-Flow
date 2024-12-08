@@ -31,6 +31,8 @@ public:
 
 	void updatePBMPMConstants(PBMPMConstants& newConstants);
 
+	PBMPMConstants getPBMPMConstants() { return pbmpmScene.getConstants(); }
+
 private:
 	Camera* camera;
 

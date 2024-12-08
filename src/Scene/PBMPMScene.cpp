@@ -407,7 +407,7 @@ void PBMPMScene::constructScene() {
 	// Create Model Matrix
 	modelMat *= XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
-	float radius = 1;
+	float radius = 0.2;
 	// Create Vertex & Index Buffer
 	auto circleData = generateSphere(radius, 16, 16);
 	indexCount = (unsigned int)circleData.second.size();
@@ -772,6 +772,13 @@ void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {
 	constants.particlesPerCellAxis = newConstants.particlesPerCellAxis;
 	constants.frictionAngle = newConstants.frictionAngle;
 	constants.borderFriction = newConstants.borderFriction;
+
+	// Update mouse constants
+	constants.mousePosition = newConstants.mousePosition;
+	constants.mouseActivation = newConstants.mouseActivation;
+	constants.mouseRadius = newConstants.mouseRadius;
+	constants.mouseFunction = newConstants.mouseFunction;
+	constants.mouseVelocity = newConstants.mouseVelocity;
 }
 
 bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {

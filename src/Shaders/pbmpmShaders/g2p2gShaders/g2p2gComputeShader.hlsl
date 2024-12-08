@@ -459,11 +459,12 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 
                 // Mouse Iteraction
                 if (g_simConstants.mouseActivation == 1) {
-                    float t;
-                    bool intersected = intersectRaySphere(g_simConstants.mousePosition.xyz, float3(0, 0, 1), p, 2.f, t);
+                    //float t;
+                    //bool intersected = intersectRaySphere(g_simConstants.mousePosition.xyz, float3(0, 0, 1), p, 10.f, t);
                     float3 offset = p - float3(g_simConstants.mousePosition.xyz);
                     float lenOffset = max(length(offset), 0.0001);
-                    if (intersected)
+
+                    if (lenOffset < g_simConstants.mouseRadius)
                     {
                         float3 normOffset = offset / lenOffset;
 

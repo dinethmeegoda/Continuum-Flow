@@ -118,6 +118,8 @@ public:
 
 	StructuredBuffer* getPositionBuffer() { return &positionBuffer; }
 
+	PBMPMConstants getConstants() { return constants; }
+
 	int getParticleCount();
 
 private:

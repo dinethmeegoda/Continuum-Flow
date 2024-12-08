@@ -91,4 +91,24 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io) {
     
 }
 
+// Function to calculate the 3D position of the mouse 30 units forward in world space
+XMFLOAT4 GetMouseWorldPositionAtDepth(HWND hwnd, float ndcX, float ndcY, const XMMATRIX& projectionMatrix, const XMMATRIX& viewMatrix, float forwardDistance = 30.0f) {
+    // Get the inverse of the projection and view matrices
+    XMMATRIX invProj = XMMatrixInverse(nullptr, projectionMatrix);
+    XMMATRIX invView = XMMatrixInverse(nullptr, viewMatrix);
 
+    // Define NDC position with a Z value corresponding to the near plane
+    XMVECTOR ndcPoint = XMVectorSet(ndcX, ndcY, 0.0f, 1.0f);
+
+    // Unproject from NDC to view space
+    XMVECTOR viewPoint = XMVector3TransformCoord(ndcPoint, invProj);
+
+    // Scale the view space point to the desired distance
+    viewPoint = XMVector3Normalize(viewPoint) * forwardDistance;
+
+    // Transform the scaled view space point to world space
+    XMVECTOR worldPoint = XMVector3TransformCoord(viewPoint, invView);
+
+    // Return the world space position as XMFLOAT3
+    return XMFLOAT4(XMVectorGetX(worldPoint), XMVectorGetY(worldPoint), XMVectorGetZ(worldPoint), 0.f);
+}
