@@ -70,7 +70,9 @@ ImGuiIO& initImGUI(DXContext& context) {
 void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, unsigned int* renderMode, float* isovalue, float* kernelScale) {
     ImGui::Begin("Scene Options");
 
-    ImGui::Text("Simulation Parameters");
+    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+    ImGui::TextColored({0, 1, 0, 1}, "Simulation Parameters");
 
     ImGui::SliderFloat("Gravity Strength", &pbmpmConstants.gravityStrength, 0.0f, 20.0f);
 
@@ -87,11 +89,11 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
     ImGui::Checkbox("Use Grid Volume for Liquid", (bool*)&useGridVolume);
     pbmpmConstants.useGridVolumeForLiquid = useGridVolume;
 
-    ImGui::Text("Mesh Shading Parameters");
+    ImGui::TextColored({ 0, 1, 0, 1 }, "Mesh Shading Parameters");
     ImGui::SliderFloat("Isovalue", isovalue, 0.0f, 1.0f);
     ImGui::SliderFloat("Kernel Scale", kernelScale, 0.1f, 5.f);
 
-    ImGui::Text("Render Parameters");
+    ImGui::TextColored({ 0, 1, 0, 1 }, "Render Parameters");
 
     if (ImGui::Combo("Select Render Mode", (int*)&renderModeType, modes, IM_ARRAYSIZE(modes)))
     {
@@ -100,8 +102,6 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
 
     ImGui::Checkbox("Render Meshlets", &meshletRenderType);
     *renderMeshlets = meshletRenderType;
-
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
     ImGui::End();
 }

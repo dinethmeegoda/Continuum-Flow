@@ -33,10 +33,10 @@ float P(float d, float h)
     }
 }
 
-float isotropicKernel(float3 r, float h, float kernelScale)
+float isotropicKernel(float3 r, float h)
 {
-    r *= kernelScale;
-    h *= kernelScale;
+    r *= cb.kernelScale;
+    h *= cb.kernelScale;
     float d = length(r);
     return P(d / h, h) / cubic(h);
 }
@@ -79,7 +79,7 @@ void main( uint3 globalThreadId : SV_DispatchThreadID ) {
                     int particleIdx = cellParticleIndices[neighborCellIdx1d * MAX_PARTICLES_PER_CELL + i];
                     float3 particlePos = positionsBuffer[particleIdx].xyz;
                     float3 r = vertPos - particlePos;
-                    totalDensity += isotropicKernel(r, cb.resolution, cb.kernelScale); // (In the paper, they use kernel radius here, which is defaulted to 0.99 * cell resolution)
+                    totalDensity += isotropicKernel(r, cb.resolution); // (In the paper, they use kernel radius here, which is defaulted to 0.99 * cell resolution)
                 }
             }
         }
