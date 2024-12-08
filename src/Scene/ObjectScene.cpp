@@ -1,5 +1,5 @@
 #include "ObjectScene.h"
-#include "GridConstants.h"
+#include "SceneConstants.h"
 
 ObjectScene::ObjectScene(DXContext* context, RenderPipeline* pipeline, std::vector<SimShape>& shapes, bool isWireframeScene)
 	: Drawable(context, pipeline), shapes(shapes)
@@ -55,13 +55,13 @@ void ObjectScene::constructSceneSolid() {
     //cube for ground
     inputStrings.push_back("objs\\cube.obj");
     XMFLOAT4X4 groundModelMatrix;
-    XMStoreFloat4x4(&groundModelMatrix, XMMatrixScaling(GRID_WIDTH, -5.0f, GRID_DEPTH));
+    XMStoreFloat4x4(&groundModelMatrix, XMMatrixScaling(1.5 * GRID_WIDTH, -5.0f, 1.5 * GRID_DEPTH));
     modelMatrices.push_back(groundModelMatrix);
 
     //push ground as solid
     auto string = inputStrings.back();
     auto m = modelMatrices.back();
-    Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m);
+    Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, false, XMFLOAT3(GROUND_PLANE_COLOR));
     meshes.push_back(newMesh);
     sceneSize += newMesh.getNumTriangles();
 }

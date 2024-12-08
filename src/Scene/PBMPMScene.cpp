@@ -1,5 +1,5 @@
 #include "PBMPMScene.h"
-#include "GridConstants.h"
+#include "SceneConstants.h"
 
 PBMPMScene::PBMPMScene(DXContext* context, RenderPipeline* pipeline, unsigned int instances)
 	: Drawable(context, pipeline), context(context), renderPipeline(pipeline), instanceCount(instances),
