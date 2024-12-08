@@ -27,7 +27,7 @@ struct Vertex {
 class Mesh {
 public:
 	Mesh() = delete;
-	Mesh(std::string fileLocation, DXContext* context, ID3D12GraphicsCommandList6* cmdList, RenderPipeline* pipeline, XMFLOAT4X4 modelMatrix, bool doWireframeIndices = false);
+	Mesh(std::string fileLocation, DXContext* context, ID3D12GraphicsCommandList6* cmdList, RenderPipeline* pipeline, XMFLOAT4X4 modelMatrix, bool doWireframeIndices = false, XMFLOAT3 color = {0, 0, 0});
 	void loadMesh(std::string fileLocation, bool doWireframeIndices);
 
 	D3D12_INDEX_BUFFER_VIEW* getIBV();
@@ -41,6 +41,8 @@ public:
 
 	bool getIsWireframe() { return isWireframe; }
 
+	XMFLOAT3* getColor() { return &color; }
+
 private:
 	std::vector<Vertex> vertices;
 	std::vector<XMFLOAT3> vertexPositions;
@@ -53,6 +55,8 @@ private:
 	D3D12_INDEX_BUFFER_VIEW ibv;
 
 	XMFLOAT4X4 modelMatrix;
+
+	XMFLOAT3 color;
 
 	bool isWireframe{ false };
 };

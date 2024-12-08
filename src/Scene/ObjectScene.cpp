@@ -35,11 +35,17 @@ void ObjectScene::constructSceneWire() {
         modelMatrices.push_back(simShapeMatrix);
     }
 
-    //push grid and shapes as wireframe
-    for (int i = 0; i < inputStrings.size(); i++) {
+    auto string = inputStrings.front();
+    auto m = modelMatrices.front();
+    Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true, {0, 1, 0});
+    meshes.push_back(newMesh);
+    sceneSize += newMesh.getNumTriangles();
+
+    //push shapes as wireframe
+    for (int i = 1; i < inputStrings.size(); i++) {
         auto string = inputStrings.at(i);
         auto m = modelMatrices.at(i);
-		Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true);
+		Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true, { 1, 0, 0 });
 		meshes.push_back(newMesh);
 		sceneSize += newMesh.getNumTriangles();
 	}
@@ -87,8 +93,8 @@ void ObjectScene::draw(Camera* camera) {
         auto projMat = camera->getProjMat();
         cmdList->SetGraphicsRoot32BitConstants(0, 16, &viewMat, 0);
         cmdList->SetGraphicsRoot32BitConstants(0, 16, &projMat, 16);
-        
         cmdList->SetGraphicsRoot32BitConstants(0, 16, m.getModelMatrix(), 32);
+        cmdList->SetGraphicsRoot32BitConstants(0, 3, m.getColor(), 48);
 
         cmdList->DrawIndexedInstanced(m.getNumTriangles() * 3, 1, 0, 0, 0);
     }
