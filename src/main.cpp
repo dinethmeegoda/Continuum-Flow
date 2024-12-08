@@ -88,9 +88,15 @@ int main() {
         if (mState.rightButton) {
 
             if (kState.LeftShift) {
-				pbmpmTempConstants.mouseFunction = 1;
+                // Pulling Fluid
+				pbmpmTempConstants.mouseFunction = 2;
 			}
+            else if (kState.LeftAlt) {
+                // Grab Fluid Ball
+                pbmpmTempConstants.mouseFunction = 1;
+            }
             else {
+				// Pushing Fluid
 				pbmpmTempConstants.mouseFunction = 0;
 			}
 

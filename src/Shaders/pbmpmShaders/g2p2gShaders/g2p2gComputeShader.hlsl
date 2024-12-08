@@ -474,8 +474,14 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         }
                         else if (g_simConstants.mouseFunction == 1)
                         {
-                            particle.displacement = -offset * g_simConstants.deltaTime * 1.5f;
+							float3 isect_pos = g_simConstants.mousePosition.xyz + g_simConstants.mouseDirection.xyz * 80;
+                            particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * 10.f;
                         }
+						else if (g_simConstants.mouseFunction == 2)
+						{
+                            float3 isect_pos = g_simConstants.mousePosition.xyz + g_simConstants.mouseDirection.xyz * t;
+							particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * 10.f;
+						}
                     }
                 }
                 

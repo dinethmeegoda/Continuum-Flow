@@ -775,10 +775,10 @@ void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {
 
 	// Update mouse constants
 	constants.mousePosition = newConstants.mousePosition;
+	constants.mouseFunction = newConstants.mouseFunction;
 	constants.mouseDirection = newConstants.mouseDirection;
 	constants.mouseActivation = newConstants.mouseActivation;
 	constants.mouseRadius = newConstants.mouseRadius;
-	constants.mouseFunction = newConstants.mouseFunction;
 }
 
 bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {
