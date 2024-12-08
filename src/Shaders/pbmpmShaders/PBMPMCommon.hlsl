@@ -65,7 +65,6 @@ struct Particle {
 	float3 displacement; //2->3
 	float mass;
     float3x3 deformationGradient;
-	float material;
 	float volume;
 	float lambda;
     float3x3 deformationDisplacement;

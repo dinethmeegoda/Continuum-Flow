@@ -407,7 +407,7 @@ void PBMPMScene::constructScene() {
 	//sand
 	constants = { {64, 64, 64}, 0.01,2.5, 0.4, 0.2,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		0, 3,35, 1, 0, 0, 0, 0, 0, 0, 5, 0.3 };
+		0, 4, 35, 2, 0, 0, 0, 0, 0, 0, 5, 0.3 };
 
 	//elastic
 	/*constants = { {64, 64, 64},       
@@ -508,8 +508,10 @@ void PBMPMScene::constructScene() {
 
 	// Shape Buffer
 	std::vector<SimShape> shapes;
-	shapes.push_back(SimShape(0, { 16, 16, 16}, 0, { 6, 6, 6 },
-		0, 3, 1, 1, 100));
+	shapes.push_back(SimShape(0, { 32, 32, 32}, 0, { 2, 2, 2 },
+		0, 0, 0, 1, 100));
+	shapes.push_back(SimShape(0, { 16, 16, 16 }, 0, { 6, 6, 6 },
+		0, 3, 3, 1, 100));
 	shapeBuffer = StructuredBuffer(shapes.data(), shapes.size(), sizeof(SimShape));
 
 	//Temp tile data buffer

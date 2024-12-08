@@ -70,7 +70,6 @@ struct PBMPMParticle {
 	XMFLOAT3 displacement; //2->3
 	float mass;
 	XMFLOAT3X3 deformationGradient;
-	float material;
 	float volume;
 	float lambda;
 	XMFLOAT3X3 deformationDisplacement;
