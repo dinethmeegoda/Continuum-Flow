@@ -43,6 +43,9 @@ struct PBMPMConstants {
 	unsigned int iteration;
 	unsigned int iterationCount;
 	float borderFriction;
+	float elasticRelaxation;
+	float elasticityRatio;
+
 
 	//mouse stuff
 	XMFLOAT4 mousePosition;

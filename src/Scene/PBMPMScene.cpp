@@ -212,7 +212,7 @@ void PBMPMScene::doEmission(StructuredBuffer* gridBuffer) {
 	emissionCmd->ResourceBarrier(1, &gridBufferBarrier);
 
 	// Set Root Descriptors
-	emissionCmd->SetComputeRoot32BitConstants(0, 28, &constants, 0);
+	emissionCmd->SetComputeRoot32BitConstants(0, 30, &constants, 0);
 	emissionCmd->SetComputeRootConstantBufferView(1, shapeBuffer.getGPUVirtualAddress());
 	emissionCmd->SetComputeRootDescriptorTable(2, particleBuffer.getUAVGPUDescriptorHandle());
 	emissionCmd->SetComputeRootDescriptorTable(3, gridBuffer->getSRVGPUDescriptorHandle());
@@ -276,7 +276,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitCountPipeline.getCommandList()->ResourceBarrier(1, &particlePositionsBarrier);
 
 	// Properly set the Descriptors & Resource Transitions
-	bukkitCountPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 28, &constants, 0);
+	bukkitCountPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 30, &constants, 0);
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(1, particleCount.getSRVGPUDescriptorHandle());
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(2, particleBuffer.getSRVGPUDescriptorHandle());
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(3, positionBuffer.getSRVGPUDescriptorHandle());
@@ -314,7 +314,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitAllocatePipeline.getCommandList()->ResourceBarrier(1, &bukkitCountBarrier);
 
 	// Properly set the Descriptors & Resource Transitions
-	bukkitAllocatePipeline.getCommandList()->SetComputeRoot32BitConstants(0, 28, &constants, 0);
+	bukkitAllocatePipeline.getCommandList()->SetComputeRoot32BitConstants(0, 30, &constants, 0);
 	bukkitAllocatePipeline.getCommandList()->SetComputeRootDescriptorTable(1, bukkitSystem.countBuffer.getSRVGPUDescriptorHandle());
 	bukkitAllocatePipeline.getCommandList()->SetComputeRootDescriptorTable(2, bukkitSystem.threadData.getUAVGPUDescriptorHandle());
 
@@ -352,7 +352,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitInsertPipeline.getCommandList()->ResourceBarrier(2, barriers);
 
 	// Properly set the Descriptors
-	bukkitInsertPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 28, &constants, 0);
+	bukkitInsertPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 30, &constants, 0);
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(1, particleBuffer.getSRVGPUDescriptorHandle());
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(2, bukkitSystem.countBuffer2.getUAVGPUDescriptorHandle());
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(3, bukkitSystem.indexStart.getSRVGPUDescriptorHandle());
@@ -401,10 +401,94 @@ void PBMPMScene::constructScene() {
 	auto computeId = g2p2gPipeline.getCommandListID();
 
 	// Create Constant Data
+
+	//liquid
+	
 	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01, 9.8, 0.2, 0.02,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2 };
+		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2, 0, 0};
+	//sand
+	/*constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01,2.5, 0.4, 0.2,
+		(unsigned int)std::ceil(std::pow(10, 7)),
+		0, 3,35, 1, 0, 0, 0, 0, 0, 0, 5, 0.3, 1.5, 0.5};*/
 
+	//Visco
+	/*constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH},       
+	0.01f,             
+	2.0f,              
+	0.8f,              
+	0.1f,              
+	(unsigned int)std::ceil(std::pow(10, 7)), 
+	0,                 
+	3,                  
+	30.0f,               
+	1,                  
+	0,                 
+	0,                 
+	0,                  
+	0,                  
+	0,                  
+	0,                  
+	10,                 
+	0.2f,
+	1.5,
+	0.8};*/
+
+	//elastic
+	/*constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH},
+	0.01f,
+	2.0f,
+	1.2f,
+	0.3f,
+	(unsigned int)std::ceil(std::pow(10, 7)),
+	0,
+	3,
+	50.0f,
+	1,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	10,
+	0.4f,
+	1.5f,
+	2.0f,
+	};*/
+
+
+
+	/*constants = { {64, 64, 64}, 0.01,2.5, 1.5, 0.1,
+		(unsigned int)std::ceil(std::pow(10, 7)),
+		1, 3,30, 1, 0, 0, 0, 0, 0, 0, 5, 0.9, 0, 0 };*/
+
+	//XMUINT3 gridSize; //2 -> 3
+	//float deltaTime;
+	//float gravityStrength;
+
+	//float liquidRelaxation;
+	//float liquidViscosity;
+	//unsigned int fixedPointMultiplier;
+
+	//unsigned int useGridVolumeForLiquid;
+	//unsigned int particlesPerCellAxis;
+
+	//float frictionAngle;
+	//unsigned int shapeCount;
+	//unsigned int simFrame;
+
+	//unsigned int bukkitCount;
+	//unsigned int bukkitCountX;
+	//unsigned int bukkitCountY;
+	//unsigned int bukkitCountZ; //added
+	//unsigned int iteration;
+	//unsigned int iterationCount;
+	//float borderFriction;
+	// 
+	
+
+	
 	// Create Model Matrix
 	modelMat *= XMMatrixTranslation(0.0f, 0.0f, 0.0f);
 
@@ -447,8 +531,11 @@ void PBMPMScene::constructScene() {
 	renderDispatchBuffer = StructuredBuffer(&renderDispatch, 5, sizeof(int));
 
 	// Shape Buffer
-	shapes.push_back(SimShape(0, { 16, 40, 16}, 0, { 2, 2, 2 },
+
+	std::vector<SimShape> shapes;
+	shapes.push_back(SimShape(0, { 32, 32, 32}, 0, { 10, 10, 10 },
 		0, 0, 0, 1, 100));
+
 	shapeBuffer = StructuredBuffer(shapes.data(), shapes.size(), sizeof(SimShape));
 
 	//Temp tile data buffer
@@ -604,7 +691,7 @@ void PBMPMScene::compute() {
 			cmdList->SetPipelineState(g2p2gPipeline.getPSO());
 			cmdList->SetComputeRootSignature(g2p2gPipeline.getRootSignature());
 
-			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 28, &constants, 0);
+			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 30, &constants, 0);
 
 			ID3D12DescriptorHeap* computeDescriptorHeaps[] = { g2p2gPipeline.getDescriptorHeap()->Get() };
 			cmdList->SetDescriptorHeaps(_countof(computeDescriptorHeaps), computeDescriptorHeaps);
@@ -772,6 +859,8 @@ void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {
 	constants.particlesPerCellAxis = newConstants.particlesPerCellAxis;
 	constants.frictionAngle = newConstants.frictionAngle;
 	constants.borderFriction = newConstants.borderFriction;
+	constants.elasticRelaxation = newConstants.elasticRelaxation;
+	constants.elasticityRatio = newConstants.elasticityRatio;
 }
 
 bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {
@@ -783,6 +872,8 @@ bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {
 		one.particlesPerCellAxis == two.particlesPerCellAxis &&
 		one.frictionAngle == two.frictionAngle &&
 		one.borderFriction == two.borderFriction;
+		one.elasticRelaxation == two.elasticRelaxation;
+		one.elasticityRatio == two.elasticityRatio;
 }
 
 int PBMPMScene::getParticleCount() {

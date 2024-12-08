@@ -10,6 +10,7 @@
 #define MaterialElastic 1
 #define MaterialSand 2
 #define MaterialVisco 3
+#define MaterialSnow 4 
 
 #define ShapeTypeBox 0
 #define ShapeTypeCircle 1
@@ -46,6 +47,8 @@ struct PBMPMConstants {
 	unsigned int iteration;
 	unsigned int iterationCount;
 	float borderFriction;
+    float elasticRelaxation;
+    float elasticityRatio;
 
     //mouse stuff
     float4 mousePosition;
@@ -304,3 +307,21 @@ float4x4 expandToFloat4x4(float3x3 m)
         0.0, 0.0, 0.0, 0.0
     );
 }
+float cbrt(float x) {
+    if (x == 0.0f) return 0.0f;
+
+    float sign = x < 0.0f ? -1.0f : 1.0f;
+    x = abs(x);
+
+    // Initial guess
+    float y = x;
+
+    // Newton iterations for cube root
+    // y = y - (y³ - x)/(3y²)
+    for (int i = 0; i < 4; i++) {
+        y = y - (y * y * y - x) / (3.0f * y * y);
+    }
+
+    return sign * y;
+}
+
