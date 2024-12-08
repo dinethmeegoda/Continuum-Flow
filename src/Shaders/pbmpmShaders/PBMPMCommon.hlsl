@@ -10,6 +10,7 @@
 #define MaterialElastic 1
 #define MaterialSand 2
 #define MaterialVisco 3
+#define MaterialSnow 4 
 
 #define ShapeTypeBox 0
 #define ShapeTypeCircle 1
