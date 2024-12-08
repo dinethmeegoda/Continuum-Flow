@@ -23,6 +23,7 @@
 static ImGUIDescriptorHeapAllocator imguiHeapAllocator;
 static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
 static bool meshletRenderType = false;
+static unsigned int renderModeType = 0; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
 
 ImGuiIO& initImGUI(DXContext& context) {
     IMGUI_CHECKVERSION();
@@ -61,21 +62,17 @@ ImGuiIO& initImGUI(DXContext& context) {
     return io;
 }
 
-void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets) {
-    ImGui::Begin("Parameters");
+void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, unsigned int* renderMode) {
+    ImGui::Begin("Scene Options");
 
-    // General parameters
     ImGui::Text("Simulation Parameters");
 
-    // Sliders for float values
     ImGui::SliderFloat("Gravity Strength", &pbmpmConstants.gravityStrength, 0.0f, 20.0f);
 
-    // Parameters for liquid simulation
     ImGui::SliderFloat("Liquid Relaxation", &pbmpmConstants.liquidRelaxation, 0.1f, 10.0f);
     ImGui::SliderFloat("Liquid Viscosity", &pbmpmConstants.liquidViscosity, 0.0f, 10.0f);
     ImGui::SliderFloat("Friction Angle", &pbmpmConstants.frictionAngle, 0.0f, 90.0f);
 
-    // Input for unsigned integers (e.g., counts and iterations)
     ImGui::InputInt3("Grid Size", (int*)&pbmpmConstants.gridSize);
     ImGui::InputInt("Fixed Point Multiplier", (int*)&pbmpmConstants.fixedPointMultiplier);
     ImGui::InputInt("Particles Per Cell Axis", (int*)&pbmpmConstants.particlesPerCellAxis);
@@ -84,15 +81,20 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
 
     ImGui::SliderFloat("Border Friction", &pbmpmConstants.borderFriction, 0.0f, 1.0f);
 
+    ImGui::Text("Render Parameters");
+
+    const char* modes[] = { "Mesh Shaded Fluid", "Particles", "Mesh Shaded Fluid with Particles" };
+    if (ImGui::Combo("Select Render Mode", (int*)&renderModeType, modes, IM_ARRAYSIZE(modes)))
+    {
+        *renderMode = renderModeType;
+    }
+
     ImGui::Checkbox("Render Meshlets", &meshletRenderType);
     *renderMeshlets = meshletRenderType ? 1 : 0;
 
-    // Optional display of FPS and frame info
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
     ImGui::End();
-
-    
 }
 
 

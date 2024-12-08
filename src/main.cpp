@@ -30,6 +30,7 @@ int main() {
     PBMPMConstants pbmpmTempConstants = pbmpmConstants;
 
     unsigned int renderMeshlets = 0;
+    unsigned int renderMode = 0;
 
     while (!Window::get().getShouldClose()) {
         //update window
@@ -60,15 +61,6 @@ int main() {
         }
         if (kState.LeftControl) {
             camera->translate({ 0.f, -1.0f, 0.f });
-        }
-        if (kState.D1) {
-            scene.setRenderScene(Object);
-        }
-        if (kState.D2) {
-            scene.setRenderScene(PBMPM);
-        }
-        if (kState.D3) {
-            scene.setRenderScene(Fluid);
         }
 
         //check mouse state
@@ -126,13 +118,13 @@ int main() {
         //mesh render pass
         Window::get().setRT(meshPipeline->getCommandList());
         Window::get().setViewport(vp, meshPipeline->getCommandList());
-        scene.drawFluid(renderMeshlets);
+        if (renderMode != 1) scene.drawFluid(renderMeshlets);
         context.executeCommandList(meshPipeline->getCommandListID());
 
         //first render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
-        scene.draw();
+        if (renderMode != 0) scene.draw();
 
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();
@@ -140,7 +132,7 @@ int main() {
         ImGui::NewFrame();
 
         //draw ImGUI
-        drawImGUIWindow(pbmpmTempConstants, io, &renderMeshlets);
+        drawImGUIWindow(pbmpmTempConstants, io, &renderMeshlets, &renderMode);
 
         //render ImGUI
         ImGui::Render();
