@@ -9,7 +9,7 @@ ConstantBuffer<PBMPMConstants> g_simConstants : register(b0);
 // Define the constant buffer with an array of SimShapes
 cbuffer shapes : register(b1)
 {
-    SimShape g_shapes[1]; // Adjust the size of the array as needed
+    SimShape g_shapes[4]; // Adjust the size of the array as needed
 };
 
 // Structured Buffer for particles (read-write UAV)

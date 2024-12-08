@@ -565,7 +565,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 p += particle.displacement;
                 
                 // Mouse Iteraction
-                if (g_simConstants.mouseActivation == 1) {
+                if (g_simConstants.mouseActivation > 0) {
                     float t;
                     bool intersected = intersectRaySphere(g_simConstants.mousePosition.xyz, g_simConstants.mouseDirection.xyz, p, g_simConstants.mouseRadius, t);
                     float3 offset = p - float3(g_simConstants.mousePosition.xyz);
@@ -575,19 +575,19 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                     {
                         float3 normOffset = offset / lenOffset;
 
-                        if (g_simConstants.mouseFunction == 0)
+                        if (g_simConstants.mouseFunction == 0) // Push
                         {
-                            particle.displacement += normOffset * g_simConstants.mouseActivation;
+                            particle.displacement += normOffset * g_simConstants.mouseActivation * g_simConstants.mouseVelocity * 0.5f;
                         }
-                        else if (g_simConstants.mouseFunction == 1)
+                        else if (g_simConstants.mouseFunction == 1) // Grab (Add constant)
                         {
 							float3 isect_pos = g_simConstants.mousePosition.xyz + g_simConstants.mouseDirection.xyz * 80;
-                            particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * 10.f;
+                            particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_simConstants.mouseVelocity * 5.f;
                         }
-						else if (g_simConstants.mouseFunction == 2)
+						else if (g_simConstants.mouseFunction == 2) // Pull
 						{
                             float3 isect_pos = g_simConstants.mousePosition.xyz + g_simConstants.mouseDirection.xyz * t;
-							particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * 10.f;
+							particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_simConstants.mouseVelocity * 5.f;
 						}
                     }
                 }
@@ -686,7 +686,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 float3x3 F = mul(Identity + particle.deformationDisplacement, particle.deformationGradient);
                 SVDResult svdResult = svd(F);
                 float elasticRelaxation = 1.5f;
-                float elasticityRatio = 1.5;
+                float elasticityRatio = 2.0f;
 
                 float df = det(F);
                 float cdf = clamp(abs(df), 0.1, 1000.0);

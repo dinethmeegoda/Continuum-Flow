@@ -13,15 +13,19 @@ struct PSInput
 float4 main(PSInput input) : SV_Target
 {
     // Use the instance ID to retrieve the material
-    int materialIndex = materials[input.InstanceID];
+    int materialType = materials[input.InstanceID];
 
 // Determine the material color based on the material index (example logic)
-if (materialIndex == 0)
-    return float4(1.0f, 0.0f, 0.0f, 1.0f); // Red
-else if (materialIndex == 1)
-    return float4(0.0f, 0.75f, 0.0f, 1.0f); // Green
-else if (materialIndex == 2)
-    return float4(0.0f, 0.0f, 1.0f, 1.0f); // Blue
+if (materialType == 0)
+    return float4(0.00, 0.63, 0.98, 1.0f); // Water
+else if (materialType == 1)
+    return float4(0.0f, 0.75f, 0.0f, 1.0f); // Elastic
+else if (materialType == 2)
+    return float4(0.8f, 0.8f, 0.0f, 1.0f); // Sand
+else if (materialType == 3)
+    return float4(0.7f, 0.0f, 0.8f, 1.0f); // Visco
+else if (materialType == 4)
+    return float4(0.8f, 0.8f, 0.8f, 1.0f); // Snow
 else
-    return float4(1.0f, 1.0f, 1.0f, 1.0f); // Default: White
+    return float4(0.0f, 0.0f, 0.0f, 1.0f); // Default
 }

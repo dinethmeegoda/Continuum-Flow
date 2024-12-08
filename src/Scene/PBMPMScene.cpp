@@ -212,7 +212,7 @@ void PBMPMScene::doEmission(StructuredBuffer* gridBuffer) {
 
 	// Set Root Descriptors
 	emissionCmd->SetComputeRoot32BitConstants(0, 32, &constants, 0);
-	emissionCmd->SetComputeRootConstantBufferView(1, shapeBuffer.getGPUVirtualAddress());
+	emissionCmd->SetComputeRootDescriptorTable(1, shapeBuffer.getCBVGPUDescriptorHandle());
 	emissionCmd->SetComputeRootDescriptorTable(2, particleBuffer.getUAVGPUDescriptorHandle());
 	emissionCmd->SetComputeRootDescriptorTable(3, gridBuffer->getSRVGPUDescriptorHandle());
 	emissionCmd->SetComputeRootDescriptorTable(4, positionBuffer.getUAVGPUDescriptorHandle());
@@ -407,7 +407,7 @@ void PBMPMScene::constructScene() {
 	//sand
 	constants = { {64, 64, 64}, 0.01,2.5, 0.4, 0.2,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		0, 4, 35, 2, 0, 0, 0, 0, 0, 0, 5, 0.3 };
+		0, 4, 35, 4, 0, 0, 0, 0, 0, 0, 5, 0.3 };
 
 	//elastic
 	/*constants = { {64, 64, 64},       
@@ -507,12 +507,20 @@ void PBMPMScene::constructScene() {
 	renderDispatchBuffer = StructuredBuffer(&renderDispatch, 5, sizeof(int));
 
 	// Shape Buffer
-	std::vector<SimShape> shapes;
-	shapes.push_back(SimShape(0, { 32, 32, 32}, 0, { 2, 2, 2 },
-		0, 0, 0, 1, 100));
-	shapes.push_back(SimShape(0, { 16, 16, 16 }, 0, { 6, 6, 6 },
-		0, 3, 3, 1, 100));
-	shapeBuffer = StructuredBuffer(shapes.data(), shapes.size(), sizeof(SimShape));
+	std::vector<SimShape> shapesVector;
+	SimShape blockShape = SimShape(0, { 16, 16, 16 }, 0, { 6, 6, 6 },
+		0, 3, 1, 1, 100);
+	SimShape waterEmitter = SimShape(0, { 32, 32, 32 }, 0, { 2, 2, 2 },
+		0, 0, 0, 1, 100);
+	SimShape viscoEmitter = SimShape(0, { 16, 32, 32 }, 0, { 2, 2, 2 },
+		0, 0, 3, 1, 100);
+	SimShape sandEmitter = SimShape(0, { 32, 32, 16 }, 0, { 2, 2, 2 },
+		0, 0, 2, 1, 100);
+	shapesVector.push_back(blockShape);
+	shapesVector.push_back(waterEmitter);
+	//shapesVector.push_back(viscoEmitter);
+	//shapesVector.push_back(sandEmitter);
+	shapeBuffer = StructuredBuffer(shapesVector.data(), shapesVector.size(), sizeof(SimShape));
 
 	//Temp tile data buffer
 	std::vector<int> tempTileData;
@@ -846,6 +854,7 @@ void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {
 	constants.mouseDirection = newConstants.mouseDirection;
 	constants.mouseActivation = newConstants.mouseActivation;
 	constants.mouseRadius = newConstants.mouseRadius;
+	constants.mouseVelocity = newConstants.mouseVelocity;
 }
 
 bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {

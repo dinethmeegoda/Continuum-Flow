@@ -125,6 +125,7 @@ int main() {
 			);
 
             pbmpmTempConstants.mouseRadius = 5.0;
+			pbmpmTempConstants.mouseVelocity = 1.0;
 
             scene.updatePBMPMConstants(pbmpmTempConstants);
         }

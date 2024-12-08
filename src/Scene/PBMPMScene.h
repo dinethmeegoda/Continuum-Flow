@@ -64,6 +64,7 @@ struct SimShape {
 	int material;
 	float emissionRate;
 	int radius;
+	XMFLOAT3 padding;
 };
 
 struct PBMPMParticle {
