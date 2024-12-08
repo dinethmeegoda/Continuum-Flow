@@ -75,7 +75,7 @@ int main() {
         auto meshPipeline = scene.getFluidMeshPipeline();
         auto objectPipeline = scene.getObjectPipeline();
         //whichever pipeline renders first should begin and end the frame
-        auto firstPipeline = meshPipeline;
+        auto firstPipeline = objectPipeline;
 
         //begin frame
         Window::get().beginFrame(firstPipeline->getCommandList());
@@ -84,13 +84,19 @@ int main() {
         D3D12_VIEWPORT vp;
         Window::get().createViewport(vp, firstPipeline->getCommandList());
 
+        //object render pass
+        Window::get().setRT(objectPipeline->getCommandList());
+        Window::get().setViewport(vp, objectPipeline->getCommandList());
+        if (renderGrid) scene.drawObject();
+        context.executeCommandList(objectPipeline->getCommandListID());
+
         //mesh render pass
         Window::get().setRT(meshPipeline->getCommandList());
         Window::get().setViewport(vp, meshPipeline->getCommandList());
         if (renderMode != 1) scene.drawFluid(renderMeshlets);
         context.executeCommandList(meshPipeline->getCommandListID());
 
-        //first render pass
+        //particles + imgui render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
         if (renderMode != 0) scene.drawPBMPM();
@@ -114,12 +120,6 @@ int main() {
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), renderPipeline->getCommandList());
 
         context.executeCommandList(renderPipeline->getCommandListID());
-
-        //object render pass
-        Window::get().setRT(objectPipeline->getCommandList());
-        Window::get().setViewport(vp, objectPipeline->getCommandList());
-        if (renderGrid) scene.drawObject();
-        context.executeCommandList(objectPipeline->getCommandListID());
 
         //end frame
         Window::get().endFrame(firstPipeline->getCommandList());

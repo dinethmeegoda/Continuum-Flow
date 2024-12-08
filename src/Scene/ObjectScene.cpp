@@ -14,11 +14,12 @@ void ObjectScene::constructScene()
 
 	inputStrings.push_back("objs\\cube.obj");
 
+    //cube for grid
     XMFLOAT4X4 gridModelMatrix;
     XMStoreFloat4x4(&gridModelMatrix, XMMatrixScaling(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH));
     modelMatrices.push_back(gridModelMatrix);
-
     
+    //cubes for shapes
     for (const auto& shape : shapes) {
         inputStrings.push_back("objs\\cube.obj");
         XMFLOAT4X4 simShapeMatrix;
@@ -30,13 +31,27 @@ void ObjectScene::constructScene()
         modelMatrices.push_back(simShapeMatrix);
     }
 
-    for (int i = 0; i < inputStrings.size(); i++) {
+    //cube for ground
+    inputStrings.push_back("objs\\cube.obj");
+    XMFLOAT4X4 groundModelMatrix;
+    XMStoreFloat4x4(&groundModelMatrix, XMMatrixScaling(GRID_WIDTH, -5.0f, GRID_DEPTH));
+    modelMatrices.push_back(groundModelMatrix);
+
+    //push grid and shapes as wireframe
+    for (int i = 0; i < inputStrings.size() - 1; i++) {
         auto string = inputStrings.at(i);
         auto m = modelMatrices.at(i);
 		Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true);
 		meshes.push_back(newMesh);
 		sceneSize += newMesh.getNumTriangles();
 	}
+
+    //push ground as solid
+    auto string = inputStrings.back();
+    auto m = modelMatrices.back();
+    Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m);
+    meshes.push_back(newMesh);
+    sceneSize += newMesh.getNumTriangles();
 }
 
 void ObjectScene::draw(Camera* camera) {
@@ -45,15 +60,19 @@ void ObjectScene::draw(Camera* camera) {
         auto cmdList = renderPipeline->getCommandList();
         cmdList->IASetVertexBuffers(0, 1, m.getVBV());
         cmdList->IASetIndexBuffer(m.getIBV());
-        //cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-        cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
-        // == RS ==
-        //NO NEED TO RESET VIEWPORT??
+
+        if (m.getIsWireframe()) {
+            cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+        }
+        else {
+            cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        }
+
         // == PSO ==
         cmdList->SetPipelineState(renderPipeline->getPSO());
         cmdList->SetGraphicsRootSignature(renderPipeline->getRootSignature());
+        
         // == ROOT ==
-
         ID3D12DescriptorHeap* descriptorHeaps[] = { renderPipeline->getDescriptorHeap()->GetAddress() };
         cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
         cmdList->SetGraphicsRootDescriptorTable(1, renderPipeline->getDescriptorHeap()->GetGPUHandleAt(0)); // Descriptor table slot 1 for CBV
@@ -62,7 +81,7 @@ void ObjectScene::draw(Camera* camera) {
         auto projMat = camera->getProjMat();
         cmdList->SetGraphicsRoot32BitConstants(0, 16, &viewMat, 0);
         cmdList->SetGraphicsRoot32BitConstants(0, 16, &projMat, 16);
-        //model mat for this mesh
+        
         cmdList->SetGraphicsRoot32BitConstants(0, 16, m.getModelMatrix(), 32);
 
         cmdList->DrawIndexedInstanced(m.getNumTriangles() * 3, 1, 0, 0, 0);

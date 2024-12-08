@@ -39,6 +39,8 @@ public:
 
 	UINT getNumTriangles();
 
+	bool getIsWireframe() { return isWireframe; }
+
 private:
 	std::vector<Vertex> vertices;
 	std::vector<XMFLOAT3> vertexPositions;
@@ -51,4 +53,6 @@ private:
 	D3D12_INDEX_BUFFER_VIEW ibv;
 
 	XMFLOAT4X4 modelMatrix;
+
+	bool isWireframe{ false };
 };

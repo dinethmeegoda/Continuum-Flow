@@ -1,6 +1,6 @@
 #include "Mesh.h"
 
-Mesh::Mesh(std::string fileLocation, DXContext* context, ID3D12GraphicsCommandList6* cmdList, RenderPipeline* pipeline, XMFLOAT4X4 p_modelMatrix, bool doWireframeIndices) {
+Mesh::Mesh(std::string fileLocation, DXContext* context, ID3D12GraphicsCommandList6* cmdList, RenderPipeline* pipeline, XMFLOAT4X4 p_modelMatrix, bool doWireframeIndices) : isWireframe(doWireframeIndices) {
 	loadMesh(fileLocation, doWireframeIndices);
     vertexBuffer = VertexBuffer(vertexPositions, (UINT)(vertices.size() * sizeof(XMFLOAT3)), (UINT)sizeof(XMFLOAT3));
     indexBuffer = IndexBuffer(indices, (UINT)(indices.size() * sizeof(unsigned int)));
