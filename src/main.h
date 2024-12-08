@@ -24,6 +24,8 @@ static ImGUIDescriptorHeapAllocator imguiHeapAllocator;
 static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
 static bool meshletRenderType = false;
 static unsigned int renderModeType = 0; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
+static int fixedPointExponent = 7;
+static bool useGridVolume = true;
 
 ImGuiIO& initImGUI(DXContext& context) {
     IMGUI_CHECKVERSION();
@@ -69,17 +71,18 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
 
     ImGui::SliderFloat("Gravity Strength", &pbmpmConstants.gravityStrength, 0.0f, 20.0f);
 
-    ImGui::SliderFloat("Liquid Relaxation", &pbmpmConstants.liquidRelaxation, 0.1f, 10.0f);
-    ImGui::SliderFloat("Liquid Viscosity", &pbmpmConstants.liquidViscosity, 0.0f, 10.0f);
+    ImGui::SliderFloat("Liquid Relaxation", &pbmpmConstants.liquidRelaxation, 0.0f, 10.0f);
+    ImGui::SliderFloat("Liquid Viscosity", &pbmpmConstants.liquidViscosity, 0.0f, 1.0f);
     ImGui::SliderFloat("Friction Angle", &pbmpmConstants.frictionAngle, 0.0f, 90.0f);
 
-    ImGui::InputInt3("Grid Size", (int*)&pbmpmConstants.gridSize);
-    ImGui::InputInt("Fixed Point Multiplier", (int*)&pbmpmConstants.fixedPointMultiplier);
-    ImGui::InputInt("Particles Per Cell Axis", (int*)&pbmpmConstants.particlesPerCellAxis);
-
-    ImGui::Checkbox("Use Grid Volume for Liquid", (bool*)&pbmpmConstants.useGridVolumeForLiquid);
+    ImGui::SliderInt("Particles Per Cell Axis", (int*)&pbmpmConstants.particlesPerCellAxis, 1, 8);
+    ImGui::SliderInt("Fixed Point Multiplier", (int*)&fixedPointExponent, 4, 13);
+    pbmpmConstants.fixedPointMultiplier = pow(10, fixedPointExponent);
 
     ImGui::SliderFloat("Border Friction", &pbmpmConstants.borderFriction, 0.0f, 1.0f);
+
+    ImGui::Checkbox("Use Grid Volume for Liquid", (bool*)&useGridVolume);
+    pbmpmConstants.useGridVolumeForLiquid = useGridVolume ? 1 : 0;
 
     ImGui::Text("Render Parameters");
 
@@ -96,5 +99,3 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
 
     ImGui::End();
 }
-
-

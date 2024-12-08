@@ -24,8 +24,8 @@ int main() {
     //initialize scene
     Scene scene{camera.get(), &context};
 
-    PBMPMConstants pbmpmConstants = scene.getPBMPMConstants();
-    PBMPMConstants pbmpmTempConstants = pbmpmConstants;
+    PBMPMConstants pbmpmCurrConstants = scene.getPBMPMConstants();
+    PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
 
     unsigned int renderMeshlets = 0;
     unsigned int renderMode = 0;
@@ -40,41 +40,14 @@ int main() {
             camera->updateAspect((float)Window::get().getWidth() / (float)Window::get().getHeight());
         }
 
-        //check keyboard state
         auto kState = keyboard->GetState();
-        if (kState.W) {
-            camera->translate({ 0.f, 0.f, 1.0f });
-        }
-        if (kState.A) {
-            camera->translate({ -1.0f, 0.f, 0.f });
-        }
-        if (kState.S) {
-            camera->translate({ 0.f, 0.f, -1.0f });
-        }
-        if (kState.D) {
-            camera->translate({ 1.0f, 0.f, 0.f });
-        }
-        if (kState.Space) {
-            camera->translate({ 0.f, 1.0f, 0.f });
-        }
-        if (kState.LeftControl) {
-            camera->translate({ 0.f, -1.0f, 0.f });
-        }
-
-        //check mouse state
         auto mState = mouse->GetState();
-
         mouse->SetMode(mState.leftButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
-
-        if (mState.positionMode == Mouse::MODE_RELATIVE && kState.LeftShift) {
-            camera->rotateOnX(-mState.y * 0.01f);
-            camera->rotateOnY(mState.x * 0.01f);
-            camera->rotate();
-        }
+        camera->kmStateCheck(kState, mState);
 
         if (mState.rightButton) {
             //enable mouse force
-            pbmpmTempConstants.mouseActivation = 1;
+            pbmpmIterConstants.mouseActivation = 1;
 
             POINT cursorPos;
             GetCursorPos(&cursorPos);
@@ -84,18 +57,15 @@ int main() {
 
             XMVECTOR screenCursorPos = XMVectorSet(ndcX, ndcY, 0.0f, 1.0f);
             XMVECTOR worldCursorPos = XMVector4Transform(screenCursorPos, camera->getInvViewProjMat());
-            XMStoreFloat4(&(pbmpmTempConstants.mousePosition), worldCursorPos);
+            XMStoreFloat4(&(pbmpmIterConstants.mousePosition), worldCursorPos);
 
-            pbmpmTempConstants.mouseFunction = 0;
-            pbmpmTempConstants.mouseRadius = 1000;
-            scene.updatePBMPMConstants(pbmpmTempConstants);
+            pbmpmIterConstants.mouseFunction = 0;
+            pbmpmIterConstants.mouseRadius = 1000;
+            scene.updatePBMPMConstants(pbmpmIterConstants);
         }
         else {
-            pbmpmTempConstants.mouseActivation = 0;
+            pbmpmIterConstants.mouseActivation = 0;
         }
-
-        //update camera
-        camera->updateViewMat();
 
         //get pipelines
         auto renderPipeline = scene.getPBMPMRenderPipeline();
@@ -130,13 +100,13 @@ int main() {
         ImGui::NewFrame();
 
         //draw ImGUI
-        drawImGUIWindow(pbmpmTempConstants, io, &renderMeshlets, &renderMode);
+        drawImGUIWindow(pbmpmIterConstants, io, &renderMeshlets, &renderMode);
 
         //render ImGUI
         ImGui::Render();
-        if (!PBMPMScene::constantsEqual(pbmpmTempConstants, pbmpmConstants)) {
-            scene.updatePBMPMConstants(pbmpmTempConstants);
-            pbmpmConstants = pbmpmTempConstants;
+        if (!PBMPMScene::constantsEqual(pbmpmIterConstants, pbmpmCurrConstants)) {
+            scene.updatePBMPMConstants(pbmpmIterConstants);
+            pbmpmCurrConstants = pbmpmIterConstants;
         }
 
         renderPipeline->getCommandList()->SetDescriptorHeaps(1, &imguiSRVHeap);
