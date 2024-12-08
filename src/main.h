@@ -89,7 +89,7 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
 
     ImGui::Text("Mesh Shading Parameters");
     ImGui::SliderFloat("Isovalue", isovalue, 0.0f, 1.0f);
-    ImGui::SliderFloat("Kernel Scale", kernelScale, 0.5f, 20.f);
+    ImGui::SliderFloat("Kernel Scale", kernelScale, 0.1f, 5.f);
 
     ImGui::Text("Render Parameters");
 
