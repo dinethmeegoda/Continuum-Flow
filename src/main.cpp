@@ -73,9 +73,10 @@ int main() {
         //get pipelines
         auto renderPipeline = scene.getPBMPMRenderPipeline();
         auto meshPipeline = scene.getFluidMeshPipeline();
-        auto objectPipeline = scene.getObjectPipeline();
+        auto objectWirePipeline = scene.getObjectWirePipeline();
+        auto objectSolidPipeline = scene.getObjectSolidPipeline();
         //whichever pipeline renders first should begin and end the frame
-        auto firstPipeline = objectPipeline;
+        auto firstPipeline = objectWirePipeline;
 
         //begin frame
         Window::get().beginFrame(firstPipeline->getCommandList());
@@ -84,11 +85,17 @@ int main() {
         D3D12_VIEWPORT vp;
         Window::get().createViewport(vp, firstPipeline->getCommandList());
 
-        //object render pass
-        Window::get().setRT(objectPipeline->getCommandList());
-        Window::get().setViewport(vp, objectPipeline->getCommandList());
-        if (renderGrid) scene.drawObject();
-        context.executeCommandList(objectPipeline->getCommandListID());
+        //wire object render pass
+        Window::get().setRT(objectWirePipeline->getCommandList());
+        Window::get().setViewport(vp, objectWirePipeline->getCommandList());
+        if (renderGrid) scene.drawWireObjects();
+        context.executeCommandList(objectWirePipeline->getCommandListID());
+
+        //solid object render pass
+        Window::get().setRT(objectSolidPipeline->getCommandList());
+        Window::get().setViewport(vp, objectSolidPipeline->getCommandList());
+        scene.drawSolidObjects();
+        context.executeCommandList(objectSolidPipeline->getCommandListID());
 
         //mesh render pass
         Window::get().setRT(meshPipeline->getCommandList());
@@ -127,7 +134,8 @@ int main() {
         Window::get().present();
 		context.resetCommandList(renderPipeline->getCommandListID());
         context.resetCommandList(meshPipeline->getCommandListID());
-        context.resetCommandList(objectPipeline->getCommandListID());
+        context.resetCommandList(objectWirePipeline->getCommandListID());
+        context.resetCommandList(objectSolidPipeline->getCommandListID());
     }
 
     // Scene should release all resources, including their pipelines

@@ -93,7 +93,7 @@ void Mesh::loadMesh(std::string fileLocation, bool doWireframeIndices) {
     }
 
     for (int i = 0; i < vertices.size(); i++) {
-        vertices[i].nor = normals[i];
+        //vertices[i].nor = normals[i];
     }
 
     if (!doWireframeIndices) {

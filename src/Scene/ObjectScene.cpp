@@ -1,14 +1,18 @@
 #include "ObjectScene.h"
 #include "GridConstants.h"
 
-ObjectScene::ObjectScene(DXContext* context, RenderPipeline* pipeline, std::vector<SimShape>& shapes)
+ObjectScene::ObjectScene(DXContext* context, RenderPipeline* pipeline, std::vector<SimShape>& shapes, bool isWireframeScene)
 	: Drawable(context, pipeline), shapes(shapes)
 {
-	constructScene();
+    if (isWireframeScene) {
+        constructSceneWire();
+    }
+    else {
+        constructSceneSolid();
+    }
 }
 
-void ObjectScene::constructScene()
-{
+void ObjectScene::constructSceneWire() {
 	renderPipeline->createPSOD();
 	renderPipeline->createPipelineState(context->getDevice());
 
@@ -31,20 +35,22 @@ void ObjectScene::constructScene()
         modelMatrices.push_back(simShapeMatrix);
     }
 
-    //cube for ground
-    inputStrings.push_back("objs\\cube.obj");
-    XMFLOAT4X4 groundModelMatrix;
-    XMStoreFloat4x4(&groundModelMatrix, XMMatrixScaling(GRID_WIDTH, -5.0f, GRID_DEPTH));
-    modelMatrices.push_back(groundModelMatrix);
-
     //push grid and shapes as wireframe
-    for (int i = 0; i < inputStrings.size() - 1; i++) {
+    for (int i = 0; i < inputStrings.size(); i++) {
         auto string = inputStrings.at(i);
         auto m = modelMatrices.at(i);
 		Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true);
 		meshes.push_back(newMesh);
 		sceneSize += newMesh.getNumTriangles();
 	}
+}
+
+void ObjectScene::constructSceneSolid() {
+    //cube for ground
+    inputStrings.push_back("objs\\cube.obj");
+    XMFLOAT4X4 groundModelMatrix;
+    XMStoreFloat4x4(&groundModelMatrix, XMMatrixScaling(GRID_WIDTH, -5.0f, GRID_DEPTH));
+    modelMatrices.push_back(groundModelMatrix);
 
     //push ground as solid
     auto string = inputStrings.back();

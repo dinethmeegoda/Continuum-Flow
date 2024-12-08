@@ -6,9 +6,12 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	pbmpmIC(100),
 	pbmpmScene(context, &pbmpmRP, pbmpmIC),
-	objectRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::OBJECT_RENDER_ID,
+	objectRPWire("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::OBJECT_RENDER_WIRE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	objectScene(context, &objectRP, pbmpmScene.getSimShapes()),
+	objectSceneWire(context, &objectRPWire, pbmpmScene.getSimShapes(), true), 
+	objectRPSolid("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::OBJECT_RENDER_SOLID_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	objectSceneSolid(context, &objectRPSolid, pbmpmScene.getSimShapes(), false),
 	fluidRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::FLUID_RENDER_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	bilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::BILEVEL_UNIFORM_GRID_COMPUTE_ID, 
@@ -32,8 +35,12 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 	currentCP()
 {}
 
-RenderPipeline* Scene::getObjectPipeline() {
-	return &objectRP;
+RenderPipeline* Scene::getObjectWirePipeline() {
+	return &objectRPWire;
+}
+
+RenderPipeline* Scene::getObjectSolidPipeline() {
+	return &objectRPSolid;
 }
 
 RenderPipeline* Scene::getPBMPMRenderPipeline() {
@@ -60,12 +67,16 @@ void Scene::drawFluid(unsigned int renderMeshlets) {
 	fluidScene.draw(camera, renderMeshlets);
 }
 
-void Scene::drawObject() {
-	objectScene.draw(camera);
+void Scene::drawWireObjects() {
+	objectSceneWire.draw(camera);
+}
+
+void Scene::drawSolidObjects() {
+	objectSceneSolid.draw(camera);
 }
 
 void Scene::releaseResources() {
-	objectScene.releaseResources();
+	objectSceneWire.releaseResources();
 	pbmpmScene.releaseResources();
 	fluidScene.releaseResources();
 }

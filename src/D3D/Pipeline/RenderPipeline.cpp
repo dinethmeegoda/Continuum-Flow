@@ -6,7 +6,8 @@ RenderPipeline::RenderPipeline(std::string vertexShaderName, std::string fragSha
 {
 	createPSOD();
 	createPipelineState(context.getDevice());
-    
+    getCommandList()->Close();
+    context.resetCommandList(id);
 }
 
 D3D12_INPUT_ELEMENT_DESC vertexLayout[] =

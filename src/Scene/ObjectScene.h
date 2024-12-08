@@ -9,9 +9,10 @@
 
 class ObjectScene : public Drawable {
 public:
-	ObjectScene(DXContext* context, RenderPipeline* pipeline, std::vector<SimShape>& shapes);
+	ObjectScene(DXContext* context, RenderPipeline* pipeline, std::vector<SimShape>& shapes, bool isWireframeScene = false);
 
-	void constructScene();
+	void constructSceneWire();
+	void constructSceneSolid();
 
 	void draw(Camera* camera);
 
