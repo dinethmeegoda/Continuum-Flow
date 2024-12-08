@@ -1,8 +1,8 @@
 #include "ObjectScene.h"
 #include "GridConstants.h"
 
-ObjectScene::ObjectScene(DXContext* context, RenderPipeline* pipeline)
-	: Drawable(context, pipeline)
+ObjectScene::ObjectScene(DXContext* context, RenderPipeline* pipeline, std::vector<SimShape>& shapes)
+	: Drawable(context, pipeline), shapes(shapes)
 {
 	constructScene();
 }
@@ -14,9 +14,21 @@ void ObjectScene::constructScene()
 
 	inputStrings.push_back("objs\\cube.obj");
 
-    XMFLOAT4X4 m1;
-    XMStoreFloat4x4(&m1, XMMatrixScaling(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH));
-    modelMatrices.push_back(m1);
+    XMFLOAT4X4 gridModelMatrix;
+    XMStoreFloat4x4(&gridModelMatrix, XMMatrixScaling(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH));
+    modelMatrices.push_back(gridModelMatrix);
+
+    
+    for (const auto& shape : shapes) {
+        inputStrings.push_back("objs\\cube.obj");
+        XMFLOAT4X4 simShapeMatrix;
+        XMStoreFloat4x4(&simShapeMatrix, XMMatrixMultiply(
+
+            XMMatrixScaling(shape.halfSize.x * 2, shape.halfSize.y * 2, shape.halfSize.z * 2),
+            XMMatrixTranslation(shape.position.x - shape.halfSize.x, shape.position.y - shape.halfSize.y, shape.position.z - shape.halfSize.z)
+        ));
+        modelMatrices.push_back(simShapeMatrix);
+    }
 
     for (int i = 0; i < inputStrings.size(); i++) {
         auto string = inputStrings.at(i);

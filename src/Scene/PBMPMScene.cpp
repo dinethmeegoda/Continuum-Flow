@@ -447,7 +447,6 @@ void PBMPMScene::constructScene() {
 	renderDispatchBuffer = StructuredBuffer(&renderDispatch, 5, sizeof(int));
 
 	// Shape Buffer
-	std::vector<SimShape> shapes;
 	shapes.push_back(SimShape(0, { 16, 40, 16}, 0, { 2, 2, 2 },
 		0, 0, 0, 1, 100));
 	shapeBuffer = StructuredBuffer(shapes.data(), shapes.size(), sizeof(SimShape));

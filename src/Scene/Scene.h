@@ -32,12 +32,12 @@ public:
 private:
 	Camera* camera;
 
-	RenderPipeline objectRP;
-	ObjectScene objectScene;
-	
 	RenderPipeline pbmpmRP;
 	unsigned int pbmpmIC;
 	PBMPMScene pbmpmScene;
+
+	RenderPipeline objectRP;
+	ObjectScene objectScene;
 
 	RenderPipeline fluidRP;
 	ComputePipeline bilevelUniformGridCP;
