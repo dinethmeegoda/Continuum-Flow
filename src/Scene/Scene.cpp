@@ -77,6 +77,7 @@ void Scene::drawSolidObjects() {
 
 void Scene::releaseResources() {
 	objectSceneWire.releaseResources();
+	objectSceneSolid.releaseResources();
 	pbmpmScene.releaseResources();
 	fluidScene.releaseResources();
 }
