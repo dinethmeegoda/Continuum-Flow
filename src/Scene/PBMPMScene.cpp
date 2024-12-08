@@ -383,17 +383,6 @@ void PBMPMScene::bukkitizeParticles() {
 
 	// Reset the command lists
 	context->resetCommandList(bukkitInsertPipeline.getCommandListID());
-
-	// Copy from Count Buffers 2
-	//std::vector<int> count;
-	//count.resize(bukkitSystem.count);
-	//bukkitSystem.countBuffer2.copyDataFromGPU(*context, count.data(), bukkitInsertPipeline.getCommandList(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, bukkitInsertPipeline.getCommandListID());
-
-	// Copy from Particle Data
-	//std::vector<int> particleData;
-	//particleData.resize(maxParticles);
-	//bukkitSystem.particleData.copyDataFromGPU(*context, particleData.data(), bukkitInsertPipeline.getCommandList(), D3D12_RESOURCE_STATE_UNORDERED_ACCESS, bukkitInsertPipeline.getCommandListID());
-
 }
 
 void PBMPMScene::constructScene() {
@@ -407,87 +396,6 @@ void PBMPMScene::constructScene() {
 	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01, 9.8, 0.2, 0.02,
 		(unsigned int)std::ceil(std::pow(10, 7)),
 		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2, 0, 0};
-	//sand
-	/*constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01,2.5, 0.4, 0.2,
-		(unsigned int)std::ceil(std::pow(10, 7)),
-		0, 3,35, 1, 0, 0, 0, 0, 0, 0, 5, 0.3, 1.5, 0.5};*/
-
-	//Visco
-	/*constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH},       
-	0.01f,             
-	2.0f,              
-	0.8f,              
-	0.1f,              
-	(unsigned int)std::ceil(std::pow(10, 7)), 
-	0,                 
-	3,                  
-	30.0f,               
-	1,                  
-	0,                 
-	0,                 
-	0,                  
-	0,                  
-	0,                  
-	0,                  
-	10,                 
-	0.2f,
-	1.5,
-	0.8};*/
-
-	//elastic
-	/*constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH},
-	0.01f,
-	2.0f,
-	1.2f,
-	0.3f,
-	(unsigned int)std::ceil(std::pow(10, 7)),
-	0,
-	3,
-	50.0f,
-	1,
-	0,
-	0,
-	0,
-	0,
-	0,
-	0,
-	10,
-	0.4f,
-	1.5f,
-	2.0f,
-	};*/
-
-
-
-	/*constants = { {64, 64, 64}, 0.01,2.5, 1.5, 0.1,
-		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 3,30, 1, 0, 0, 0, 0, 0, 0, 5, 0.9, 0, 0 };*/
-
-	//XMUINT3 gridSize; //2 -> 3
-	//float deltaTime;
-	//float gravityStrength;
-
-	//float liquidRelaxation;
-	//float liquidViscosity;
-	//unsigned int fixedPointMultiplier;
-
-	//unsigned int useGridVolumeForLiquid;
-	//unsigned int particlesPerCellAxis;
-
-	//float frictionAngle;
-	//unsigned int shapeCount;
-	//unsigned int simFrame;
-
-	//unsigned int bukkitCount;
-	//unsigned int bukkitCountX;
-	//unsigned int bukkitCountY;
-	//unsigned int bukkitCountZ; //added
-	//unsigned int iteration;
-	//unsigned int iterationCount;
-	//float borderFriction;
-	// 
-	
-
 	
 	// Create Model Matrix
 	modelMat *= XMMatrixTranslation(0.0f, 0.0f, 0.0f);
@@ -532,8 +440,7 @@ void PBMPMScene::constructScene() {
 
 	// Shape Buffer
 
-	std::vector<SimShape> shapes;
-	shapes.push_back(SimShape(0, { 32, 32, 32}, 0, { 10, 10, 10 },
+	shapes.push_back(SimShape(0, { 32, 32, 32}, 0, { 3, 3, 3 },
 		0, 0, 0, 1, 100));
 
 	shapeBuffer = StructuredBuffer(shapes.data(), shapes.size(), sizeof(SimShape));
@@ -861,6 +768,7 @@ void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {
 	constants.borderFriction = newConstants.borderFriction;
 	constants.elasticRelaxation = newConstants.elasticRelaxation;
 	constants.elasticityRatio = newConstants.elasticityRatio;
+	constants.iterationCount = newConstants.iterationCount;
 }
 
 bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {
@@ -871,9 +779,10 @@ bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {
 		one.useGridVolumeForLiquid == two.useGridVolumeForLiquid &&
 		one.particlesPerCellAxis == two.particlesPerCellAxis &&
 		one.frictionAngle == two.frictionAngle &&
-		one.borderFriction == two.borderFriction;
-		one.elasticRelaxation == two.elasticRelaxation;
-		one.elasticityRatio == two.elasticityRatio;
+		one.borderFriction == two.borderFriction &&
+		one.elasticRelaxation == two.elasticRelaxation &&
+		one.elasticityRatio == two.elasticityRatio &&
+		one.iterationCount == two.iterationCount;
 }
 
 int PBMPMScene::getParticleCount() {
