@@ -1,18 +1,21 @@
 #include "Scene.h"
 
-Scene::Scene(RenderScene p_scene, Camera* p_camera, DXContext* context)
-	: scene(p_scene), camera(p_camera),
-	objectRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::OBJECT_RENDER_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	objectScene(context, &objectRP),
+Scene::Scene(Camera* p_camera, DXContext* context)
+	:  camera(p_camera),
 	pbmpmRP("PBMPMVertexShader.cso", "PixelShader.cso", "PBMPMVertexRootSignature.cso", *context, CommandListID::PBMPM_RENDER_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	pbmpmIC(100),
 	pbmpmScene(context, &pbmpmRP, pbmpmIC),
+	objectRPWire("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::OBJECT_RENDER_WIRE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	objectSceneWire(context, &objectRPWire, pbmpmScene.getSimShapes(), true), 
+	objectRPSolid("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::OBJECT_RENDER_SOLID_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	objectSceneSolid(context, &objectRPSolid, pbmpmScene.getSimShapes(), false),
 	fluidRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::FLUID_RENDER_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	bilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::BILEVEL_UNIFORM_GRID_COMPUTE_ID, 
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 21, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 45, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	surfaceBlockDetectionCP("SurfaceBlockDetectionRootSig.cso", "SurfaceBlockDetection.cso", *context, CommandListID::SURFACE_BLOCK_DETECTION_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	surfaceCellDetectionCP("SurfaceCellDetectionRootSig.cso", "SurfaceCellDetection.cso", *context, CommandListID::SURFACE_CELL_DETECTION_COMPUTE_ID,
@@ -23,70 +26,58 @@ Scene::Scene(RenderScene p_scene, Camera* p_camera, DXContext* context)
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	surfaceVertexNormalCP("SurfaceVertexNormalsRootSig.cso", "SurfaceVertexNormals.cso", *context, CommandListID::SURFACE_VERTEX_NORMAL_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	fluidMeshPipeline("FluidMeshShader.cso", "PixelShader.cso", "FluidMeshRootSig.cso", *context, CommandListID::FLUID_MESH_ID,
+	fluidMeshPipeline("FluidMeshShader.cso", "FluidSurfaceShader.cso", "FluidMeshRootSig.cso", *context, CommandListID::FLUID_MESH_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	fluidScene(context, &fluidRP, &bilevelUniformGridCP, &surfaceBlockDetectionCP, &surfaceCellDetectionCP, &surfaceVertexCompactionCP, &surfaceVertexDensityCP, &surfaceVertexNormalCP, &fluidMeshPipeline),
+	bufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::FLUID_BUFFER_CLEAR_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	fluidScene(context, &fluidRP, &bilevelUniformGridCP, &surfaceBlockDetectionCP, &surfaceCellDetectionCP, &surfaceVertexCompactionCP, &surfaceVertexDensityCP, &surfaceVertexNormalCP, &bufferClearCP, &fluidMeshPipeline),
 	currentRP(),
 	currentCP()
-{
-	setRenderScene(p_scene);
+{}
+
+RenderPipeline* Scene::getObjectWirePipeline() {
+	return &objectRPWire;
 }
 
-
-RenderPipeline* Scene::getRenderPipeline() {
-	return currentRP;
+RenderPipeline* Scene::getObjectSolidPipeline() {
+	return &objectRPSolid;
 }
 
-void Scene::setRenderScene(RenderScene renderScene) {
-	scene = renderScene;
+RenderPipeline* Scene::getPBMPMRenderPipeline() {
+	return &pbmpmRP;
+}
 
-	switch (scene) {
-	case PBMPM:
-		currentRP = &pbmpmRP;
-		//currentCP = &pbmpmCP;
-		break;
-	case Fluid:
-		currentRP = &fluidRP;
-		currentCP = &bilevelUniformGridCP;
-		break;
-	case Object:
-		currentRP = &objectRP;
-		currentCP = nullptr;
-		break;
-	}
+MeshPipeline* Scene::getFluidMeshPipeline() {
+	return &fluidMeshPipeline;
 }
 
 void Scene::compute() {
-	switch (scene) {
-	case PBMPM:
-		pbmpmScene.compute();
-		break;
-	case Fluid:
-		fluidScene.compute();
-		break;
-	case Object:
-	default:
-		break;
-	}
+	pbmpmScene.compute();
+	fluidScene.compute(
+		pbmpmScene.getPositionBuffer(),
+		pbmpmScene.getParticleCount()
+	);
 }
 
-void Scene::draw() {
-	switch (scene) {
-	case PBMPM:
-		pbmpmScene.draw(camera);
-		break;
-	case Fluid:
-		fluidScene.draw(camera);
-		break;
-	default:
-	case Object:
-		objectScene.draw(camera);
-		break;
-	}
+void Scene::drawPBMPM() {
+	pbmpmScene.draw(camera);
+}
+
+void Scene::drawFluid(unsigned int renderMeshlets) {
+	fluidScene.draw(camera, renderMeshlets);
+}
+
+void Scene::drawWireObjects() {
+	objectSceneWire.draw(camera);
+}
+
+void Scene::drawSolidObjects() {
+	objectSceneSolid.draw(camera);
 }
 
 void Scene::releaseResources() {
-	objectScene.releaseResources();
+	objectSceneWire.releaseResources();
+	objectSceneSolid.releaseResources();
 	pbmpmScene.releaseResources();
 	fluidScene.releaseResources();
 }

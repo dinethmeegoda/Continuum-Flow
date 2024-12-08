@@ -51,8 +51,8 @@ struct PBMPMConstants {
     float elasticityRatio;
 
     //mouse stuff
+    float4 mousePosition;
     unsigned int mouseActivation;
-    uint2 mousePosition;
     unsigned int mouseRadius;
     unsigned int mouseFunction;
     unsigned int mouseVelocity;

@@ -91,6 +91,45 @@ bool Window::init(DXContext* contextPtr, int w, int h) {
         rtvHandles[i].ptr += handleIncrement * i;
     }
 
+    // Create DSV Heap
+    D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{};
+    dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+    dsvHeapDesc.NumDescriptors = 1;
+    dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+    if (FAILED(dxContext->getDevice()->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&dsvDescHeap)))) {
+        return false;
+    }
+
+    // Create handles to view
+    dsvHandle = dsvDescHeap->GetCPUDescriptorHandleForHeapStart();
+
+    // Create the depth stencil view
+    D3D12_DEPTH_STENCIL_VIEW_DESC depthStencilDesc = {};
+    depthStencilDesc.Format = DXGI_FORMAT_D32_FLOAT;
+    depthStencilDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+    depthStencilDesc.Flags = D3D12_DSV_FLAG_NONE;
+
+    D3D12_CLEAR_VALUE depthOptimizedClearValue = {};
+    depthOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+    depthOptimizedClearValue.DepthStencil.Depth = 1.0f;
+    depthOptimizedClearValue.DepthStencil.Stencil = 0;
+ 
+    const CD3DX12_HEAP_PROPERTIES depthStencilHeapProps(D3D12_HEAP_TYPE_DEFAULT);
+    const CD3DX12_RESOURCE_DESC depthStencilTextureDesc = CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+
+    if (FAILED(dxContext->getDevice()->CreateCommittedResource(
+        &depthStencilHeapProps,
+        D3D12_HEAP_FLAG_NONE,
+        &depthStencilTextureDesc,
+        D3D12_RESOURCE_STATE_DEPTH_WRITE,
+        &depthOptimizedClearValue,
+        IID_PPV_ARGS(&depthStencilBuffer)
+    ))) {
+        return false;
+    }
+
+    dxContext->getDevice()->CreateDepthStencilView(depthStencilBuffer, &depthStencilDesc, dsvHandle);
+
     //get buffers
     if (!getBuffers()) {
         return false;
@@ -142,8 +181,13 @@ void Window::beginFrame(ID3D12GraphicsCommandList6* cmdList) {
 
     float clearColor[] = { 0.9f, 0.9f, 0.9f, 1.f };
     cmdList->ClearRenderTargetView(rtvHandles[currentSwapChainBufferIdx], clearColor, 0, nullptr);
+    cmdList->ClearDepthStencilView(dsvHandle, D3D12_CLEAR_FLAG_DEPTH, 1.f, 0, 0, nullptr);
 
-    cmdList->OMSetRenderTargets(1, &rtvHandles[currentSwapChainBufferIdx], false, nullptr);
+    setRT(cmdList);
+}
+
+void Window::setRT(ID3D12GraphicsCommandList6* cmdList) {
+    cmdList->OMSetRenderTargets(1, &rtvHandles[currentSwapChainBufferIdx], false, &dsvHandle);
 }
 
 void Window::endFrame(ID3D12GraphicsCommandList6* cmdList) {
@@ -259,12 +303,15 @@ LRESULT Window::OnWindowMessage(HWND wnd, UINT msg, WPARAM wParam, LPARAM lParam
 }
 
 
-void Window::createAndSetDefaultViewport(D3D12_VIEWPORT& vp, ID3D12GraphicsCommandList5* cmdList) {
+void Window::createViewport(D3D12_VIEWPORT& vp, ID3D12GraphicsCommandList5* cmdList) {
     vp.TopLeftX = vp.TopLeftY = 0;
     vp.Width = (float)Window::get().getWidth();
     vp.Height = (float)Window::get().getHeight();
-    vp.MinDepth = 1.f;
-    vp.MaxDepth = 0.f;
+    vp.MinDepth = 0.f;
+    vp.MaxDepth = 1.f;
+}
+
+void Window::setViewport(D3D12_VIEWPORT& vp, ID3D12GraphicsCommandList5* cmdList) {
     cmdList->RSSetViewports(1, &vp);
     RECT scRect;
     scRect.left = scRect.top = 0;

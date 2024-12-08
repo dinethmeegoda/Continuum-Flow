@@ -7,17 +7,22 @@
 #include "../Shaders/constants.h"
 
 struct GridConstants {
-    unsigned int numParticles;
-    XMUINT3 gridDim;
+    int numParticles;
+    XMINT3 gridDim;
     XMFLOAT3 minBounds;
     float resolution;
+    float kernelScale;
 };
 
+// TODO: can just combine this with grid constants
 struct MeshShadingConstants {
     XMMATRIX viewProj;
-    XMUINT3 dimensions;
+    XMINT3 dimensions;
     float resolution;
     XMFLOAT3 minBounds;
+    unsigned int renderMeshlets;
+    XMFLOAT3 cameraPos;
+    float isovalue;
 };
 
 struct Cell {
@@ -40,10 +45,14 @@ public:
                ComputePipeline* surfaceVertexCompactionCP,
                ComputePipeline* surfaceVertexDensityCP,
                ComputePipeline* surfaceVertexNormalCP,
+               ComputePipeline* bufferClearCP,
                MeshPipeline* fluidMeshPipeline);
 
-    void compute();
-    void draw(Camera* camera);
+    void compute(
+        StructuredBuffer* positionsBuffer,
+        int numParticles
+    );
+    void draw(Camera* camera, unsigned int renderMeshlets);
     void constructScene();
     void computeBilevelUniformGrid();
     void computeSurfaceBlockDetection();
@@ -53,8 +62,12 @@ public:
     void computeSurfaceVertexNormal();
     void releaseResources();
 
+    float* getIsovalue() { return &isovalue; }
+    float* getKernelScale() { return &kernelScale; }
+
 private:
-    void transitionBuffersToUAV(ID3D12GraphicsCommandList6* cmdList, D3D12_RESOURCE_STATES state);
+    void transitionBuffers(ID3D12GraphicsCommandList6* cmdList, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
+    void resetBuffers();
 
     GridConstants gridConstants;
     
@@ -64,6 +77,7 @@ private:
     ComputePipeline* surfaceVertexCompactionCP;
     ComputePipeline* surfaceVertexDensityCP;
     ComputePipeline* surfaceVertexNormalCP;
+    ComputePipeline* bufferClearCP;
 
     MeshPipeline* fluidMeshPipeline;
     
@@ -73,9 +87,9 @@ private:
 	ID3D12CommandSignature* commandSignature = nullptr;
     ID3D12CommandSignature* meshCommandSignature = nullptr;
 
-    std::vector<XMFLOAT3> positions;
-	StructuredBuffer positionBuffer;
-    StructuredBuffer cellsBuffer;
+    StructuredBuffer* positionBuffer;
+    StructuredBuffer cellParticleCountBuffer;
+    StructuredBuffer cellParticleIndicesBuffer;
     StructuredBuffer blocksBuffer;
     StructuredBuffer surfaceBlockIndicesBuffer;
     StructuredBuffer surfaceBlockDispatch;
@@ -85,4 +99,7 @@ private:
     StructuredBuffer surfaceVertDensityDispatch;
     StructuredBuffer surfaceVertDensityBuffer;
     StructuredBuffer surfaceVertexNormalBuffer;
+
+    float isovalue{ 0.03f };
+    float kernelScale{ 1.0f };
 };

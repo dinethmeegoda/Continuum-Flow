@@ -1,10 +1,6 @@
 #include "SurfaceBlockDetectionRootSig.hlsl"
 #include "../constants.h"
 
-struct Block {
-    int nonEmptyCellCount;
-};
-
 struct NumberOfBlocks {
     int value;
 };
@@ -12,12 +8,12 @@ struct NumberOfBlocks {
 ConstantBuffer<NumberOfBlocks> numberOfBlocks : register(b0);
 
 // SRV for blocks buffer (input buffer)
-StructuredBuffer<Block> blocks : register(t0);
+StructuredBuffer<int> blocks : register(t0);
 
 // UAV for the surface block indices buffer (output buffer)
-RWStructuredBuffer<uint> surfaceBlockIndices : register(u0);
+RWStructuredBuffer<int> surfaceBlockIndices : register(u0);
 
-RWStructuredBuffer<uint3> surfaceBlockDispatch : register(u1);
+RWStructuredBuffer<int3> surfaceBlockDispatch : register(u1);
 
 /*
     Rather than follow the paper directly, which uses an atomic add per-thread to get a write-index into the surfaceBlockIndices buffer,
@@ -27,16 +23,16 @@ RWStructuredBuffer<uint3> surfaceBlockDispatch : register(u1);
     Inspired by this article on "stream compaction using wave intrinsics:" https://interplayoflight.wordpress.com/2022/12/25/stream-compaction-using-wave-intrinsics/
 */
 [numthreads(SURFACE_BLOCK_DETECTION_THREADS_X, 1, 1)]
-void main(uint3 globalThreadId : SV_DispatchThreadID) {
+void main(int3 globalThreadId : SV_DispatchThreadID) {
     if (globalThreadId.x >= numberOfBlocks.value) {
         return;
     }
 
-    Block block = blocks[globalThreadId.x];
-    bool isSurfaceBlock = block.nonEmptyCellCount > 0 && block.nonEmptyCellCount < FILLED_BLOCK;
-    uint localSurfaceBlockIndexInWave = WavePrefixCountBits(isSurfaceBlock);
-    uint surfaceBlockWaveCount = WaveActiveCountBits(isSurfaceBlock);
-    uint surfaceBlockGlobalStartIdx;
+    int blockNonEmptyCellCount = blocks[globalThreadId.x];
+    bool isSurfaceBlock = blockNonEmptyCellCount > 0 && blockNonEmptyCellCount < FILLED_BLOCK;
+    int localSurfaceBlockIndexInWave = WavePrefixCountBits(isSurfaceBlock);
+    int surfaceBlockWaveCount = WaveActiveCountBits(isSurfaceBlock);
+    int surfaceBlockGlobalStartIdx;
 
     if (WaveIsFirstLane()) {
         InterlockedAdd(surfaceBlockDispatch[0].x, surfaceBlockWaveCount, surfaceBlockGlobalStartIdx);
@@ -45,7 +41,7 @@ void main(uint3 globalThreadId : SV_DispatchThreadID) {
     surfaceBlockGlobalStartIdx = WaveReadLaneFirst(surfaceBlockGlobalStartIdx); // (its faster to use an intrinsic here than to write to a shared variable and sync)
 
     if (isSurfaceBlock) {
-        uint surfaceBlockGlobalIdx = surfaceBlockGlobalStartIdx + localSurfaceBlockIndexInWave;
+        int surfaceBlockGlobalIdx = surfaceBlockGlobalStartIdx + localSurfaceBlockIndexInWave;
         surfaceBlockIndices[surfaceBlockGlobalIdx] = globalThreadId.x;
     }
 }

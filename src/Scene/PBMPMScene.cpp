@@ -1,4 +1,5 @@
 #include "PBMPMScene.h"
+#include "GridConstants.h"
 
 PBMPMScene::PBMPMScene(DXContext* context, RenderPipeline* pipeline, unsigned int instances)
 	: Drawable(context, pipeline), context(context), renderPipeline(pipeline), instanceCount(instances),
@@ -211,7 +212,7 @@ void PBMPMScene::doEmission(StructuredBuffer* gridBuffer) {
 	emissionCmd->ResourceBarrier(1, &gridBufferBarrier);
 
 	// Set Root Descriptors
-	emissionCmd->SetComputeRoot32BitConstants(0, 26, &constants, 0);
+	emissionCmd->SetComputeRoot32BitConstants(0, 28, &constants, 0);
 	emissionCmd->SetComputeRootConstantBufferView(1, shapeBuffer.getGPUVirtualAddress());
 	emissionCmd->SetComputeRootDescriptorTable(2, particleBuffer.getUAVGPUDescriptorHandle());
 	emissionCmd->SetComputeRootDescriptorTable(3, gridBuffer->getSRVGPUDescriptorHandle());
@@ -275,7 +276,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitCountPipeline.getCommandList()->ResourceBarrier(1, &particlePositionsBarrier);
 
 	// Properly set the Descriptors & Resource Transitions
-	bukkitCountPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 26, &constants, 0);
+	bukkitCountPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 28, &constants, 0);
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(1, particleCount.getSRVGPUDescriptorHandle());
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(2, particleBuffer.getSRVGPUDescriptorHandle());
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(3, positionBuffer.getSRVGPUDescriptorHandle());
@@ -313,7 +314,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitAllocatePipeline.getCommandList()->ResourceBarrier(1, &bukkitCountBarrier);
 
 	// Properly set the Descriptors & Resource Transitions
-	bukkitAllocatePipeline.getCommandList()->SetComputeRoot32BitConstants(0, 26, &constants, 0);
+	bukkitAllocatePipeline.getCommandList()->SetComputeRoot32BitConstants(0, 28, &constants, 0);
 	bukkitAllocatePipeline.getCommandList()->SetComputeRootDescriptorTable(1, bukkitSystem.countBuffer.getSRVGPUDescriptorHandle());
 	bukkitAllocatePipeline.getCommandList()->SetComputeRootDescriptorTable(2, bukkitSystem.threadData.getUAVGPUDescriptorHandle());
 
@@ -351,7 +352,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitInsertPipeline.getCommandList()->ResourceBarrier(2, barriers);
 
 	// Properly set the Descriptors
-	bukkitInsertPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 26, &constants, 0);
+	bukkitInsertPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 28, &constants, 0);
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(1, particleBuffer.getSRVGPUDescriptorHandle());
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(2, bukkitSystem.countBuffer2.getUAVGPUDescriptorHandle());
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(3, bukkitSystem.indexStart.getSRVGPUDescriptorHandle());
@@ -400,8 +401,10 @@ void PBMPMScene::constructScene() {
 	auto computeId = g2p2gPipeline.getCommandListID();
 
 	// Create Constant Data
+
 	//liquid
-	/*constants = { {64, 64, 64}, 0.01, 9.8, 0.2, 0.02,
+	/*
+	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01, 9.8, 0.2, 0.02,
 		(unsigned int)std::ceil(std::pow(10, 7)),
 		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2, 0, 0};*/
 	//sand
@@ -528,9 +531,11 @@ void PBMPMScene::constructScene() {
 	renderDispatchBuffer = StructuredBuffer(&renderDispatch, 5, sizeof(int));
 
 	// Shape Buffer
+
 	std::vector<SimShape> shapes;
 	shapes.push_back(SimShape(0, { 32, 32, 32}, 0, { 10, 10, 10 },
 		0, 3, 1, 1, 100));
+
 	shapeBuffer = StructuredBuffer(shapes.data(), shapes.size(), sizeof(SimShape));
 
 	//Temp tile data buffer
@@ -869,4 +874,17 @@ bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {
 		one.borderFriction == two.borderFriction;
 		one.elasticRelaxation == two.elasticRelaxation;
 		one.elasticityRatio == two.elasticityRatio;
+}
+
+int PBMPMScene::getParticleCount() {
+	XMINT4 count;
+	particleCount.copyDataFromGPU(
+		*context, 
+		&count,
+		g2p2gPipeline.getCommandList(),
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		g2p2gPipeline.getCommandListID()
+	);
+
+	return count.x;
 }

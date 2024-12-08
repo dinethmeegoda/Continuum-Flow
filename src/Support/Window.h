@@ -44,13 +44,15 @@ public:
 	void resize();
 
 	void beginFrame(ID3D12GraphicsCommandList6* cmdList);
+	void setRT(ID3D12GraphicsCommandList6* cmdList);
 	void endFrame(ID3D12GraphicsCommandList6* cmdList);
 
 	void shutdown();
 
 	void updateTitle(std::wstring text);
 
-	static void createAndSetDefaultViewport(D3D12_VIEWPORT& vp, ID3D12GraphicsCommandList5* cmdList);
+	static void createViewport(D3D12_VIEWPORT& vp, ID3D12GraphicsCommandList5* cmdList);
+	static void setViewport(D3D12_VIEWPORT& vp, ID3D12GraphicsCommandList5* cmdList);
 
 private:
 	Window() = default;
@@ -73,6 +75,10 @@ private:
 
 	ComPointer<ID3D12DescriptorHeap> rtvDescHeap;
 	D3D12_CPU_DESCRIPTOR_HANDLE rtvHandles[FRAME_COUNT];
+
+	ComPointer<ID3D12DescriptorHeap> dsvDescHeap;
+	D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle;
+    ComPointer<ID3D12Resource> depthStencilBuffer;
 
 	bool getBuffers();
 	void releaseBuffers();

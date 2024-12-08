@@ -48,8 +48,8 @@ struct PBMPMConstants {
 
 
 	//mouse stuff
+	XMFLOAT4 mousePosition;
 	unsigned int mouseActivation;
-	XMUINT2 mousePosition;
 	unsigned int mouseRadius;
 	unsigned int mouseFunction;
 	unsigned int mouseVelocity;
@@ -119,6 +119,14 @@ public:
 
 	static bool constantsEqual(PBMPMConstants& one, PBMPMConstants& two);
 
+	StructuredBuffer* getPositionBuffer() { return &positionBuffer; }
+
+	int getParticleCount();
+
+	PBMPMConstants getConstants() { return constants; }
+
+	std::vector<SimShape>& getSimShapes() { return shapes; }
+
 private:
 	DXContext* context;
 	RenderPipeline* renderPipeline;
@@ -161,6 +169,8 @@ private:
 	StructuredBuffer tempTileDataBuffer;
 
 	std::array<StructuredBuffer, 3> gridBuffers;
+
+	std::vector<SimShape> shapes;
 
 	void createBukkitSystem();
 

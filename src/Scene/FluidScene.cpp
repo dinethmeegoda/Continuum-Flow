@@ -1,4 +1,5 @@
 #include "FluidScene.h"
+#include "GridConstants.h"
 
 FluidScene::FluidScene(DXContext* context, 
                        RenderPipeline* pipeline, 
@@ -8,6 +9,7 @@ FluidScene::FluidScene(DXContext* context,
                        ComputePipeline* surfaceVertexCompactionCP,
                        ComputePipeline* surfaceVertexDensityCP,
                        ComputePipeline* surfaceVertexNormalCP,
+                       ComputePipeline* bufferClearCP,
                        MeshPipeline* fluidMeshPipeline)
     : Drawable(context, pipeline), 
       bilevelUniformGridCP(bilevelUniformGridCP), 
@@ -16,16 +18,17 @@ FluidScene::FluidScene(DXContext* context,
       surfaceVertexCompactionCP(surfaceVertexCompactionCP),
       surfaceVertexDensityCP(surfaceVertexDensityCP),
       surfaceVertexNormalCP(surfaceVertexNormalCP),
+      bufferClearCP(bufferClearCP),
       fluidMeshPipeline(fluidMeshPipeline)
 {
     constructScene();
 }
 
 // In this pipeline, drawing is done via a mesh shader
-void FluidScene::draw(Camera* camera) {
+void FluidScene::draw(Camera* camera, unsigned int renderMeshlets) {
     auto cmdList = fluidMeshPipeline->getCommandList();
-    MeshShadingConstants meshShadingConstants = { camera->getViewProjMat(), gridConstants.gridDim, gridConstants.resolution, gridConstants.minBounds };
-
+    gridConstants.kernelScale = kernelScale;
+    MeshShadingConstants meshShadingConstants = { camera->getViewProjMat(), gridConstants.gridDim, gridConstants.resolution, gridConstants.minBounds, renderMeshlets, camera->getPosition(), isovalue };
     cmdList->SetPipelineState(fluidMeshPipeline->getPSO());
     cmdList->SetGraphicsRootSignature(fluidMeshPipeline->getRootSignature());
 
@@ -63,7 +66,7 @@ void FluidScene::draw(Camera* camera) {
     cmdList->SetGraphicsRootDescriptorTable(2, surfaceVertexNormalBuffer.getSRVGPUDescriptorHandle());
     cmdList->SetGraphicsRootShaderResourceView(3, surfaceHalfBlockDispatch.getGPUVirtualAddress());
     cmdList->SetGraphicsRootUnorderedAccessView(4, surfaceVertDensityDispatch.getGPUVirtualAddress());
-    cmdList->SetGraphicsRoot32BitConstants(5, 23, &meshShadingConstants, 0);
+    cmdList->SetGraphicsRoot32BitConstants(5, 28, &meshShadingConstants, 0);
 
     // Transition surfaceHalfBlockDispatch to indirect argument buffer
     D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -77,12 +80,31 @@ void FluidScene::draw(Camera* camera) {
     // Draws
     cmdList->ExecuteIndirect(meshCommandSignature, 1, surfaceHalfBlockDispatch.getBuffer(), 0, nullptr, 0);
 
-    transitionBuffersToUAV(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+    // TODO Temporary: just so these two buffers can be transitioned along with everything else
+    D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier3 = CD3DX12_RESOURCE_BARRIER::Transition(
+        surfaceHalfBlockDispatch.getBuffer(),
+        D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+    );
+
+    D3D12_RESOURCE_BARRIER surfaceVertDensityDispatchBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
+        surfaceVertDensityDispatch.getBuffer(),
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+    );
+
+    D3D12_RESOURCE_BARRIER barriers2[2] = { surfaceHalfBlockDispatchBarrier3, surfaceVertDensityDispatchBarrier2 };
+    cmdList->ResourceBarrier(2, barriers2);
+    // End temporary
+
+    transitionBuffers(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     context->executeCommandList(fluidMeshPipeline->getCommandListID());
     context->signalAndWaitForFence(fence, fenceValue);
 
     context->resetCommandList(fluidMeshPipeline->getCommandListID());
+    
+    resetBuffers();
 }
 
 float getRandomFloatInRange(float min, float max) {
@@ -90,47 +112,24 @@ float getRandomFloatInRange(float min, float max) {
 }
 
 void FluidScene::constructScene() {
-    unsigned int blocksPerEdge = 3;
-    unsigned int numParticles = blocksPerEdge * CELLS_PER_BLOCK_EDGE * blocksPerEdge * CELLS_PER_BLOCK_EDGE * blocksPerEdge * CELLS_PER_BLOCK_EDGE;
-    numParticles -= blocksPerEdge * CELLS_PER_BLOCK_EDGE * blocksPerEdge * CELLS_PER_BLOCK_EDGE; // Skip the top level of cells
-    gridConstants = { numParticles, {blocksPerEdge * CELLS_PER_BLOCK_EDGE, blocksPerEdge * CELLS_PER_BLOCK_EDGE, blocksPerEdge * CELLS_PER_BLOCK_EDGE}, {0.f, 0.f, 0.f}, 0.1f };
-
-    // Populate position data. Place a particle per-cell in a 12x12x12 block of cells, each at a random position in a cell.
-    // (Temporary, eventually, position data will come from simulation)
-    for (unsigned int i = 0; i < gridConstants.gridDim.x; ++i) {
-        for (unsigned int j = 0; j < gridConstants.gridDim.y; ++j) {
-            for (unsigned int k = 0; k < gridConstants.gridDim.z; ++k) {
-                // SKip i,j,k = top level of cells, that way the top level is empty and the second-to-top level becomes the "surface"
-                if (k == gridConstants.gridDim.z - 1) {
-                    continue;
-                }
-
-                positions.push_back({ 
-                    gridConstants.minBounds.x + gridConstants.resolution * i + getRandomFloatInRange(0.f, gridConstants.resolution),
-                    gridConstants.minBounds.y + gridConstants.resolution * j + getRandomFloatInRange(0.f, gridConstants.resolution),
-                    gridConstants.minBounds.z + gridConstants.resolution * k + getRandomFloatInRange(0.f, gridConstants.resolution) 
-                });
-            }
-        }
-    }
-
-    positionBuffer = StructuredBuffer(positions.data(), gridConstants.numParticles, sizeof(XMFLOAT3));
-    positionBuffer.passDataToGPU(*context, bilevelUniformGridCP->getCommandList(), bilevelUniformGridCP->getCommandListID());
-    positionBuffer.createSRV(*context, bilevelUniformGridCP->getDescriptorHeap());
+    int blocksPerEdge = 8;
+    float cellWidth = (float)std::max(std::max(GRID_WIDTH, GRID_HEIGHT), GRID_DEPTH) / ((float)blocksPerEdge * (float)CELLS_PER_BLOCK_EDGE);
+    gridConstants = { 0, {blocksPerEdge * CELLS_PER_BLOCK_EDGE, blocksPerEdge * CELLS_PER_BLOCK_EDGE, blocksPerEdge * CELLS_PER_BLOCK_EDGE}, {0.f, 0.f, 0.f}, cellWidth, kernelScale };
 
     // Create cells and blocks buffers
     int numCells = gridConstants.gridDim.x * gridConstants.gridDim.y * gridConstants.gridDim.z;
     int numBlocks = numCells / (CELLS_PER_BLOCK_EDGE * CELLS_PER_BLOCK_EDGE * CELLS_PER_BLOCK_EDGE);
     int numVerts = (gridConstants.gridDim.x + 1) * (gridConstants.gridDim.y + 1) * (gridConstants.gridDim.z + 1);
     
-    std::vector<Cell> cells(numCells);
+    std::vector<int> cellParticleCounts(numCells, 0);
+    std::vector<int> cellParticleIndices(numCells * MAX_PARTICLES_PER_CELL, -1);
     std::vector<Block> blocks(numBlocks);
-    std::vector<unsigned int> surfaceBlockIndices(numBlocks, 0);
+    std::vector<int> surfaceBlockIndices(numBlocks, 0);
     XMUINT3 dipatchCPU = { 0, 1, 1 };
-    std::vector<unsigned int> surfaceVertices(numVerts, 0);
-    std::vector<unsigned int> surfaceVertexIndices(numVerts, 0);
+    std::vector<int> surfaceVertices(numVerts, 0);
+    std::vector<int> surfaceVertexIndices(numVerts, 0);
     std::vector<float> surfaceVertexDensities(numVerts, 0.f);
-    std::vector<XMFLOAT2> surfaceVertexNormals(numVerts, { 0.f, 0.f }); // (x, y) components of the normal; z component can be inferred. This helps save space.
+    std::vector<XMFLOAT3> surfaceVertexNormals(numVerts, { 0.f, 0.f, 0.f });
 
     // Use the descriptor heap for the bilevelUniformGridCP for pretty much everything. Simplifies sharing resources
     blocksBuffer = StructuredBuffer(blocks.data(), numBlocks, sizeof(Block));
@@ -138,10 +137,15 @@ void FluidScene::constructScene() {
     blocksBuffer.createUAV(*context, bilevelUniformGridCP->getDescriptorHeap());
     blocksBuffer.createSRV(*context, bilevelUniformGridCP->getDescriptorHeap());
 
-    cellsBuffer = StructuredBuffer(cells.data(), numCells, sizeof(Cell));
-    cellsBuffer.passDataToGPU(*context, bilevelUniformGridCP->getCommandList(), bilevelUniformGridCP->getCommandListID());
-    cellsBuffer.createUAV(*context, bilevelUniformGridCP->getDescriptorHeap());
-    cellsBuffer.createSRV(*context, bilevelUniformGridCP->getDescriptorHeap());
+    cellParticleCountBuffer = StructuredBuffer(cellParticleCounts.data(), numCells, sizeof(int));
+    cellParticleCountBuffer.passDataToGPU(*context, bilevelUniformGridCP->getCommandList(), bilevelUniformGridCP->getCommandListID());
+    cellParticleCountBuffer.createUAV(*context, bilevelUniformGridCP->getDescriptorHeap());
+    cellParticleCountBuffer.createSRV(*context, bilevelUniformGridCP->getDescriptorHeap());
+
+    cellParticleIndicesBuffer = StructuredBuffer(cellParticleIndices.data(), MAX_PARTICLES_PER_CELL * numCells, sizeof(int));
+    cellParticleIndicesBuffer.passDataToGPU(*context, bilevelUniformGridCP->getCommandList(), bilevelUniformGridCP->getCommandListID());
+    cellParticleIndicesBuffer.createUAV(*context, bilevelUniformGridCP->getDescriptorHeap());
+    cellParticleIndicesBuffer.createSRV(*context, bilevelUniformGridCP->getDescriptorHeap());
 
     surfaceBlockIndicesBuffer = StructuredBuffer(surfaceBlockIndices.data(), numBlocks, sizeof(unsigned int));
     surfaceBlockIndicesBuffer.passDataToGPU(*context, bilevelUniformGridCP->getCommandList(), bilevelUniformGridCP->getCommandListID());
@@ -178,11 +182,11 @@ void FluidScene::constructScene() {
     surfaceVertDensityBuffer.createUAV(*context, bilevelUniformGridCP->getDescriptorHeap());
     surfaceVertDensityBuffer.createSRV(*context, bilevelUniformGridCP->getDescriptorHeap());
 
-    surfaceVertexNormalBuffer = StructuredBuffer(surfaceVertexNormals.data(), numVerts, sizeof(XMFLOAT2));
+    surfaceVertexNormalBuffer = StructuredBuffer(surfaceVertexNormals.data(), numVerts, sizeof(XMFLOAT3));
     surfaceVertexNormalBuffer.passDataToGPU(*context, bilevelUniformGridCP->getCommandList(), bilevelUniformGridCP->getCommandListID());
     surfaceVertexNormalBuffer.createUAV(*context, bilevelUniformGridCP->getDescriptorHeap()); 
     surfaceVertexNormalBuffer.createSRV(*context, bilevelUniformGridCP->getDescriptorHeap());
-    
+
 	// Create Command Signature
 	// Describe the arguments for an indirect dispatch
 	D3D12_INDIRECT_ARGUMENT_DESC argumentDesc = {};
@@ -212,15 +216,19 @@ void FluidScene::constructScene() {
     context->getDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
 
     // Transition all resources to UAVs to start
-    transitionBuffersToUAV(bilevelUniformGridCP->getCommandList(), D3D12_RESOURCE_STATE_COPY_DEST);
+    transitionBuffers(bilevelUniformGridCP->getCommandList(), D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
     context->executeCommandList(bilevelUniformGridCP->getCommandListID());
     context->signalAndWaitForFence(fence, fenceValue);
     context->resetCommandList(bilevelUniformGridCP->getCommandListID());
 }
 
-void FluidScene::compute() {
-    // TODO: do a reset compute pass first to clear the buffers (take advantage of existing passes where possible)
-    // (This is a todo, because I need to implement a third compute pass that operates on the cell level to clear the cell buffers)
+void FluidScene::compute(
+    StructuredBuffer* pbmpmPositionsBuffer,
+    int numParticles
+) {
+    gridConstants.numParticles = numParticles;
+    positionBuffer = pbmpmPositionsBuffer;
+
     computeBilevelUniformGrid();
     computeSurfaceBlockDetection();
     computeSurfaceCellDetection();
@@ -240,10 +248,11 @@ void FluidScene::computeBilevelUniformGrid() {
     cmdList->SetDescriptorHeaps(_countof(computeDescriptorHeaps), computeDescriptorHeaps);
 
     // Set compute root descriptor table
-    cmdList->SetComputeRootDescriptorTable(0, positionBuffer.getSRVGPUDescriptorHandle());
-    cmdList->SetComputeRootDescriptorTable(1, cellsBuffer.getUAVGPUDescriptorHandle());
-    cmdList->SetComputeRootDescriptorTable(2, blocksBuffer.getUAVGPUDescriptorHandle());
-    cmdList->SetComputeRoot32BitConstants(3, 8, &gridConstants, 0);
+    cmdList->SetComputeRootDescriptorTable(0, positionBuffer->getSRVGPUDescriptorHandle());
+    cmdList->SetComputeRootDescriptorTable(1, cellParticleCountBuffer.getUAVGPUDescriptorHandle());
+    cmdList->SetComputeRootDescriptorTable(2, cellParticleIndicesBuffer.getUAVGPUDescriptorHandle());
+    cmdList->SetComputeRootDescriptorTable(3, blocksBuffer.getUAVGPUDescriptorHandle());
+    cmdList->SetComputeRoot32BitConstants(4, 9, &gridConstants, 0);
 
     // Dispatch
     int numWorkGroups = (gridConstants.numParticles + BILEVEL_UNIFORM_GRID_THREADS_X - 1) / BILEVEL_UNIFORM_GRID_THREADS_X;
@@ -320,18 +329,18 @@ void FluidScene::computeSurfaceCellDetection() {
     );
 
     // Transition cellsBuffer to SRV 
-    D3D12_RESOURCE_BARRIER cellsBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        cellsBuffer.getBuffer(),
+    D3D12_RESOURCE_BARRIER cellParticleCountBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        cellParticleCountBuffer.getBuffer(),
         D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
         D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
     );
 
-    D3D12_RESOURCE_BARRIER barriers[3] = { surfaceBlockIndicesBufferBarrier, surfaceBlockDispatchBarrier, cellsBufferBarrier };
+    D3D12_RESOURCE_BARRIER barriers[3] = { surfaceBlockIndicesBufferBarrier, surfaceBlockDispatchBarrier, cellParticleCountBufferBarrier };
     cmdList->ResourceBarrier(3, barriers);
 
     // Set compute root descriptor table
     cmdList->SetComputeRootDescriptorTable(0, surfaceBlockIndicesBuffer.getSRVGPUDescriptorHandle());
-    cmdList->SetComputeRootDescriptorTable(1, cellsBuffer.getSRVGPUDescriptorHandle());
+    cmdList->SetComputeRootDescriptorTable(1, cellParticleCountBuffer.getSRVGPUDescriptorHandle());
     cmdList->SetComputeRootDescriptorTable(2, surfaceVerticesBuffer.getUAVGPUDescriptorHandle());
     cmdList->SetComputeRootShaderResourceView(3, surfaceBlockDispatch.getGPUVirtualAddress());
     cmdList->SetComputeRootUnorderedAccessView(4, surfaceHalfBlockDispatch.getGPUVirtualAddress());
@@ -365,14 +374,6 @@ void FluidScene::compactSurfaceVertices() {
     ID3D12DescriptorHeap* computeDescriptorHeaps[] = { bilevelUniformGridCP->getDescriptorHeap()->Get() };
     cmdList->SetDescriptorHeaps(_countof(computeDescriptorHeaps), computeDescriptorHeaps);
 
-
-    // Transition surfaceBlockDispatch to an SRV 
-    D3D12_RESOURCE_BARRIER surfaceBlockDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        surfaceBlockDispatch.getBuffer(),
-        D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
-        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE
-    );
-
     // Transition surfaceVerticesBuffer back to SRV 
     D3D12_RESOURCE_BARRIER surfaceVerticesBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceVerticesBuffer.getBuffer(),
@@ -380,28 +381,18 @@ void FluidScene::compactSurfaceVertices() {
         D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE 
     );
 
-    D3D12_RESOURCE_BARRIER barriers[2] = { surfaceBlockDispatchBarrier, surfaceVerticesBufferBarrier };
-    cmdList->ResourceBarrier(2, barriers);
+    cmdList->ResourceBarrier(1, &surfaceVerticesBufferBarrier);
 
     // Set compute root descriptor table
     cmdList->SetComputeRootDescriptorTable(0, surfaceVerticesBuffer.getSRVGPUDescriptorHandle());
-    //make sure this should be block and SRV
-    cmdList->SetComputeRootDescriptorTable(1, surfaceBlockDispatch.getSRVGPUDescriptorHandle());
-    cmdList->SetComputeRootDescriptorTable(2, surfaceVertexIndicesBuffer.getUAVGPUDescriptorHandle());
-
-    cmdList->SetComputeRootUnorderedAccessView(3, surfaceVertDensityDispatch.getGPUVirtualAddress());
-
-    // Transition surfaceBlockDispatch to indirect argument buffer
-    D3D12_RESOURCE_BARRIER surfaceBlockDispatchBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
-        surfaceBlockDispatch.getBuffer(),
-        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-        D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
-    );
-
-    cmdList->ResourceBarrier(1, &surfaceBlockDispatchBarrier2);
+    cmdList->SetComputeRootDescriptorTable(1, surfaceVertexIndicesBuffer.getUAVGPUDescriptorHandle());
+    cmdList->SetComputeRootUnorderedAccessView(2, surfaceVertDensityDispatch.getGPUVirtualAddress());
+    cmdList->SetComputeRoot32BitConstants(3, 3, &gridConstants.gridDim, 0);
 
     // Dispatch
-    cmdList->ExecuteIndirect(commandSignature, 1, surfaceBlockDispatch.getBuffer(), 0, nullptr, 0);
+    int numVertices = (gridConstants.gridDim.x + 1) * (gridConstants.gridDim.y + 1) * (gridConstants.gridDim.z + 1);
+    int numWorkGroups = (numVertices + SURFACE_VERTEX_COMPACTION_THREADS_X - 1) / SURFACE_VERTEX_COMPACTION_THREADS_X;
+    cmdList->Dispatch(numWorkGroups, 1, 1);
 
     context->executeCommandList(surfaceVertexCompactionCP->getCommandListID());
     context->signalAndWaitForFence(fence, fenceValue);
@@ -444,14 +435,14 @@ void FluidScene::computeSurfaceVertexDensity() {
     cmdList->ResourceBarrier(3, barriers);
 
     // Set compute root descriptor table
-    cmdList->SetComputeRootDescriptorTable(0, positionBuffer.getSRVGPUDescriptorHandle());
-    cmdList->SetComputeRootDescriptorTable(1, cellsBuffer.getSRVGPUDescriptorHandle());
-    cmdList->SetComputeRootDescriptorTable(2, surfaceVertexIndicesBuffer.getSRVGPUDescriptorHandle());
-    cmdList->SetComputeRootShaderResourceView(3, surfaceVertDensityDispatch.getGPUVirtualAddress());
-    cmdList->SetComputeRootUnorderedAccessView(4, surfaceBlockDispatch.getGPUVirtualAddress());
-    cmdList->SetComputeRootDescriptorTable(5, surfaceVertDensityBuffer.getUAVGPUDescriptorHandle());
-    cmdList->SetComputeRoot32BitConstants(6, 1, &gridConstants, 0);
-
+    cmdList->SetComputeRootDescriptorTable(0, positionBuffer->getSRVGPUDescriptorHandle());
+    cmdList->SetComputeRootDescriptorTable(1, cellParticleCountBuffer.getSRVGPUDescriptorHandle());
+    cmdList->SetComputeRootDescriptorTable(2, cellParticleIndicesBuffer.getSRVGPUDescriptorHandle());
+    cmdList->SetComputeRootDescriptorTable(3, surfaceVertexIndicesBuffer.getSRVGPUDescriptorHandle());
+    cmdList->SetComputeRootShaderResourceView(4, surfaceVertDensityDispatch.getGPUVirtualAddress());
+    cmdList->SetComputeRootUnorderedAccessView(5, surfaceBlockDispatch.getGPUVirtualAddress());
+    cmdList->SetComputeRootDescriptorTable(6, surfaceVertDensityBuffer.getUAVGPUDescriptorHandle());
+    cmdList->SetComputeRoot32BitConstants(7, 9, &gridConstants, 0);
 
     // Transition surfaceVertDensityDispatch to indirect argument buffer
     D3D12_RESOURCE_BARRIER surfaceVertDensityDispatchBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -503,7 +494,7 @@ void FluidScene::computeSurfaceVertexNormal() {
     cmdList->SetComputeRootDescriptorTable(1, surfaceVertexIndicesBuffer.getSRVGPUDescriptorHandle());
     cmdList->SetComputeRootShaderResourceView(2, surfaceVertDensityDispatch.getGPUVirtualAddress());
     cmdList->SetComputeRootDescriptorTable(3, surfaceVertexNormalBuffer.getUAVGPUDescriptorHandle());
-    cmdList->SetComputeRoot32BitConstants(4, 1, &gridConstants, 0);
+    cmdList->SetComputeRoot32BitConstants(4, 9, &gridConstants, 0);
 
     // Transition surfaceVertDensityDispatch to indirect argument buffer
     D3D12_RESOURCE_BARRIER surfaceVertDensityDispatchBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -528,8 +519,8 @@ void FluidScene::releaseResources() {
     bilevelUniformGridCP->releaseResources();
     surfaceBlockDetectionCP->releaseResources();
     surfaceCellDetectionCP->releaseResources();
-    positionBuffer.releaseResources();
-    cellsBuffer.releaseResources();
+    cellParticleCountBuffer.releaseResources();
+    cellParticleIndicesBuffer.releaseResources();
     blocksBuffer.releaseResources();
     surfaceBlockIndicesBuffer.releaseResources();
     surfaceBlockDispatch.releaseResources();
@@ -541,78 +532,76 @@ void FluidScene::releaseResources() {
     surfaceVertexNormalBuffer.releaseResources();
 }
 
-void FluidScene::transitionBuffersToUAV(ID3D12GraphicsCommandList6* cmdList, D3D12_RESOURCE_STATES beforeState) {
-    // Transition everything back to what it needs to be for the next frame
-    // Cells buffer to UAV
-    D3D12_RESOURCE_BARRIER cellsBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        cellsBuffer.getBuffer(),
+void FluidScene::transitionBuffers(ID3D12GraphicsCommandList6* cmdList, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState) {
+    D3D12_RESOURCE_BARRIER cellParticleCountsBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        cellParticleCountBuffer.getBuffer(),
         beforeState,
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        afterState
     );
 
-    // Blocks buffer to UAV
+    D3D12_RESOURCE_BARRIER cellParticleIndicesBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        cellParticleIndicesBuffer.getBuffer(),
+        beforeState,
+        afterState
+    );
+
     D3D12_RESOURCE_BARRIER blocksBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         blocksBuffer.getBuffer(),
         beforeState,
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        afterState
     );
     
-    // Surface block indices buffer to UAV
     D3D12_RESOURCE_BARRIER surfaceBlockIndicesBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceBlockIndicesBuffer.getBuffer(),
         beforeState,
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        afterState
     );
 
-    // Surface vertices buffer to UAV
     D3D12_RESOURCE_BARRIER surfaceVerticesBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceVerticesBuffer.getBuffer(),
         beforeState,
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        afterState
     );
 
-    // Surface vertex indices buffer to UAV
     D3D12_RESOURCE_BARRIER surfaceVertexIndicesBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceVertexIndicesBuffer.getBuffer(),
         beforeState,
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        afterState
     );
 
-    // Surface vertex density buffer to UAV
     D3D12_RESOURCE_BARRIER surfaceVertDensityBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceVertDensityBuffer.getBuffer(),
         beforeState,
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        afterState
     );
 
-    // Surface vertex normal buffer to UAV
     D3D12_RESOURCE_BARRIER surfaceVertexNormalBufferBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceVertexNormalBuffer.getBuffer(),
         beforeState,
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        afterState
     );
 
-    // Dispatch buffers back to UAVs
     D3D12_RESOURCE_BARRIER surfaceBlockDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceBlockDispatch.getBuffer(),
         beforeState,
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        afterState
     );
 
     D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceHalfBlockDispatch.getBuffer(),
         beforeState,
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        afterState
     );
 
     D3D12_RESOURCE_BARRIER surfaceVertDensityDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceVertDensityDispatch.getBuffer(),
         beforeState,
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+        afterState
     );
 
-    D3D12_RESOURCE_BARRIER barriers[10] = { 
-        cellsBufferBarrier,
+    D3D12_RESOURCE_BARRIER barriers[11] = { 
+        cellParticleCountsBufferBarrier,
+        cellParticleIndicesBufferBarrier,
         blocksBufferBarrier,
         surfaceBlockIndicesBufferBarrier,
         surfaceVerticesBufferBarrier,
@@ -624,5 +613,50 @@ void FluidScene::transitionBuffersToUAV(ID3D12GraphicsCommandList6* cmdList, D3D
         surfaceVertDensityDispatchBarrier 
     };
 
-    cmdList->ResourceBarrier(10, barriers);
+    cmdList->ResourceBarrier(11, barriers);
+}
+
+void FluidScene::resetBuffers() {
+	constexpr UINT THREAD_GROUP_SIZE = 256;
+    int numCells = gridConstants.gridDim.x * gridConstants.gridDim.y * gridConstants.gridDim.z;
+    int numCellIndices = numCells * MAX_PARTICLES_PER_CELL;
+    int numBlocks = numCells / (CELLS_PER_BLOCK_EDGE * CELLS_PER_BLOCK_EDGE * CELLS_PER_BLOCK_EDGE);
+    int numVerts = (gridConstants.gridDim.x + 1) * (gridConstants.gridDim.y + 1) * (gridConstants.gridDim.z + 1);
+
+	// Bind the PSO and Root Signature
+    auto cmdList = bufferClearCP->getCommandList();
+    cmdList->SetPipelineState(bufferClearCP->getPSO());
+    cmdList->SetComputeRootSignature(bufferClearCP->getRootSignature());
+
+    // Bind the descriptor heap
+	ID3D12DescriptorHeap* descriptorHeaps[] = { bilevelUniformGridCP->getDescriptorHeap()->Get() };
+	cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+
+    cmdList->SetComputeRoot32BitConstants(0, 1, &numCells, 0);
+	cmdList->SetComputeRootDescriptorTable(1, cellParticleCountBuffer.getUAVGPUDescriptorHandle());
+	cmdList->Dispatch((numCells + THREAD_GROUP_SIZE - 1) / THREAD_GROUP_SIZE, 1, 1);
+
+    cmdList->SetComputeRoot32BitConstants(0, 1, &numCellIndices, 0);
+    cmdList->SetComputeRootDescriptorTable(1, cellParticleIndicesBuffer.getUAVGPUDescriptorHandle());
+    cmdList->Dispatch((numCellIndices + THREAD_GROUP_SIZE - 1) / THREAD_GROUP_SIZE, 1, 1);
+
+    cmdList->SetComputeRoot32BitConstants(0, 1, &numBlocks, 0);
+    cmdList->SetComputeRootDescriptorTable(1, blocksBuffer.getUAVGPUDescriptorHandle());
+    cmdList->Dispatch((numBlocks + THREAD_GROUP_SIZE - 1) / THREAD_GROUP_SIZE, 1, 1);
+
+    cmdList->SetComputeRoot32BitConstants(0, 1, &numVerts, 0);
+    cmdList->SetComputeRootDescriptorTable(1, surfaceVerticesBuffer.getUAVGPUDescriptorHandle());
+    cmdList->Dispatch((numVerts + THREAD_GROUP_SIZE - 1) / THREAD_GROUP_SIZE, 1, 1);
+
+    cmdList->SetComputeRoot32BitConstants(0, 1, &numVerts, 0);
+    cmdList->SetComputeRootDescriptorTable(1, surfaceVertexIndicesBuffer.getUAVGPUDescriptorHandle());
+    cmdList->Dispatch((numVerts + THREAD_GROUP_SIZE - 1) / THREAD_GROUP_SIZE, 1, 1);
+
+    cmdList->SetComputeRoot32BitConstants(0, 1, &numVerts, 0);
+    cmdList->SetComputeRootDescriptorTable(1, surfaceVertDensityBuffer.getUAVGPUDescriptorHandle());
+    cmdList->Dispatch((numVerts + THREAD_GROUP_SIZE - 1) / THREAD_GROUP_SIZE, 1, 1);
+
+    context->executeCommandList(bufferClearCP->getCommandListID());
+    context->signalAndWaitForFence(fence, fenceValue);
+    context->resetCommandList(bufferClearCP->getCommandListID());
 }
