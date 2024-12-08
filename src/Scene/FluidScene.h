@@ -5,11 +5,6 @@
 #include "../D3D/Pipeline/MeshPipeline.h"
 #include "../D3D/StructuredBuffer.h"
 #include "../Shaders/constants.h"
-#include <Alembic/AbcCoreFactory/All.h>
-#include <Alembic/AbcGeom/All.h>
-
-using namespace Alembic::Abc;
-using namespace Alembic::AbcGeom;
 
 struct GridConstants {
     int numParticles;
@@ -48,6 +43,7 @@ public:
                ComputePipeline* surfaceVertexCompactionCP,
                ComputePipeline* surfaceVertexDensityCP,
                ComputePipeline* surfaceVertexNormalCP,
+               ComputePipeline* bufferClearCP,
                MeshPipeline* fluidMeshPipeline);
 
     void compute(
@@ -66,7 +62,7 @@ public:
 
 private:
     void transitionBuffers(ID3D12GraphicsCommandList6* cmdList, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
-    void resetBuffers(ID3D12GraphicsCommandList6* cmdList);
+    void resetBuffers();
 
     GridConstants gridConstants;
     
@@ -76,6 +72,7 @@ private:
     ComputePipeline* surfaceVertexCompactionCP;
     ComputePipeline* surfaceVertexDensityCP;
     ComputePipeline* surfaceVertexNormalCP;
+    ComputePipeline* bufferClearCP;
 
     MeshPipeline* fluidMeshPipeline;
     
@@ -97,11 +94,4 @@ private:
     StructuredBuffer surfaceVertDensityDispatch;
     StructuredBuffer surfaceVertDensityBuffer;
     StructuredBuffer surfaceVertexNormalBuffer;
-
-    StructuredBuffer blankCellParticleCountBuffer;
-    StructuredBuffer blankCellParticleIndicesBuffer;
-    StructuredBuffer blankBlocksBuffer;
-    StructuredBuffer blankSurfaceVerticesBuffer;
-    StructuredBuffer blankSurfaceVertDensityBuffer;
-    StructuredBuffer blankSurfaceVertexNormalBuffer;
 };
