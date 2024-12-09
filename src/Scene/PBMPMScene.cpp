@@ -397,7 +397,7 @@ void PBMPMScene::constructScene() {
 		0,
 		3,
 		50.0f,
-		2,
+		3,
 		0,
 		0,
 		0,
@@ -457,6 +457,9 @@ void PBMPMScene::constructScene() {
 
 	shapes.push_back(SimShape(0, { 32, 32, 32 }, 0, { 3, 3, 3 },
 	0, 3, 1, 1, 100));
+
+	shapes.push_back(SimShape(0, { 16, 32, 32 }, 0, { 3, 3, 3 },
+	0, 3, 2, 1, 100));
 
 	shapeBuffer = StructuredBuffer(shapes.data(), (unsigned int)shapes.size(), sizeof(SimShape));
 
