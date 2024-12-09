@@ -388,9 +388,27 @@ void PBMPMScene::bukkitizeParticles() {
 void PBMPMScene::constructScene() {
 	auto computeId = g2p2gPipeline.getCommandListID();
 	
-	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 9.8f, 0.2f, 0.02f,
+	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH},
+		0.01f,
+		2.0f,
+		1.2f,
+		0.3f,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 4, 30, 2, 0, 0, 0, 0, 0, 0, 5, 0.2f, 1.5f, 2.0f};
+		0,
+		3,
+		50.0f,
+		2,
+		0,
+		0,
+		0,
+		0,
+		0,
+		0,
+		10,
+		0.4f,
+		0.f,
+		0.f,
+	};
 	
 	// Create Vertex & Index Buffer
 	auto sphereData = generateSphere(PARTICLE_RADIUS, 16, 16);
@@ -431,11 +449,11 @@ void PBMPMScene::constructScene() {
 
 	// Shape Buffer
 
-	shapes.push_back(SimShape(1, { 32, 32, 32 }, 0, { 10, 10, 10 },
-		0, 3, 1, 1, 100));
+	//shapes.push_back(SimShape(1, { 16, 32, 16 }, 0, { 10, 10, 10 },
+	//	0, 3, 1, 1, 100));
 
-	/*shapes.push_back(SimShape(0, { 32, 32, 32}, 0, { 3, 3, 3 },
-  	0, 0, 0, 1, 100));*/
+	shapes.push_back(SimShape(0, { 48, 32, 48}, 0, { 3, 3, 3 },
+  	0, 0, 0, 1, 100));
 
 	shapeBuffer = StructuredBuffer(shapes.data(), (unsigned int)shapes.size(), sizeof(SimShape));
 
