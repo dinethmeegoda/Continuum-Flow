@@ -1,6 +1,6 @@
 *Breakpoint* is a project created by [Daniel Gerhardt](https://www.danieljgerhardt.com/), [Dineth Meegoda](https://dinethmeegoda.com/), [Matt Schwartz](https://www.linkedin.com/in/matthew-schwartz-37019016b/), [Zixiao Wang](https://www.linkedin.com/in/zixiao-wang-826a5a255/), for CIS 5650 GPU Programming at the University of Pennsylvania.
 
-Our project combines a novel particle simulation technique - PBMPM, developed by EA - with a state-of-the-art fluid surface construction method, using mesh shading and a bilevel-grid, all running in real time. 
+Our project combines a novel particle simulation technique - the Position Based Material Point Method(PBMPM), developed by EA - with a state-of-the-art fluid surface construction method, using mesh shading and a bilevel-grid, all running in real time. 
 
 # Breakpoint - Project Overview
 
@@ -18,9 +18,17 @@ For the graphical interface (which includes interactive sliders for the simulati
 
 ## PBMPM
 
-*Breakpoint* includes a 3D implemention of Chris Lewin's PBMPM. The public repository for PBMPM is a 2D WebGPU version, and there is an EA in-house 3D version on the CPU. *Breakpoint* is the first instance of PBMPM in DirectX on the GPU in 3D. 
+*Breakpoint* includes a 3D implemention of EA's Position Based Material Point Method. The public repository for PBMPM is a 2D WebGPU version, and there is an EA in-house 3D version on the CPU. *Breakpoint* is the first instance of PBMPM in DirectX on the GPU in 3D. 
 
-PBMPM works by putting particles into a grid of bukkits, allocating work per bukkit, and then enforcing movement constraints per material per bukkit. The bukkits have a halo range so the particles can react to the movement of particles within neighboring bukkits.
+For particle simulations, the Material Point Method(MPM) is currently one of the most widely used integration techniques. This is for a couple reasons - namely that it is easily implemented, and it is easy to scale to incorporate numerous varied material types. However, it is not entirely stable, and certain behaviors like compressing a liquid to 0 volume or vast force differences can cause strange behavior. In real time environments like games, particle simulations should be real time, accurate, and behave as expected with the user's inputs. Ensuring stability across user inputs is one of the advantages of PBMPM, the Position Based Material Point Method. As can be discerned from the name, it is a modification upon MPM. It utilizes a semi-implicit compliant constraint, is stable at any time step, and does not add complex implementation overhead to MPM. Our work moved the simulation to 3D on the GPU in a custom DirectX 12 engine.
+
+For a detailed overview from the author of PBMPM, Chris Lewin, please refer to the [repository](https://github.com/electronicarts/pbmpm) and his [SIGGRAPH presentation](https://www.youtube.com/watch?v=-ERzqNADJ8w&t=5s) from this year.
+
+The pseudocode algorithm for PBMPM is as follows:
+
+![](app/image/pbmpmalgo.png)
+
+As highlighted in red, the approach uses constraints like in PBD for rigid and soft body simulations that are seen often in modern games. However, the overall algorithmic approach is very similar to standard MPM, where there is a background grid that stores information for the simulation. 
 
 ### Materials
 
@@ -357,7 +365,7 @@ Lastly, there is a toggle to see the meshlets in the mesh shader:
 
 ## PBMPM
 
-There are a number of parameters that affect how PBMPM performs, due to the complexity of the simulation algorithm. The following is a list of performance tests for PBMPM, analyzing the various parameters and attributes of the particle simulation. For the setup, unless otherwise stated the iteration and substep count are 5, the grid is 64x64x64, there are 2000 particles emitted by an initial emitter, mesh shading is on, the particles per cell axis is 4, and the fixed point multiplier is 7.
+There are a number of parameters that affect how PBMPM performs, due to the complexity of the simulation algorithm. The following is a list of performance tests for PBMPM, analyzing the various parameters and attributes of the particle simulation. For the setup, unless otherwise stated the iteration and substep count are 5, the grid is 64x64x64, there are 2000 particles emitted by an initial emitter, mesh shading is on, the particles per cell axis is 4, and the fixed point multiplier is 7. These tests were performed in release mode on a personal laptop with Windows 23H2, an AMD Ryzen 9 7940HS @ 4GHz 32GB, and a RTX 4070 8 GB.
 
 The primary 2 are the iteration count and substep count. The substep count runs bukkiting and emission as well as g2p2g for each update within a frame. The iteration count is a subroutine of substep count that determines how many times g2p2g is run within each substep. The two of these have major impacts on performance.
 
