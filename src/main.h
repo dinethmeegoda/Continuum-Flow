@@ -29,7 +29,7 @@ static int fixedPointExponent = 7;
 static bool useGridVolume = true;
 static bool renderGrid = false;
 
-const char* modes[] = { "Mesh Shaded Fluid", "Particles", "Mesh Shaded Fluid with Particles" };
+const char* modes[] = { "Mesh Shaded Fluid, Non-Fluid Particles", "Mesh Shaded Fluid, All Particles", "No Mesh Shaded Fluid, All Particles"};
 
 ImGuiIO& initImGUI(DXContext& context) {
     IMGUI_CHECKVERSION();
