@@ -250,9 +250,9 @@ In this step, particles are placed into blocks (the coarse structure) and cells 
 In our implementation, we use clever indexing math to calculate the iteration bounds for the exact 8 neighboring blocks a-priori, avoiding much of the divergent logic.
 
 <p align="center">
-  <img src="app/image/indexmath.png" alt="indexmath" />
+  <img src="app/image/indexingillustration.png" alt="indexmath" />
   <br>
-  <i>Indexing illustration</i>
+  <i>The light blue cell is on the positive X edge and negative Y edge of the block, thus (1, -1). Each closest neighbor (red) can be derived via these offsets. The same approach extends to 8 neighbors in 3D. </i>
 </p>
 
 We can take a vector from the center of a block to the cell represented by a given thread, and then remap that distance such that cells on the border of a block are ±1, and anything inside is 0. Not only does this tell us whether or not a cell is on a block boundary, it also gives us the directions we need to search for the 8 neighboring blocks 
