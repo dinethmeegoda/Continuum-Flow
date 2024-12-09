@@ -449,7 +449,7 @@ void PBMPMScene::constructScene() {
 
 	// Visco Cube
 	shapes.push_back(SimShape(0, { 10, 10, 54 }, 0, { 8, 8, 8 },
-		0, 3, 3, 1, 100));
+		0, 3, 2, 1, 100));
 
 	// Snow
 	//shapes.push_back(SimShape(0, { 20, 58, 20 }, 0, { 4, 3, 4 },

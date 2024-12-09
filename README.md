@@ -518,3 +518,9 @@ Accidental meshlet couch:
 First attempt at porting 2D to 3D:
 
 ![](app/image/startOf3D.gif)
+
+Some angry particles:
+
+![](app/image/swirlywhirly.gif)
+
+![](app/image/evilwhirl.gif)
