@@ -32,11 +32,12 @@ public:
 	float* getFluidKernelScale() { return fluidScene.getKernelScale(); }
 	float* getFluidKernelRadius() { return fluidScene.getKernelRadius(); }
 
+	unsigned int* getPBMPMSubstepCount() { return pbmpmScene.getSubstepCount(); }
+
 private:
 	Camera* camera;
 
 	RenderPipeline pbmpmRP;
-	unsigned int pbmpmIC;
 	PBMPMScene pbmpmScene;
 
 	RenderPipeline objectRPWire;

@@ -7,6 +7,7 @@
 #include "../D3D/IndexBuffer.h"
 #include "../D3D/Pipeline/ComputePipeline.h"
 #include "Geometry.h"
+#include <iostream>
 #include <math.h>
 
 // Keep consistent with PBMPMCommon.hlsl
@@ -107,7 +108,7 @@ struct BukkitThreadData {
 
 class PBMPMScene : public Drawable {
 public:
-	PBMPMScene(DXContext* context, RenderPipeline* renderPipeline, unsigned int instanceCount);
+	PBMPMScene(DXContext* context, RenderPipeline* renderPipeline);
 
 	void constructScene();
 
@@ -129,6 +130,8 @@ public:
 
 	std::vector<SimShape>& getSimShapes() { return shapes; }
 
+	unsigned int* getSubstepCount() { return &substepCount; }
+
 private:
 	DXContext* context;
 	RenderPipeline* renderPipeline;
@@ -149,7 +152,6 @@ private:
 	D3D12_INDEX_BUFFER_VIEW ibv;
 	VertexBuffer vertexBuffer;
 	IndexBuffer indexBuffer;
-	unsigned int instanceCount;
 	ID3D12CommandSignature* commandSignature = nullptr;
 	ID3D12CommandSignature* renderCommandSignature = nullptr;
 	UINT64 fenceValue = 1;
@@ -183,4 +185,10 @@ private:
 	void bukkitizeParticles();
 
 	void doEmission(StructuredBuffer* gridBuffer);
+
+	unsigned int frameCount{ 0 };
+	unsigned int startTime{ 0 };
+	unsigned int endTime{ 0 };
+
+	unsigned int substepCount{ 5 };
 };
