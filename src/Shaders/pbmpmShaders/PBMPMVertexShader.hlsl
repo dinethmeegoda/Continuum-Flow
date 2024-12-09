@@ -1,4 +1,4 @@
-#include "PBMPMVertexRootSignature.hlsl"
+#include "PBMPMRootSignature.hlsl"
 
 cbuffer CameraMatrices : register(b0) {
     float4x4 viewMatrix;        // 16 floats
@@ -9,20 +9,42 @@ cbuffer CameraMatrices : register(b0) {
 // Particle positions as an SRV at register t0
 StructuredBuffer<float4> positions : register(t0);
 
+// Particle materials as an SRV at register t1
+StructuredBuffer<int> materials : register(t1);
+
 struct VSInput
 {
     float3 Position : POSITION;      // Input position from vertex buffer
     uint InstanceID : SV_InstanceID; // Instance ID for indexing into model matrices
 };
 
-[RootSignature(ROOTSIG)]
-float4 main(VSInput input) : SV_Position
+struct VSOutput
 {
+    float4 Position : SV_Position; // Position for rasterization
+    uint InstanceID : INSTANCE_ID; // Pass the instance ID to the pixel shader
+};
+
+[RootSignature(ROOTSIG)]
+VSOutput main(VSInput input)
+{
+    // Discard the particle if it is water
+	if (materials[input.InstanceID] == 0)
+	{
+		VSOutput output;
+		output.Position = float4(0.0f, 0.0f, 0.0f, 0.0f);
+		return output;
+	}
+
+    VSOutput output;
+
     // Retrieve the particle position for the current instance
     float3 particlePosition = positions[input.InstanceID].xyz;
 
     // Apply the model, view, and projection transformations
     float4 worldPos = mul(modelMatrix, float4(input.Position + particlePosition, 1.0));
     float4 viewPos = mul(viewMatrix, worldPos);
-    return mul(projectionMatrix, viewPos);
+    output.Position = mul(projectionMatrix, viewPos);
+    // Pass the instance ID to the pixel shader
+    output.InstanceID = input.InstanceID;
+    return output;
 }

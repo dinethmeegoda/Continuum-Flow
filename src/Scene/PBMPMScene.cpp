@@ -666,11 +666,18 @@ void PBMPMScene::draw(Camera* cam) {
 	// PSO
 	cmdList->SetPipelineState(renderPipeline->getPSO());
 	cmdList->SetGraphicsRootSignature(renderPipeline->getRootSignature());
-
-	// Transition particle buffer to SRV
-	auto srvBarrier = CD3DX12_RESOURCE_BARRIER::Transition(positionBuffer.getBuffer(),
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE);
-	cmdList->ResourceBarrier(1, &srvBarrier);
+	
+	// transition buffers to SRV and indirect argument
+	D3D12_RESOURCE_BARRIER srvBarriers[] = { CD3DX12_RESOURCE_BARRIER::Transition(positionBuffer.getBuffer(),
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE), 
+		CD3DX12_RESOURCE_BARRIER::Transition(materialBuffer.getBuffer(),
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS, D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE),
+		CD3DX12_RESOURCE_BARRIER::Transition(
+		renderDispatchBuffer.getBuffer(),
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT)
+	};
+	cmdList->ResourceBarrier(3, srvBarriers);
 
 	ID3D12DescriptorHeap* descriptorHeaps[] = { g2p2gPipeline.getDescriptorHeap()->Get()};
 	cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
@@ -679,29 +686,23 @@ void PBMPMScene::draw(Camera* cam) {
 	cmdList->SetGraphicsRoot32BitConstants(0, 16, &viewMat, 0);
 	cmdList->SetGraphicsRoot32BitConstants(0, 16, &projMat, 16);
 	cmdList->SetGraphicsRoot32BitConstants(0, 16, &modelMat, 32);
-	cmdList->SetGraphicsRootDescriptorTable(1, positionBuffer.getSRVGPUDescriptorHandle()); // Descriptor table slot 1 for position SRV
-
-	auto indirectBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
-		renderDispatchBuffer.getBuffer(),
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
-	);
-	cmdList->ResourceBarrier(1, &indirectBarrier);
+	cmdList->SetGraphicsRootDescriptorTable(1, positionBuffer.getSRVGPUDescriptorHandle()); // Descriptor table slot 1 for position & mat SRV
 
 	// Draw
 	cmdList->ExecuteIndirect(renderCommandSignature, 1, renderDispatchBuffer.getBuffer(), 0, nullptr, 0);
 
-	auto srvBarrierEnd = CD3DX12_RESOURCE_BARRIER::Transition(positionBuffer.getBuffer(),
-		D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
-	cmdList->ResourceBarrier(1, &srvBarrierEnd);
-
-	auto indirectBarrierBack = CD3DX12_RESOURCE_BARRIER::Transition(
+	// Transition buffers back to UAV
+	D3D12_RESOURCE_BARRIER uavBarriers[] = { CD3DX12_RESOURCE_BARRIER::Transition(positionBuffer.getBuffer(),
+				D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS),
+			CD3DX12_RESOURCE_BARRIER::Transition(materialBuffer.getBuffer(),
+						D3D12_RESOURCE_STATE_ALL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS),
+			CD3DX12_RESOURCE_BARRIER::Transition(
 		renderDispatchBuffer.getBuffer(),
 		D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
-		D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-	);
-	cmdList->ResourceBarrier(1, &indirectBarrierBack);
+		D3D12_RESOURCE_STATE_UNORDERED_ACCESS)
+	};
 
+	cmdList->ResourceBarrier(3, uavBarriers);
 }
 
 void PBMPMScene::releaseResources() {
