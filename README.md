@@ -366,7 +366,7 @@ These parameters tune how the particles behave, and the speed and accuracy of th
 
 ### Mesh Shading Parameters
 
-![](app/image/meshshaderparams.png)
+![](app/image/meshshadeparams.png)
 
 - Isovalue: determines what fluid density constitutes the "surface."
 - Kernel scale: generally speaking, controls the "blobiness" of the fluid.
@@ -392,7 +392,7 @@ Lastly, there is a toggle to see the meshlets in the mesh shader:
 
 ## Position Based Material Point Method Performance
 
-There are a number of parameters that affect how PBMPM performs, due to the complexity of the simulation algorithm. The following is a list of performance tests for PBMPM, analyzing the various parameters and attributes of the particle simulation. For the setup, unless otherwise stated the iteration and substep count are 5, the grid is 64x64x64, there are 2000 particles emitted by an initial emitter, mesh shading is on, the particles per cell axis is 4, and the fixed point multiplier is 7. These tests were performed in release mode on a personal laptop with Windows 23H2, an AMD Ryzen 9 7940HS @ 4GHz 32GB, and a RTX 4070 8 GB.
+There are a number of parameters that affect how PBMPM performs, due to the complexity of the simulation algorithm. The following is a list of performance tests for PBMPM, analyzing the various parameters and attributes of the particle simulation. For the setup, unless otherwise stated the simulation and mesh shading parameters are as shown above in the demonstration of the ImGUI toggles. These tests were performed in release mode on a personal laptop with Windows 23H2, an AMD Ryzen 9 7940HS @ 4GHz 32GB, and a RTX 4070 8 GB.
 
 The primary 2 are the iteration count and substep count. The substep count runs bukkiting and emission as well as g2p2g for each update within a frame. The iteration count is a subroutine of substep count that determines how many times g2p2g is run within each substep. The two of these have major impacts on performance.
 
