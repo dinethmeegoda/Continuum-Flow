@@ -130,6 +130,8 @@ public:
 
 	std::vector<SimShape>& getSimShapes() { return shapes; }
 
+	unsigned int* getSubstepCount() { return &substepCount; }
+
 private:
 	DXContext* context;
 	RenderPipeline* renderPipeline;
@@ -187,4 +189,6 @@ private:
 	unsigned int frameCount{ 0 };
 	unsigned int startTime{ 0 };
 	unsigned int endTime{ 0 };
+
+	unsigned int substepCount{ 5 };
 };

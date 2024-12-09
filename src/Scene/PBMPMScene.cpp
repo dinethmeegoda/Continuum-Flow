@@ -550,9 +550,7 @@ void PBMPMScene::compute() {
 	
 	resetBuffers(true);
 
-	// Could be 20?
-	int substepCount = 5;
-	for (int substepIdx = 0; substepIdx < substepCount; substepIdx++) {
+	for (unsigned int substepIdx = 0; substepIdx < substepCount; substepIdx++) {
 
 		// Update simulation uniforms
 		constants.iteration = 0;

@@ -114,7 +114,11 @@ int main() {
         ImGui::NewFrame();
 
         //draw ImGUI
-        drawImGUIWindow(pbmpmIterConstants, io, &renderMeshlets, &renderMode, scene.getFluidIsovalue(), scene.getFluidKernelScale(), scene.getFluidKernelRadius());
+        drawImGUIWindow(pbmpmIterConstants, io, &renderMeshlets, &renderMode, 
+            scene.getFluidIsovalue(), 
+            scene.getFluidKernelScale(), 
+            scene.getFluidKernelRadius(), 
+            scene.getPBMPMSubstepCount());
 
         //render ImGUI
         ImGui::Render();
