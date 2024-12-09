@@ -355,6 +355,10 @@ Particles per cell axis is for 2 things. The first is the volume calculation, ca
 
 Bukkit size and bukkit halo size determine the size of the cells that particles are grouped into and how far particles can look around them to determine the influence of surrounding cells respectively. Due to the constraints of memory usage in 3D, the 4 configurations above are the only viable ones that allow the shaders to run. This is due to the shared memory limitation of DirectX 12, which is 32kb in compute shaders. Decreasing the bukkit size increases performance, as does bukkit halo size. The halo size has a greater effect, which is expected since the halo size increase causes a vast increase in the memory access of each thread. However, it is not advised to reduce these past 2 for bukkit size and 1 for halo size, since the simulation does not perform stably below these values. Ideally, these values could be increased, but because of shared memory limitations, they cannot be in the current implementation. One avenue of investigation is determining whether a greater bukkit size with no shared memory would yield performance improvements.
 
+![](app/image/materials.png)
+
+The above chart analyze the average FPS lost when adding 1 cube of 2000 particles of varying material types. The average FPS lost corresponds to the complexity of the simulation equations for each of the materials. Adding various materials increases thread divergence and computational weight at the cost of increased realism and scene depth.
+
 Helpful resources: 
 - [PBMPM](https://www.ea.com/seed/news/siggraph2024-pbmpm)
 - [Fluid Mesh Shading](https://dl.acm.org/doi/10.1145/3651285)
@@ -381,4 +385,8 @@ Helpful resources:
     articleno = {1},
     numpages = {14},
 }
+```
+
+```
+Chris Lewin. [A Position Based Material Point Method](https://www.ea.com/seed). ACM SIGGRAPH 2024.
 ```
