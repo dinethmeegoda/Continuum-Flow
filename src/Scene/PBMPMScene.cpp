@@ -1,8 +1,8 @@
 #include "PBMPMScene.h"
 #include "SceneConstants.h"
 
-PBMPMScene::PBMPMScene(DXContext* context, RenderPipeline* pipeline, unsigned int instances)
-	: Drawable(context, pipeline), context(context), renderPipeline(pipeline), instanceCount(instances),
+PBMPMScene::PBMPMScene(DXContext* context, RenderPipeline* pipeline)
+	: Drawable(context, pipeline), context(context), renderPipeline(pipeline),
 	modelMat(XMMatrixIdentity()),
 	g2p2gPipeline("g2p2gRootSignature.cso", "g2p2gComputeShader.cso", *context, CommandListID::PBMPM_G2P2G_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 36, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),

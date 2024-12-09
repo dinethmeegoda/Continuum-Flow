@@ -36,7 +36,6 @@ private:
 	Camera* camera;
 
 	RenderPipeline pbmpmRP;
-	unsigned int pbmpmIC;
 	PBMPMScene pbmpmScene;
 
 	RenderPipeline objectRPWire;

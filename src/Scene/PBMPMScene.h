@@ -107,7 +107,7 @@ struct BukkitThreadData {
 
 class PBMPMScene : public Drawable {
 public:
-	PBMPMScene(DXContext* context, RenderPipeline* renderPipeline, unsigned int instanceCount);
+	PBMPMScene(DXContext* context, RenderPipeline* renderPipeline);
 
 	void constructScene();
 
@@ -149,7 +149,6 @@ private:
 	D3D12_INDEX_BUFFER_VIEW ibv;
 	VertexBuffer vertexBuffer;
 	IndexBuffer indexBuffer;
-	unsigned int instanceCount;
 	ID3D12CommandSignature* commandSignature = nullptr;
 	ID3D12CommandSignature* renderCommandSignature = nullptr;
 	UINT64 fenceValue = 1;
