@@ -27,7 +27,7 @@ static bool meshletRenderType = false;
 static unsigned int renderModeType = 0; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
 static int fixedPointExponent = 7;
 static bool useGridVolume = true;
-static bool renderGrid = false;
+static bool renderGrid = true;
 
 const char* modes[] = { "Mesh Shaded Fluid, Non-Fluid Particles", "Mesh Shaded Fluid, All Particles", "No Mesh Shaded Fluid, All Particles" };
 
@@ -91,6 +91,9 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
 
         ImGui::SliderInt("Iteration Count", (int*)&pbmpmConstants.iterationCount, 1, 10);
         ImGui::SliderInt("Substep Count", (int*)substepCount, 1, 20);
+
+        ImGui::SliderFloat("Mouse Radius", &pbmpmConstants.mouseRadius, 0.1f, 10.f);
+        ImGui::SliderFloat("Mouse Strength", &pbmpmConstants.mouseStrength, 0.f, 40.f);
 
         ImGui::Checkbox("Use Grid Volume for Liquid", (bool*)&useGridVolume);
         pbmpmConstants.useGridVolumeForLiquid = useGridVolume;

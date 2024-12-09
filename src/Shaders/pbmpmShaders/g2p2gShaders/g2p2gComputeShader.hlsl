@@ -12,6 +12,12 @@ cbuffer mouseConstants : register(b1) {
     MouseConstants g_mouseConstants;
 };
 
+// Define the constant buffer with an array of SimShapes
+cbuffer shapes : register(b2)
+{
+    SimShape g_shapes[MaxSimShapes]; // Adjust the size of the array as needed
+};
+
 // Structured Buffer for particles (read-write UAV)
 RWStructuredBuffer<Particle> g_particles : register(u0);
 
@@ -295,6 +301,30 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
         }
 
         float3 gridDisplacement = float3(dx, dy, dz);
+
+		// Collision detection against shapes
+		for (int shapeIndex = 0; shapeIndex < g_simConstants.shapeCount; shapeIndex++)
+		{
+			SimShape shape = g_shapes[shapeIndex];
+
+			// Check if the shape is a guardian
+			if (shape.functionality == ShapeFunctionCollider)
+			{
+				float3 displacedGridPosition = gridPosition + gridDisplacement;
+
+				CollideResult c = collide(shape, displacedGridPosition);
+
+                if (c.collides)
+                {
+					float gap = min(0, dot(c.normal, c.pointOnCollider - gridPosition));
+					float penetration = dot(c.normal, gridDisplacement) - gap;
+
+                    // Prevent further penetration in radial direction
+					float radialImpulse = max(penetration, 0.0f);
+					gridDisplacement -= radialImpulse * c.normal * (1.0 - g_simConstants.borderFriction);
+                }
+			}
+		}
 
         // Collision detection against guardian shape
 
@@ -601,6 +631,37 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 int originalMax; // Needed for InterlockedMax output parameter
                 InterlockedMax(g_freeIndices[0], 0, originalMax); 
                 
+                for (int shapeIndex = 0; shapeIndex < g_simConstants.shapeCount; shapeIndex++)
+                {
+                    SimShape shape = g_shapes[shapeIndex];
+
+                    // Check if the shape is a guardian
+                    if (shape.functionality == ShapeFunctionCollider)
+                    {
+                        CollideResult c = collide(shape, p);
+
+                        if (c.collides)
+                        {
+							particle.displacement -= c.penetration * c.normal * (1.0 - g_simConstants.borderFriction);
+                        }
+                    }
+
+                    if (shape.functionality == ShapeFunctionDrain) {
+                        if (collide(shape, p).collides) {
+                            particle.enabled = 0;
+							// Change material so that it is not rendered
+							g_materials[myParticleIndex] = 99;
+
+                            uint freeIndex;
+                            InterlockedAdd(g_freeIndices[0], 1, freeIndex);
+                            
+							// Atomic store the particle index to the free list using InterlockedExchange
+							int originalValue;
+							InterlockedExchange(g_freeIndices[1 + uint(freeIndex)], int(myParticleIndex), originalValue);
+                        }
+                    }
+                }
+
                 p = projectInsideGuardian(p, g_simConstants.gridSize, GuardianSize);
             }
             

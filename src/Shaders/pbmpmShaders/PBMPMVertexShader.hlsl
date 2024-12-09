@@ -29,7 +29,7 @@ struct VSOutput
 VSOutput main(VSInput input)
 {
     // Discard the particle if it is water
-	if (materials[input.InstanceID] == 0 && renderMode == 0)
+	if ((materials[input.InstanceID] == 0 || materials[input.InstanceID] == 99) && renderMode == 0)
 	{
 		VSOutput output;
 		output.Position = float4(0.0f, 0.0f, 0.0f, 0.0f);

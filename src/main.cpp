@@ -87,10 +87,6 @@ int main() {
                 pbmpmIterConstants.mousePosition,
                 pbmpmIterConstants.mouseRayDirection
             );
-
-            // Should be controlled by IMGUI
-            pbmpmIterConstants.mouseRadius = 8.0;
-            pbmpmIterConstants.mouseStrength = 1.0;
         }
         else {
             pbmpmIterConstants.mouseActivation = 0;

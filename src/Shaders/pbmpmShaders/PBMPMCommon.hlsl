@@ -162,7 +162,7 @@ struct CubicWeightInfo
 CubicWeightInfo cubicWeightInit(float3 position)
 {
     float3 roundDownPosition = floor(position);
-    float3 offset = position - roundDownPosition;
+    float3 offset = position - roundDownPosition - 0.5;
 
     CubicWeightInfo result;
     result.weights[0] = pow3(2.0 - (1.0 + offset)) / 6.0;
