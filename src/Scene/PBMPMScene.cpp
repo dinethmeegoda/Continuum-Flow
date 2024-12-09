@@ -393,7 +393,7 @@ void PBMPMScene::constructScene() {
 		(unsigned int)std::ceil(std::pow(10, 7)),
 		1, 4, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.9f, 1.4, 2.0,
 		// Mouse Defaults
-		{0, 0, 0, 0}, {0, 0, 0, 0}, 0, 10, 0, 10
+		{0, 0, 0, 0}, {0, 0, 0, 0}, 0, 6, 0, 10
 	};
 	
 	// Create Vertex & Index Buffer
@@ -448,12 +448,12 @@ void PBMPMScene::constructScene() {
 		0, 1, 0, 1, 100));
 
 	// Jelly Cube
-	/*shapes.push_back(SimShape(0, { 48, 10, 48 }, 0, { 8, 8, 8 },
-		0, 3, 1, 1, 100));*/
+	//shapes.push_back(SimShape(0, { 10, 10, 54 }, 0, { 8, 8, 8 },
+	//	0, 3, 1, 1, 100));
 
 	// Snow
-	shapes.push_back(SimShape(0, { 20, 58, 20 }, 0, { 4, 3, 4 },
-		0, 0, 4, 0.0001, 100));
+	//shapes.push_back(SimShape(0, { 20, 58, 20 }, 0, { 4, 3, 4 },
+	//	0, 0, 4, 0.0001, 100));
 
 	shapeBuffer = StructuredBuffer(shapes.data(), (unsigned int)shapes.size(), sizeof(SimShape));
 

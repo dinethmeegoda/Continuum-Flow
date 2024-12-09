@@ -1,8 +1,10 @@
-*Breakpoint* is a project created by Daniel Gerhardt, Dineth Meegoda, Matt Schwartz, and Zixiao Wang, for CIS 5650 GPU Programming at the University of Pennsylvania.
+*Breakpoint* is a project created by [Daniel Gerhardt](https://www.danieljgerhardt.com/), [Dineth Meegoda](https://dinethmeegoda.com/), [Matt Schwartz](https://www.linkedin.com/in/matthew-schwartz-37019016b/), [Zixiao Wang](https://www.linkedin.com/in/zixiao-wang-826a5a255/), for CIS 5650 GPU Programming at the University of Pennsylvania.
 
 Our project combines a novel particle simulation technique - PBMPM, developed by EA - with a state-of-the-art fluid surface construction method, using mesh shading and a bilevel-grid, all running in real time. 
 
-# Project Overview
+# Breakpoint - Project Overview
+
+![Demo](images/mouseDemo.gif)
 
 ## DirectX Core
 
@@ -358,7 +360,8 @@ Helpful resources:
 - [Fluid Mesh Shading](https://dl.acm.org/doi/10.1145/3651285)
 - [Disney Snow](https://media.disneyanimation.com/uploads/production/publication_asset/94/asset/SSCTS13_2.pdf)
 - [PBD softbody](https://dl.acm.org/doi/pdf/10.1145/3677388.3696322)
-- For the DX12 basics and compointer class, we used this great tutorial series resource: https://github.com/Ohjurot/D3D12Ez
+- For the DX12 basics and compointer class, we used this great [tutorial series!]( https://github.com/Ohjurot/D3D12Ez)
+- For the DescriptorHeap class and management, we used this [resource,](https://github.com/stefanpgd/Compute-DirectX12-Tutorial/)
 
 # Citations / Attributions
 ```
