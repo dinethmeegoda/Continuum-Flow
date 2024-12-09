@@ -50,6 +50,9 @@ struct PBMPMConstants {
 	float borderFriction;
     float elasticRelaxation;
     float elasticityRatio;
+
+    float sandRelaxation;
+    float sandRatio;
 };
 
 struct MouseConstants {

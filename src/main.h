@@ -79,8 +79,11 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
         ImGui::SliderFloat("Liquid Viscosity", &pbmpmConstants.liquidViscosity, 0.0f, 1.0f);
         ImGui::SliderFloat("Friction Angle", &pbmpmConstants.frictionAngle, 0.0f, 90.0f);
 
-        ImGui::SliderFloat("Elastic Relaxation", &pbmpmConstants.elasticRelaxation, 0.0f, 10.0f);
-        ImGui::SliderFloat("Elastic Ratio", &pbmpmConstants.elasticityRatio, 0.0f, 2.0f);
+        ImGui::SliderFloat("Elastic Relaxation", &pbmpmConstants.elasticRelaxation, 0.0f, 3.0f);
+        ImGui::SliderFloat("Elastic Ratio", &pbmpmConstants.elasticityRatio, 0.0f, 4.0f);
+
+        ImGui::SliderFloat("Sand Relaxation", &pbmpmConstants.sandRelaxation, 0.0f, 3.0f);
+        ImGui::SliderFloat("Sand Ratio", &pbmpmConstants.sandRatio, 0.0f, 2.0f);
 
         ImGui::SliderInt("Particles Per Cell Axis", (int*)&pbmpmConstants.particlesPerCellAxis, 1, 8);
         ImGui::SliderInt("Fixed Point Multiplier", (int*)&fixedPointExponent, 4, 13);

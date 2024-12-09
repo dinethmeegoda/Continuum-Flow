@@ -48,6 +48,9 @@ struct PBMPMConstants {
 	float elasticRelaxation;
 	float elasticityRatio;
 
+	float sandRelaxation;
+	float sandRatio;
+
 	// Not passed to GPU as part of this struct
 	XMFLOAT4 mousePosition;
 	XMFLOAT4 mouseRayDirection;
