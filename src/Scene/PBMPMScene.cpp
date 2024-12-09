@@ -440,7 +440,7 @@ void PBMPMScene::constructScene() {
 		0, 0, 0, 1, 100));
 
 	// Drain
-	shapes.push_back(SimShape(0, { 55, 5, 55 }, 0, { 5, 5, 5 },
+	shapes.push_back(SimShape(0, { 9, 5, 9 }, 0, { 5, 5, 5 },
 		0, 2, 0, 1, 100));
 
 	// Collider
