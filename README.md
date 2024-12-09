@@ -13,6 +13,10 @@ Our project combines a novel particle simulation technique - the Position Based 
 
 Cloning the repository and ensuring that DirectX is correctly installed should be the only steps necessary to build and run *Breakpoint* locally. The camera uses WASD for standard cardinal movement, and Space and Control for up/down movement. Press shift and rotate the mouse to rotate the camera. All mouse control of the fluid happens when right click is pressed, with extra keyboard combinations to change the functionality. Shift is for pull, alt is for grab, and no button is for push.
 
+#### Building in VS Code
+- Clone the repository
+- From the command pallete (Ctrl + Shift + P), run `Debug: Select and Start Debugging > Release` to build and run the release build of the project.
+
 ## DirectX Core
 
 We built our project on top of the DirectX 12 graphics API, creating our own engine infrastructure with guidance from the DX documentation, samples, and tutorial series by Ohjurot. Our engine includes wrapper classes for central DirectX concepts such as structured buffers and descriptor heaps. It also provides scene constructs with support for standard vertex render pipelines, mesh-shading pipelines, and compute pipelines. With these, we can render meshes from OBJ files, PBMPM particles, and mesh-shaded fluid surfaces. The default scene includes a first person camera and mouse interaction with the PBMPM particle simulation.
@@ -30,9 +34,7 @@ For a detailed overview from the author of PBMPM, Chris Lewin, please refer to t
 The pseudocode algorithm for PBMPM is as follows:
 
 <p align="center">
-  <img src="app/image/pbmpmalgo" alt="PBMPM Algorithm" />
-  <br>
-  <i>Indexing illustration</i>
+  <img src="app/image/pbmpmalgo.png" alt="PBMPM Algorithm" />
 </p>
 
 As highlighted in red, the approach uses constraints like in PBD for rigid and soft body simulations that are seen often in modern games. However, the overall algorithmic approach is very similar to standard MPM, where there is a background grid that stores information for the simulation. 
@@ -340,17 +342,6 @@ Now for the elephant in the room: why are the last 3 stages slower in our implem
   - There are a few early returns in the original implementation. We believe this is also undefined behavior in mesh shaders, with certain restrictions. We tried our best to accomplish the same computation-savings by similar means, but it may not be comparable.
   - Again, workgroup-size sensitivity and potentially engine differences.
 
-## PBD Voxelization
-
-The project initially aimed to integrate [Position-Based Dynamics (PBD)](https://dl.acm.org/doi/pdf/10.1145/3677388.3696322) into a particle-based material point method (PBMPM) for soft-body deformation and destruction, inspired by the methodology described in the Mesh Mortal Kombat paper. The paper proposes using PBD particles to simulate destructible meshes by enforcing distance and face-to-face voxel constraints through a Gram-Schmidt orthogonalization-based method. These constraints allow the soft-body to break apart while maintaining visually plausible deformations.
-At the start of the project, we successfully implemented the basic PBD particle framework, including the initialization of constraints between particles. However, as we progressed and reached Milestone 2, several challenges became apparent:
-* Lack of Detailed Mathematical Framework: The Mesh Mortal Kombat paper provides a high-level description of the methodology but lacks sufficient detail on the mathematical underpinnings of the Gram-Schmidt constraints for real-time destructible soft bodies. Implementing these constraints in a way that integrates seamlessly with the PBMPM pipeline proved to be nontrivial without additional theoretical guidance.
-* Integration Complexity: Integrating the PBD-based soft-body deformation into the PBMPM pipeline created challenges due to the differences in how the two frameworks handle deformation and constraints. PBD is inherently position-based, while PBMPM relies on deformation gradients and stress tensors. Bridging these paradigms would have required significant restructuring of the particle and grid interactions.
-* Performance Considerations: Real-time performance was a key goal of this project. The additional computational overhead of implementing and solving the PBD constraints, especially in 3D with face-to-face voxel interactions, introduced performance bottlenecks that conflicted with our performance objectives.
-
-By prioritizing the core objectives of the project—developing a scalable and visually realistic PBMPM rendering system—we were able to achieve a stable and efficient framework for soft-body deformation. Although we chose not to implement the PBD-based soft-body destruction this time, the team decided to further explore the method to integrate PBD into this project in the future. 
-
-
 # Simulation Analysis, Performance Review
 
 ## ImGui Toggles
@@ -441,10 +432,33 @@ Bukkit size and bukkit halo size determine the size of the cells that particles 
 
 The above chart analyze the average FPS lost when adding 1 cube of 2000 particles of varying material types. The average FPS lost corresponds to the complexity of the simulation equations for each of the materials. Adding various materials increases thread divergence and computational weight at the cost of increased realism and scene depth.
 
+## Mesh Shading Performance
+
+For a detailed analysis of the following performance data, see [this section](#Fluid-Mesh-Shading).
+
+| Algorithm step              | Nishidate et al. | Ours  |
+|-----------------------------|------------------|-------|
+| Construct bilevel grid      | 0.297            | 0.107 |
+| Detect surface blocks       | 0.099            | 0.006 |
+| Detect surface cells        | 2.074            | 0.083 |
+| Compact surface vertices    | 1.438            | 0.072 |
+| Surface vertex density      | 0.391            | 0.561 |
+| Surface vertex normal       | 0.038            | 0.262 |
+| Mesh shading                | 0.611            | 1.038 |
+| **Total:**                  | **4.948**        | **2.129** |
+
+<p align="center">
+  <img src="app/image/mesh_perf_chart.svg" alt="flowchart" />
+  <br>
+  <i>Performance comparison</i>
+  <br>
+  <i>(Tested on: Windows 10 22H2, Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz, NVIDIA GeForce RTX 2060)</i>
+</p>
+
+
 Helpful resources: 
 - [PBMPM](https://www.ea.com/seed/news/siggraph2024-pbmpm)
 - [Fluid Mesh Shading Repository](https://github.com/yknishidate/mesh_shader_surface_reconstruction/tree/main/shader)
-- [PBD softbody](https://dl.acm.org/doi/pdf/10.1145/3677388.3696322)
 - For the DX12 basics and compointer class, we used this great [tutorial series!]( https://github.com/Ohjurot/D3D12Ez)
 - For the DescriptorHeap class and management, we used this [resource](https://github.com/stefanpgd/Compute-DirectX12-Tutorial/).
 
