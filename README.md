@@ -29,7 +29,11 @@ For a detailed overview from the author of PBMPM, Chris Lewin, please refer to t
 
 The pseudocode algorithm for PBMPM is as follows:
 
-![](app/image/pbmpmalgo.png)
+<p align="center">
+  <img src="app/image/pbmpmalgo" alt="PBMPM Algorithm" />
+  <br>
+  <i>Indexing illustration</i>
+</p>
 
 As highlighted in red, the approach uses constraints like in PBD for rigid and soft body simulations that are seen often in modern games. However, the overall algorithmic approach is very similar to standard MPM, where there is a background grid that stores information for the simulation. 
 
