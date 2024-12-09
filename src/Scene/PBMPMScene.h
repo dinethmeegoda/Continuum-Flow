@@ -7,6 +7,7 @@
 #include "../D3D/IndexBuffer.h"
 #include "../D3D/Pipeline/ComputePipeline.h"
 #include "Geometry.h"
+#include <iostream>
 #include <math.h>
 
 // Keep consistent with PBMPMCommon.hlsl
@@ -182,4 +183,8 @@ private:
 	void bukkitizeParticles();
 
 	void doEmission(StructuredBuffer* gridBuffer);
+
+	unsigned int frameCount{ 0 };
+	unsigned int startTime{ 0 };
+	unsigned int endTime{ 0 };
 };

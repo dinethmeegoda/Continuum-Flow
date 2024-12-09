@@ -386,7 +386,6 @@ void PBMPMScene::bukkitizeParticles() {
 }
 
 void PBMPMScene::constructScene() {
-
 	auto computeId = g2p2gPipeline.getCommandListID();
 	
 	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 9.8f, 0.2f, 0.02f,
@@ -543,6 +542,9 @@ void PBMPMScene::constructScene() {
 }
 
 void PBMPMScene::compute() {
+	/*auto now = std::chrono::system_clock::now();
+	auto duration = now.time_since_epoch();
+	startTime += (unsigned int)std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();*/
 
 	int bufferIdx = 0;
 	
@@ -633,6 +635,16 @@ void PBMPMScene::compute() {
 
 		substepIndex++;
 	}
+
+	//now = std::chrono::system_clock::now();
+	//duration = now.time_since_epoch();
+	//endTime += (unsigned int)std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
+
+	//frameCount++;
+	//if (frameCount % 100 == 0) {
+	//	//std::cout << "Average frame time: " << (endTime - startTime) / 100.0 << std::endl;
+	//	startTime = endTime = 0;
+	//}
 }
 
 void PBMPMScene::draw(Camera* cam) {
