@@ -193,7 +193,7 @@ Unlike purely elastic materials, snow undergoes permanent changes when overstres
   <i>Fluid surface reconstruction - Nishidate et al.</i>
 </p>
 
-We use a novel approach for constructing the fluid surface's polygonal mesh, via a GPU-accelerated marching cubes based algorithm that utilizes mesh shaders to save on memory bandwidth. For the unfamiliar, mesh shading is a relatively new technology that replaces the vertex, primitive assembly, and other optional stages of the graphics pipeline with a single, programmable, compute-like stage. The mesh-shading stage provides ultimate flexibility and opportunity to optimize and reduce memory usage, at the cost of increased implementation complexity. Most notably, a mesh shader can only output a maximum of 256 vertices per "workgroup". This means that each workgroup of a mesh shader must work together, outputting individual "meshlets" to combine into the overall mesh:
+We used a novel approach for constructing the fluid surface's polygonal mesh, via a GPU-accelerated marching cubes based algorithm that utilizes mesh shaders to save on memory bandwidth. For the unfamiliar, mesh shading is a relatively new technology that replaces the vertex, primitive assembly, and other optional stages of the graphics pipeline with a single, programmable, compute-like stage. The mesh-shading stage provides ultimate flexibility and opportunity to optimize and reduce memory usage, at the cost of increased implementation complexity. Notably, a mesh shader can only output a maximum of 256 vertices per "workgroup." This means that each workgroup of a mesh shader must coordinate, outputting individual "meshlets" to combine into the overall mesh:
 
 
 <p align="center">
@@ -219,7 +219,7 @@ The above stages manifest as 6 compute passes and a mesh shading pass, which can
 6. Computing the normals at each surface vertex
 7. (Mesh shading) Using marching cubes to triangulate the particle density field, then fragment shading (which uses the normals).
 
-In the course of implementing these passes, we found many opportunities for significant performance improvements based on principle concepts taught in CIS 5650. To illustrate this, compare the average compute time (in milliseconds, averaged over 1,000 frames) for each step listed above between our implementation and the original:
+In the course of implementing these passes, we found many opportunities for significant performance improvements based on core concepts taught in CIS 5650. To illustrate this, compare the average compute time (in milliseconds, averaged over 1,000 frames) for each step listed above between our implementation and the original:
 
 | Algorithm step              | Nishidate et al. | Ours  |
 |-----------------------------|------------------|-------|
@@ -235,17 +235,17 @@ In the course of implementing these passes, we found many opportunities for sign
 <p align="center">
   <img src="app/image/mesh_perf_chart.svg" alt="flowchart" />
   <br>
-  <i>Technique overview - Nishidate et al.</i>
+  <i>Performance comparison</i>
+  <br>
+  <i>(Tested on: Windows 10 22H2, Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz, NVIDIA GeForce RTX 2060)</i>
 </p>
 
 
-*(Tested on: Windows 10 22H2, Intel(R) Core(TM) i7-10750H CPU @ 2.60GHz, NVIDIA GeForce RTX 2060)*
-
-Let's discuss each step in the technique and analyze the optimizations (or lack thereof) that account for the differences in computation time:
+Let's discuss each step in the technique and analyze the optimizations that account for the differences in computation time:
 
 ### Construct the bilevel grid
 
-In this step, particles are placed into blocks (the coarse structure) and cells (the fine structure). Threads are launched for each particle, and the particle's position determines its host cell. The first particle in each cell increments its block's count of non-empty cells, *as well as its neighboring blocks'*. In the original paper, they iterate over 27 neighboring blocks complex and use highly-divergent logic to narrow down to a maximum of 8 potential blocks close enough to be affected.
+In this step, particles are placed into blocks (the coarse structure) and cells (the fine structure). Threads are launched for each particle, and the particle's position determines its host cell. The first particle in each cell increments its block's count of non-empty cells, *as well as its neighboring blocks'*. In the original paper, this first cell iterates over 27 neighboring blocks and uses highly-divergent logic to narrow down to a maximum of 8 potential neighbors close enough to be affected.
 
 In our implementation, we use clever indexing math to calculate the iteration bounds for the exact 8 neighboring blocks a-priori, avoiding much of the divergent logic.
 
@@ -255,7 +255,7 @@ In our implementation, we use clever indexing math to calculate the iteration bo
   <i>Indexing illustration</i>
 </p>
 
-By taking a vector from the center of a block to the cell represented by a given thread, we can remap that distance such that cells on the border of a block are ±1, and anything inside is 0. Not only does this tell us whether or not a cell is on a block boundary, it also gives us the directions we need to search for the 8 neighboring blocks 
+We can take a vector from the center of a block to the cell represented by a given thread, and then remap that distance such that cells on the border of a block are ±1, and anything inside is 0. Not only does this tell us whether or not a cell is on a block boundary, it also gives us the directions we need to search for the 8 neighboring blocks 
 
 ```GLSL
     // (±1 or 0, ±1 or 0, ±1 or 0)
@@ -277,7 +277,11 @@ As you can see in the above results table, this single difference nearly tripled
 
 In this step, we take the array of blocks, detect which are surface blocks (`nonEmptyCellCount > 0`), and put the indices of those surface blocks into a new, compact array. Each thread acts as a single block. The paper accomplishes this by having each surface-block thread atomically add against an index, and using that unique index to write into the output surface block indices array.
 
-Both the issue with and solution to this approach was immediately obvious to us. The issue: heavy use of atomics creates high contention and is very slow. The solution: stream compaction! Stream compaction is widely used to do precisely this task: filter on an array and compress the desired entries into an output array.
+Both the issue with and solution to this approach were immediately obvious to us: 
+
+The issue - heavy use of atomics creates high contention and is very slow. 
+
+The solution - stream compaction! Stream compaction is widely used to do precisely this task: filter on an array and compress the desired entries into an output array.
 
 <p align="center">
   <img src="app/image/streamcompaction.png" alt="streamcompaction" />
@@ -285,39 +289,42 @@ Both the issue with and solution to this approach was immediately obvious to us.
   <i>Stream compaction illustrated</i>
 </p>
 
-With parallel prefix scan, 0 atomic operations are necessary. However, given our choice of framework and the lack of a library like Thrust, implementing a prefix scan in the timeframe of this project was out of scope. Instead, we opted for a simple, yet highly effective, wave-intrinsic approach, [based on this article](https://interplayoflight.wordpress.com/2022/12/25/stream-compaction-using-wave-intrinsics/). The gist is, each wave coordinates via intrinsics to get unique write-indices into the output array, needing only 1 atomic operation per-wave to sync with the other waves. With 32 threads per wave, this is a 32x reduction in atomic usage! The effect may amplify further, however, since there's much less chance of resource contention with such a reduction in atomic usage.
+With [parallel prefix scan](https://developer.nvidia.com/gpugems/gpugems3/part-vi-gpu-computing/chapter-39-parallel-prefix-sum-scan-cuda), 0 atomic operations are necessary. However, given our choice of framework and the lack of a library like Thrust, implementing a prefix scan in the timeframe of this project was out of scope. Instead, we opted for a simple, yet highly effective, wave-intrinsic approach, [based on this article](https://interplayoflight.wordpress.com/2022/12/25/stream-compaction-using-wave-intrinsics/). The gist is, each wave coordinates via intrinsics to get unique write-indices into the output array, needing only 1 atomic operation per-wave to sync with the other waves. With 32 threads per wave, this is a 32x reduction in atomic usage! The effect may amplify further, however, since there's much less chance of resource contention with such a reduction in atomic usage.
 
 As such, it's no surprise that our implementation of this stage was over 16x faster than the original!
 
 ### Detect Surface Cells
 
-In this next step, we move from the coarse-pass to the fine. Each thread in this pass, representing a single cell in a surface block, checks its neighboring 27 cells to determine if it is a surface cell. Surface cells are those which are neither completely surrounded by filled cells, nor by completely empty cells (itself included).
+In this next step, we move from the coarse-grid to the fine. Each thread in this pass, representing a single cell in a surface block, checks its neighboring 27 cells to determine if it is a surface cell. Surface cells are those which are neither completely surrounded by filled cells, nor by completely empty cells (itself included).
 
-The great time-sink in the implementation used by Nishidate et al. is its heavy global memory throughput. Since each cells needs to reference all of its neighbors, that means each thread does 27 global memory accesses. Ouch! We realized, however, that many of these accesses are redundant. Consider two adjacent cells; each has 27 neighbors, but each shares 9 of those neighbors! The optimization opportunity improves exponentially when you consider that we're analyzing *blocks* of cells, with nearly complete neighbor overlap.
+The great time-sink in the original paper's implementation is its heavy global memory throughput. Since each cells needs to reference all of its neighbors, that means each thread does 27 global memory accesses. Ouch! We realized, however, that many of these accesses are redundant. Consider two adjacent cells; each has 27 neighbors, but each shares 9 of those neighbors! The optimization opportunity improves exponentially when you consider that we're analyzing *blocks* of cells, with nearly complete neighbor overlap.
 
-The solution, then, is to pull all cell data for a block into groupshared memory. This way, for a given block of 64 cells (4 x 4 x 4), instead of doing 27 * 64 = 1728 global memory reads, we only need to do 125 reads (5 x 5 x 5). Each cell still looks up neighboring information, but from shared memory instead of global memory. The indexing is somewhat complex to make sure that 64 threads can efficiently pull data for 125 cells, but we can actually reuse the trick from the bilevel grid construction to get the right iteration bounds!
+The solution, then, is to pull all cell data for a block into groupshared memory. This way, for a given block of 64 cells (4 x 4 x 4), instead of doing 27 * 64 = 1728 global memory reads, we only need to do 125 reads (5 x 5 x 5). Each cell still looks up neighboring information, but from shared memory instead of global memory. The indexing is somewhat complex to make sure that 64 threads can efficiently pull data for 125 cells, but we can actually repurpose the trick from the bilevel grid construction to get the right iteration bounds!
 
-And, once again, looking at the performance results above, we see a MASSIVE 25x increase in performance.
+And, once again, looking at the performance results above, we see a **massive** 25x increase in performance.
 
 ### Compact Surface Vertices
 
-This is exactly the same idea as the wave intrinsic optimization done in detecting surface blocks, but with the surface vertices! Because there are so many more of these, the contention with atomic usage is exacerbated, thus the 20x performance increase!
+This is exactly the same idea as the wave intrinsic optimization done in detecting surface blocks, but with the surface vertices! Because there are so many more vertices than surface blocks, the contention with atomic usage is exacerbated, thus the 20x performance increase with our approach!
 
 ### The rest
 
 Aside from these major optimizations, there were also several smaller ones that we'll mention briefly:
-- The original paper uses one-dimensional workgroup sizes. This results in a few places where expensive modular arithmetic must be used to convert from a 1D thread ID to a 3D index. By using a 3D workgroup size, which better aligns with the underlying model, we can avoid some (but not all) of that modular arithmetic
-- TODO (need notes from other branch)
+- The original paper uses one-dimensional workgroups. This results in a few places where expensive modular arithmetic must be used to convert from a 1D thread ID to a 3D index. By using a 3D workgroup, which better aligns with the underlying model, we can avoid some (but not all) of that modular arithmetic
+- Rather than projecting each fluid mesh fragment to screen space in the fragment shader, we do that in the mesh shading step per-vertex and allow it to be interpolated.
+- We also avoided divergent control flow logic in deeply nested loops by precalculating iteration bounds (and pre-clamping to grid boundaries).
 
-Now for the elephant in the room: why are the last 3 stages slower in our implementation? The short answer is: we're not exactly sure why, but we have theories!
+Now for the elephant in the room: why are the last 3 stages slower in our implementation? The short answer is: we're not exactly sure why, but we have theories.
 
 - Surface vertex density and surface normals: our implementations for these passes are nearly identical to the original paper's. If anything, minor optimizations in these passes should have results in slightly faster times. 
   - Our best guess for the discrepancies are that our wave-intrinsic optimization in the vertex compaction stage somehow results in a less-ideal memory layout for following stages. 
   - These stages also appear to be highly sensitive to workgroup sizes, so it's possible that we just did not find the optimal configuration for our hardware. 
   - Lastly, some differences may be due to engine differences (being new to DirectX, we may not have written optimal engine code), and graphics API platforms (Vulkan + GLSL vs. DirectX + HLSL).
 </br>
+
 - Mesh shading: again, our implementation is similar to the original paper's. However, some steps in the original implementation are actually undefined behavior, forcing us to diverge slightly (these behaviors). 
-  - Most notably, since mesh output sizes (number of vertices and primitives) must be declared before writing to them, we needed to use shared memory to store our vertex data first, then later write them to global memory.
+  - Most notably, since mesh output sizes (number of vertices and primitives) must be declared before writing to them, we needed to use extra shared memory to store our vertex data first, then later write them to global memory.
+  - Where the original implementation does use shared memory, they do not synchronize the workgroup after writing.
   - There are a few early returns in the original implementation. We believe this is also undefined behavior in mesh shaders, with certain restrictions. We tried our best to accomplish the same computation-savings by similar means, but it may not be comparable.
   - Again, workgroup-size sensitivity and potentially engine differences.
 
