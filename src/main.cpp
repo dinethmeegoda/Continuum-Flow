@@ -89,7 +89,7 @@ int main() {
 			);
 
             pbmpmIterConstants.mouseRadius = 5.0;
-            pbmpmIterConstants.mouseVelocity = 1.0;
+            pbmpmIterConstants.mouseVelocity = 100.0;
 
             scene.updatePBMPMConstants(pbmpmIterConstants);
         }

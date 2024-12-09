@@ -93,6 +93,7 @@ struct SimShape {
 	int material;
 	float emissionRate;
 	int radius;
+    float3 padding;
 };
 
 // Helper Functions
