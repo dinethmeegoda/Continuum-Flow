@@ -99,7 +99,7 @@ int main() {
         }
 
         //compute pbmpm + mesh shader
-        scene.compute();
+        scene.compute(renderMode != 2);
 
         //get pipelines
         auto renderPipeline = scene.getPBMPMRenderPipeline();
@@ -128,16 +128,10 @@ int main() {
         scene.drawSolidObjects();
         context.executeCommandList(objectSolidPipeline->getCommandListID());
 
-        //mesh render pass
-        Window::get().setRT(meshPipeline->getCommandList());
-        Window::get().setViewport(vp, meshPipeline->getCommandList());
-        if (renderMode != 1) scene.drawFluid(renderMeshlets);
-        context.executeCommandList(meshPipeline->getCommandListID());
-
         //particles + imgui render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
-        if (renderMode != 0) scene.drawPBMPM();
+        scene.drawPBMPM(renderMode);
 
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();
@@ -163,6 +157,12 @@ int main() {
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), renderPipeline->getCommandList());
 
         context.executeCommandList(renderPipeline->getCommandListID());
+
+        //mesh render pass
+        Window::get().setRT(meshPipeline->getCommandList());
+        Window::get().setViewport(vp, meshPipeline->getCommandList());
+        if (renderMode != 2) scene.drawFluid(renderMeshlets);
+        context.executeCommandList(meshPipeline->getCommandListID());
 
         //end frame
         Window::get().endFrame(firstPipeline->getCommandList());
