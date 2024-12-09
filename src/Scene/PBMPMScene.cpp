@@ -757,7 +757,7 @@ bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {
 		one.iterationCount == two.iterationCount;
 }
 
-int PBMPMScene::getParticleCount() {
+int PBMPMScene::transferAndGetNumParticles() {
 	XMINT4 count;
 	particleCount.copyDataFromGPU(
 		*context, 
@@ -767,5 +767,6 @@ int PBMPMScene::getParticleCount() {
 		g2p2gPipeline.getCommandListID()
 	);
 
-	return count.x;
+	numParticles = count.x;
+	return numParticles;
 }

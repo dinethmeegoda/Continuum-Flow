@@ -54,7 +54,7 @@ void Scene::compute() {
 	pbmpmScene.compute();
 	fluidScene.compute(
 		pbmpmScene.getPositionBuffer(),
-		pbmpmScene.getParticleCount()
+		pbmpmScene.transferAndGetNumParticles()
 	);
 }
 
