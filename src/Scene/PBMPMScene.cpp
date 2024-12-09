@@ -393,7 +393,7 @@ void PBMPMScene::constructScene() {
 		(unsigned int)std::ceil(std::pow(10, 7)),
 		1, 4, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.9f, 1.4f, 2.0f, 1.5f, 0.5f,
 		// Mouse Defaults
-		{0, 0, 0, 0}, {0, 0, 0, 0}, 0, 6, 0, 10, 
+		{0, 0, 0, 0}, {0, 0, 0, 0}, 0, 6, 0, 20, 
 	};
 	
 	// Create Vertex & Index Buffer
@@ -437,19 +437,19 @@ void PBMPMScene::constructScene() {
 
 	// Water Cube
 	shapes.push_back(SimShape(0, { 32, 32, 32 }, 0, { 3, 3, 3 },
-		0, 0, 0, 1, 100));
+		0, 0, 0, 0.5, 100));
 
 	// Drain
-	shapes.push_back(SimShape(0, { 9, 5, 9 }, 0, { 5, 5, 5 },
+	shapes.push_back(SimShape(0, { 32, 5, 9 }, 0, { 32, 5, 5 },
 		0, 2, 0, 1, 100));
 
 	// Collider
 	shapes.push_back(SimShape(0, { 32, 5, 40 }, 0, { 5, 5, 5 },
 		0, 1, 0, 1, 100));
 
-	// Sand Cube
+	// Sand Emitter
 	shapes.push_back(SimShape(0, { 10, 20, 54 }, 0, { 3, 1, 2 },
-		0, 0, 2, 1, 100));
+		0, 0, 2, 0.1, 100));
 
 	// Snow
 	//shapes.push_back(SimShape(0, { 20, 58, 20 }, 0, { 4, 3, 4 },
