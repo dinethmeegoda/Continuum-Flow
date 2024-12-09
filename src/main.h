@@ -86,7 +86,7 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
 
     ImGui::SliderInt("Particles Per Cell Axis", (int*)&pbmpmConstants.particlesPerCellAxis, 1, 8);
     ImGui::SliderInt("Fixed Point Multiplier", (int*)&fixedPointExponent, 4, 13);
-    pbmpmConstants.fixedPointMultiplier = pow(10, fixedPointExponent);
+    pbmpmConstants.fixedPointMultiplier = (unsigned int)pow(10, fixedPointExponent);
 
     ImGui::SliderFloat("Border Friction", &pbmpmConstants.borderFriction, 0.0f, 1.0f);
 

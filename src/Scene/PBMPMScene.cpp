@@ -37,32 +37,32 @@ PBMPMScene::PBMPMScene(DXContext* context, RenderPipeline* pipeline, unsigned in
 }
 
 void PBMPMScene::createBukkitSystem() {
-	int bukkitCountX = std::ceil(constants.gridSize.x / BukkitSize);
-	int bukkitCountY = std::ceil(constants.gridSize.y / BukkitSize);
-	int bukkitCountZ = std::ceil(constants.gridSize.z / BukkitSize);
+	int bukkitCountX = (int)std::ceil(constants.gridSize.x / BukkitSize);
+	int bukkitCountY = (int)std::ceil(constants.gridSize.y / BukkitSize);
+	int bukkitCountZ = (int)std::ceil(constants.gridSize.z / BukkitSize);
 
 	std::vector<int> count;
 	count.resize(bukkitCountX * bukkitCountY * bukkitCountZ);
-	bukkitSystem.countBuffer = StructuredBuffer(count.data(), count.size(), sizeof(int));
+	bukkitSystem.countBuffer = StructuredBuffer(count.data(), (unsigned int)count.size(), sizeof(int));
 
 	std::vector<int> count2;
 	count2.resize(bukkitCountX * bukkitCountY * bukkitCountZ);
-	bukkitSystem.countBuffer2 = StructuredBuffer(count2.data(), count2.size(), sizeof(int));
+	bukkitSystem.countBuffer2 = StructuredBuffer(count2.data(), (unsigned int)count2.size(), sizeof(int));
 
 	std::vector<int> particleData;
 	particleData.resize(maxParticles);
-	bukkitSystem.particleData = StructuredBuffer(particleData.data(), particleData.size(), sizeof(int));
+	bukkitSystem.particleData = StructuredBuffer(particleData.data(), (unsigned int)particleData.size(), sizeof(int));
 
 	std::vector<BukkitThreadData> threadData;
 	threadData.resize(5 * 10 * bukkitCountX * bukkitCountY * bukkitCountZ); //ik why this is 50
-	bukkitSystem.threadData = StructuredBuffer(threadData.data(), threadData.size(), sizeof(BukkitThreadData));
+	bukkitSystem.threadData = StructuredBuffer(threadData.data(), (unsigned int)threadData.size(), sizeof(BukkitThreadData));
 
 	XMUINT4 allocator = { 0, 0, 0, 0 };
 	bukkitSystem.particleAllocator = StructuredBuffer(&allocator, 1, sizeof(XMUINT4));
 
 	std::vector<int> indexStart;
 	indexStart.resize(bukkitCountX * bukkitCountY * bukkitCountZ);
-	bukkitSystem.indexStart = StructuredBuffer(indexStart.data(), indexStart.size(), sizeof(int));
+	bukkitSystem.indexStart = StructuredBuffer(indexStart.data(), (unsigned int)indexStart.size(), sizeof(int));
 
 	XMUINT4 dispatch = { 0, 1, 1, 0 };
 	bukkitSystem.dispatch = StructuredBuffer(&dispatch, 1, sizeof(XMUINT4));
@@ -193,9 +193,9 @@ void PBMPMScene::resetBuffers(bool resetGrids) {
 }
 
 void PBMPMScene::doEmission(StructuredBuffer* gridBuffer) {
-	unsigned int threadGroupCountX = std::floor((constants.gridSize.x + GridDispatchSize - 1) / GridDispatchSize);
-	unsigned int threadGroupCountY = std::floor((constants.gridSize.y + GridDispatchSize - 1) / GridDispatchSize);
-	unsigned int threadGroupCountZ = std::floor((constants.gridSize.z + GridDispatchSize - 1) / GridDispatchSize);
+	unsigned int threadGroupCountX = (unsigned int)std::floor((constants.gridSize.x + GridDispatchSize - 1) / GridDispatchSize);
+	unsigned int threadGroupCountY = (unsigned int)std::floor((constants.gridSize.y + GridDispatchSize - 1) / GridDispatchSize);
+	unsigned int threadGroupCountZ = (unsigned int)std::floor((constants.gridSize.z + GridDispatchSize - 1) / GridDispatchSize);
 
 	auto emissionCmd = emissionPipeline.getCommandList();
 	auto indirectCmd = setIndirectArgsPipeline.getCommandList();
@@ -319,7 +319,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitAllocatePipeline.getCommandList()->SetComputeRootDescriptorTable(2, bukkitSystem.threadData.getUAVGPUDescriptorHandle());
 
 	//dispatch directly
-	bukkitAllocatePipeline.getCommandList()->Dispatch(bukkitDispatchSizeX, bukkitDispatchSizeY, bukkitDispatchSizeZ);
+	bukkitAllocatePipeline.getCommandList()->Dispatch((UINT)bukkitDispatchSizeX, (UINT)bukkitDispatchSizeY, (UINT)bukkitDispatchSizeZ);
 
 	// Transition bukkitCount back to UAV
 	D3D12_RESOURCE_BARRIER bukkitCountBarrierEnd = CD3DX12_RESOURCE_BARRIER::Transition(bukkitSystem.countBuffer.getBuffer(), D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
@@ -389,9 +389,9 @@ void PBMPMScene::constructScene() {
 
 	auto computeId = g2p2gPipeline.getCommandListID();
 	
-	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01, 9.8, 0.2, 0.02,
+	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 9.8f, 0.2f, 0.02f,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2, 0, 0};
+		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2f, 0, 0};
 	
 	// Create Vertex & Index Buffer
 	auto sphereData = generateSphere(PARTICLE_RADIUS, 16, 16);
@@ -399,11 +399,11 @@ void PBMPMScene::constructScene() {
 
 	std::vector<XMFLOAT4> positions;
 	positions.resize(maxParticles);
-	positionBuffer = StructuredBuffer(positions.data(), positions.size(), sizeof(XMFLOAT4));
+	positionBuffer = StructuredBuffer(positions.data(), (unsigned int)positions.size(), sizeof(XMFLOAT4));
 
 	std::vector<PBMPMParticle> particles;
 	particles.resize(maxParticles);
-	particleBuffer = StructuredBuffer(particles.data(), particles.size(), sizeof(PBMPMParticle));
+	particleBuffer = StructuredBuffer(particles.data(), (unsigned int)particles.size(), sizeof(PBMPMParticle));
 	
 	std::vector<int> freeIndices;
 	freeIndices.resize(1 + maxParticles); //maybe four maybe one idk
@@ -411,7 +411,7 @@ void PBMPMScene::constructScene() {
 	XMUINT4 count = { 0, 0, 0, 0 };
 
 	particleCount = StructuredBuffer(&count, 1, sizeof(XMUINT4));
-	particleFreeIndicesBuffer = StructuredBuffer(freeIndices.data(), freeIndices.size(), sizeof(int));
+	particleFreeIndicesBuffer = StructuredBuffer(freeIndices.data(), (unsigned int)freeIndices.size(), sizeof(int));
 	
 	// Set it based on instance size
 	XMUINT4 simDispatch = {0, 1, 1, 0};
@@ -431,12 +431,12 @@ void PBMPMScene::constructScene() {
 	shapes.push_back(SimShape(0, { 32, 32, 32}, 0, { 3, 3, 3 },
 		0, 0, 0, 1, 100));
 
-	shapeBuffer = StructuredBuffer(shapes.data(), shapes.size(), sizeof(SimShape));
+	shapeBuffer = StructuredBuffer(shapes.data(), (unsigned int)shapes.size(), sizeof(SimShape));
 
 	//Temp tile data buffer
 	std::vector<int> tempTileData;
 	tempTileData.resize(100000000);
-	tempTileDataBuffer = StructuredBuffer(tempTileData.data(), tempTileData.size(), sizeof(int));
+	tempTileDataBuffer = StructuredBuffer(tempTileData.data(), (unsigned int)tempTileData.size(), sizeof(int));
 
 	// Pass Structured Buffers to Compute Pipeline
 	positionBuffer.passDataToGPU(*context, g2p2gPipeline.getCommandList(), computeId);
@@ -470,7 +470,7 @@ void PBMPMScene::constructScene() {
 	gridBufferData.resize(constants.gridSize.x * constants.gridSize.y * constants.gridSize.z * 5); //LOOK : 4 or 5?
 
 	for (int i = 0; i < 3; i++) {
-		gridBuffers[i] = StructuredBuffer(gridBufferData.data(), gridBufferData.size(), sizeof(int));
+		gridBuffers[i] = StructuredBuffer(gridBufferData.data(), (unsigned int)gridBufferData.size(), sizeof(int));
 		gridBuffers[i].passDataToGPU(*context, g2p2gPipeline.getCommandList(), g2p2gPipeline.getCommandListID());
 		gridBuffers[i].createUAV(*context, g2p2gPipeline.getDescriptorHeap());
 	}
@@ -560,7 +560,7 @@ void PBMPMScene::compute() {
 		StructuredBuffer* nextGrid = &gridBuffers[1];
 		StructuredBuffer* nextNextGrid = &gridBuffers[2];
 
-		for (int iterationIdx = 0; iterationIdx < constants.iterationCount; iterationIdx++) {
+		for (unsigned int iterationIdx = 0; iterationIdx < constants.iterationCount; iterationIdx++) {
 			constants.iteration = iterationIdx;
 
 			updateSimUniforms(iterationIdx);
