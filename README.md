@@ -6,19 +6,21 @@ Our project combines a novel particle simulation technique - PBMPM, developed by
 
 ![Demo](images/mouseDemo.gif)
 
+## Build the Project and Controls
+
+Cloning the repository and ensuring that DirectX is correctly installed should be the only steps necessary to build and run *Breakpoint* locally. The camera uses WASD for standard cardinal movement, and Space and Control for up/down movement. Press shift and rotate the mouse to rotate the camera. All mouse control of the fluid happens when right click is pressed, with extra keyboard combinations to change the functionality. Shift is for pull, alt is for grab, and no button is for push.
+
 ## DirectX Core
 
-We built our project on top of the DirectX 12 graphics API, creating our own engine infrastructure with guidance from the DX documentation, samples, and tutorial series by Ohjurot. Our engine includes wrapper classes for central DirectX concepts such as structured buffers and descriptor heaps. It also provides scene constructs with support for standard vertex render pipelines, mesh-shading pipelines, and compute pipelines. With these, we can render meshes from OBJ files, PBMPM particles, and mesh-shaded fluid surfaces. The default scene includes an FPS camera and mouse interaction with the PBMPM particle simulation.
+We built our project on top of the DirectX 12 graphics API, creating our own engine infrastructure with guidance from the DX documentation, samples, and tutorial series by Ohjurot. Our engine includes wrapper classes for central DirectX concepts such as structured buffers and descriptor heaps. It also provides scene constructs with support for standard vertex render pipelines, mesh-shading pipelines, and compute pipelines. With these, we can render meshes from OBJ files, PBMPM particles, and mesh-shaded fluid surfaces. The default scene includes a first person camera and mouse interaction with the PBMPM particle simulation.
 
 For the graphical interface (which includes interactive sliders for the simulation and rendering parameters), we used ImGUI.
 
 ## PBMPM
 
-The public repository for PBMPM includes a 2D, non-optimized version of the simulation. We hope to expand this to 3D, and add shared memory GPU optimizations to PBMPM to make it real time in DirectX. We have had trouble setting up the grid to play well with our camera and object scale as well as volume preservation, and moving to 3D has caused some further issues with particle movement.
+*Breakpoint* includes a 3D implemention of Chris Lewin's PBMPM. The public repository for PBMPM is a 2D WebGPU version, and there is an EA in-house 3D version on the CPU. *Breakpoint* is the first instance of PBMPM in DirectX on the GPU in 3D. 
 
 PBMPM works by putting particles into a grid of bukkits, allocating work per bukkit, and then enforcing movement constraints per material per bukkit. The bukkits have a halo range so the particles can react to the movement of particles within neighboring bukkits.
-
-As of milestone 3, the 2D implementation has working bucketing, mouse movement for forces, and sand, snow, and liquid materials. In 2D gravity is applied and particles interact, but volume loss and noise are prevalent in the system. In 3D, the forces are not applied properly, and there is an unknown bug causing the particles to move up and to the right.
 
 ### Materials
 
