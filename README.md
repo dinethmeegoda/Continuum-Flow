@@ -452,3 +452,27 @@ Chris Lewin. [A Position Based Material Point Method](https://www.ea.com/seed). 
 Stomakhin, A., Schroeder, C., Chai, L., Teran, J., Selle, A. 2013. A Material Point Method for Snow Simulation. ACM Trans. Graph. 32, 4, Article 102 (July 2013), 12 pages. DOI = 10.1145/2461912.2461948
 http://doi.acm.org/10.1145/2461912.2461948.
 ```
+
+# Bloopers and Cool Shots
+
+Inside of the mesh shaded fluid:
+
+![](app/image/indamesh.png)
+
+![](app/image/indamesh2.png)
+
+Celebration splash when we first got 2D working:
+
+![](app/image/firstFluid.gif)
+
+Another 2D gif:
+
+![](app/image/waterfall.gif)
+
+Accidental meshlet couch:
+
+![](app/image/meshcouch.png)
+
+First attempt at porting 2D to 3D:
+
+![](app/image/startOf3D.gif)
