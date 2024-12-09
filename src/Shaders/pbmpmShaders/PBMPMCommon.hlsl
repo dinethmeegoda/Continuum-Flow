@@ -5,6 +5,7 @@
 #define BukkitSize 2
 #define BukkitHaloSize 1
 #define GuardianSize 3
+#define MaxSimShapes 8
 
 #define MaterialLiquid 0
 #define MaterialElastic 1
@@ -49,14 +50,15 @@ struct PBMPMConstants {
 	float borderFriction;
     float elasticRelaxation;
     float elasticityRatio;
+};
 
-    //mouse stuff
+struct MouseConstants {
     float4 mousePosition;
-    float4 mouseDirection;
+    float4 mouseRayDirection;
     unsigned int mouseActivation;
-    unsigned int mouseRadius;
+    float mouseRadius;
     unsigned int mouseFunction;
-    float mouseVelocity;
+    float mouseStrength;
 };
 
 // Define constants for identity and zero matrices
@@ -160,7 +162,7 @@ struct CubicWeightInfo
 CubicWeightInfo cubicWeightInit(float3 position)
 {
     float3 roundDownPosition = floor(position);
-    float3 offset = position - roundDownPosition;
+    float3 offset = position - roundDownPosition - 0.5;
 
     CubicWeightInfo result;
     result.weights[0] = pow3(2.0 - (1.0 + offset)) / 6.0;

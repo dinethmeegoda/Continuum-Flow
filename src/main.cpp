@@ -21,7 +21,7 @@ int main() {
     //set mouse to use the window
     mouse->SetWindow(Window::get().getHWND());
 
-	// Get the client area of the window
+    // Get the client area of the window
     RECT rect;
     GetClientRect(Window::get().getHWND(), &rect);
     float clientWidth = static_cast<float>(rect.right - rect.left);
@@ -53,61 +53,55 @@ int main() {
 
         if (mState.rightButton) {
 
+			// If right mouse button is pressed, we should update constants
+
             if (kState.LeftShift) {
                 // Pulling Fluid
                 pbmpmIterConstants.mouseFunction = 2;
-			}
+            }
             else if (kState.LeftAlt) {
                 // Grab Fluid Ball
                 pbmpmIterConstants.mouseFunction = 1;
             }
             else {
-				// Pushing Fluid
+                // Pushing Fluid
                 pbmpmIterConstants.mouseFunction = 0;
-			}
+            }
 
-            //enable mouse force
+            // enable mouse force
             pbmpmIterConstants.mouseActivation = 1;
 
             POINT mousePos;
             GetCursorPos(&mousePos);
-
-			ScreenToClient(Window::get().getHWND(), &mousePos);
-
+            ScreenToClient(Window::get().getHWND(), &mousePos);
             float ndcX = (2.0f * mousePos.x / clientWidth) - 1.0f;
             float ndcY = 1.0f - (2.0f * mousePos.y / clientHeight);
 
-			XMFLOAT4 prevMousePos = pbmpmIterConstants.mousePosition;
-			ComputeMouseRay(
-				Window::get().getHWND(),
-				ndcX,
-				ndcY,
-				camera->getProjMat(),
-				camera->getViewMat(),
+            XMFLOAT4 prevMousePos = pbmpmIterConstants.mousePosition;
+            ComputeMouseRay(
+                Window::get().getHWND(),
+                ndcX,
+                ndcY,
+                camera->getProjMat(),
+                camera->getViewMat(),
                 pbmpmIterConstants.mousePosition,
-                pbmpmIterConstants.mouseDirection
-			);
-
-            pbmpmIterConstants.mouseRadius = 5.0;
-            pbmpmIterConstants.mouseVelocity = 100.0;
-
-            scene.updatePBMPMConstants(pbmpmIterConstants);
+                pbmpmIterConstants.mouseRayDirection
+            );
         }
         else {
             pbmpmIterConstants.mouseActivation = 0;
-			scene.updatePBMPMConstants(pbmpmIterConstants);
         }
 
         //compute pbmpm + mesh shader
         scene.compute(renderMode != 2);
 
         //get pipelines
-        auto pbmpmPipeline = scene.getPBMPMRenderPipeline();
+        auto renderPipeline = scene.getPBMPMRenderPipeline();
         auto meshPipeline = scene.getFluidMeshPipeline();
         auto objectWirePipeline = scene.getObjectWirePipeline();
         auto objectSolidPipeline = scene.getObjectSolidPipeline();
         //whichever pipeline renders first should begin and end the frame
-        auto firstPipeline = objectSolidPipeline;
+        auto firstPipeline = objectWirePipeline;
 
         //begin frame
         Window::get().beginFrame(firstPipeline->getCommandList());
@@ -116,6 +110,12 @@ int main() {
         D3D12_VIEWPORT vp;
         Window::get().createViewport(vp, firstPipeline->getCommandList());
 
+        //wire object render pass
+        Window::get().setRT(objectWirePipeline->getCommandList());
+        Window::get().setViewport(vp, objectWirePipeline->getCommandList());
+        if (renderGrid) scene.drawWireObjects();
+        context.executeCommandList(objectWirePipeline->getCommandListID());
+
         //solid object render pass
         Window::get().setRT(objectSolidPipeline->getCommandList());
         Window::get().setViewport(vp, objectSolidPipeline->getCommandList());
@@ -123,9 +123,15 @@ int main() {
         context.executeCommandList(objectSolidPipeline->getCommandListID());
 
         //particles + imgui render pass
-        Window::get().setRT(pbmpmPipeline->getCommandList());
-        Window::get().setViewport(vp, pbmpmPipeline->getCommandList());
+        Window::get().setRT(renderPipeline->getCommandList());
+        Window::get().setViewport(vp, renderPipeline->getCommandList());
         scene.drawPBMPM(renderMode);
+
+        //mesh render pass
+        Window::get().setRT(meshPipeline->getCommandList());
+        Window::get().setViewport(vp, meshPipeline->getCommandList());
+        if (renderMode != 2) scene.drawFluid(renderMeshlets);
+        context.executeCommandList(meshPipeline->getCommandListID());
 
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();
@@ -142,33 +148,21 @@ int main() {
 
         //render ImGUI
         ImGui::Render();
-        if (!PBMPMScene::constantsEqual(pbmpmIterConstants, pbmpmCurrConstants)) {
+        if (pbmpmIterConstants.mouseActivation == 1 || !PBMPMScene::constantsEqual(pbmpmIterConstants, pbmpmCurrConstants)) {
             scene.updatePBMPMConstants(pbmpmIterConstants);
             pbmpmCurrConstants = pbmpmIterConstants;
         }
 
-        pbmpmPipeline->getCommandList()->SetDescriptorHeaps(1, &imguiSRVHeap);
-        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), pbmpmPipeline->getCommandList());
+        renderPipeline->getCommandList()->SetDescriptorHeaps(1, &imguiSRVHeap);
+        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), renderPipeline->getCommandList());
 
-        context.executeCommandList(pbmpmPipeline->getCommandListID());
-
-        //mesh render pass
-        Window::get().setRT(meshPipeline->getCommandList());
-        Window::get().setViewport(vp, meshPipeline->getCommandList());
-        if (renderMode != 2) scene.drawFluid(renderMeshlets);
-        context.executeCommandList(meshPipeline->getCommandListID());
-
-        //wire object render pass
-        Window::get().setRT(objectWirePipeline->getCommandList());
-        Window::get().setViewport(vp, objectWirePipeline->getCommandList());
-        if (renderGrid) scene.drawWireObjects();
-        context.executeCommandList(objectWirePipeline->getCommandListID());
+        context.executeCommandList(renderPipeline->getCommandListID());
 
         //end frame
         Window::get().endFrame(firstPipeline->getCommandList());
 
         Window::get().present();
-		context.resetCommandList(pbmpmPipeline->getCommandListID());
+		context.resetCommandList(renderPipeline->getCommandListID());
         context.resetCommandList(meshPipeline->getCommandListID());
         context.resetCommandList(objectWirePipeline->getCommandListID());
         context.resetCommandList(objectSolidPipeline->getCommandListID());

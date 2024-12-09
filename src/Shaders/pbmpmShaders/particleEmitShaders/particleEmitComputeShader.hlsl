@@ -3,11 +3,20 @@
 
 // Taken from https://github.com/electronicarts/pbmpm
 
-// Root constants bound to b0
-ConstantBuffer<PBMPMConstants> g_simConstants : register(b0);
+// Root constants bound to b0 & b1
+cbuffer simConstants : register(b0) {
+	PBMPMConstants g_simConstants;
+};
+
+cbuffer mouseConstants : register(b1) {
+    MouseConstants g_mouseConstants;
+};
 
 // Define the constant buffer with an array of SimShapes
-StructuredBuffer<SimShape> g_shapes : register(t0);
+cbuffer shapes : register(b2)
+{
+    SimShape g_shapes[MaxSimShapes]; // Adjust the size of the array as needed
+};
 
 // Structured Buffer for particles (read-write UAV)
 RWStructuredBuffer<Particle> g_particles : register(u0);
@@ -19,7 +28,7 @@ RWStructuredBuffer<int> g_freeIndices : register(u1);
 RWStructuredBuffer<int> g_particleCount : register(u2);
 
 // Structured Buffer for grid source data (read-only SRV)
-StructuredBuffer<int> g_grid : register(t1);
+StructuredBuffer<int> g_grid : register(t0);
 
 // Structured Buffer for positions (read-write UAV)
 RWStructuredBuffer<float4> g_positions : register(u3);
@@ -97,8 +106,8 @@ void addParticle(float3 position, int material, float volume, float density, flo
     );
 
     g_particles[particleIndex] = newParticle;
-    g_materials[particleIndex] = material;
-    g_positions[particleIndex] = float4(position + float3(jitter.x, jitter.y, 0.f) * jitterScale, 1.0);
+	g_materials[particleIndex] = material;
+	g_positions[particleIndex] = float4(position + float3(jitter.x, jitter.y, 0.f) * jitterScale, 1.0);
 }
 
 [numthreads(GridDispatchSize, GridDispatchSize, GridDispatchSize)]

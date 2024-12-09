@@ -16,12 +16,13 @@ const unsigned int GridDispatchSize = 8;
 const unsigned int BukkitSize = 2;
 const unsigned int BukkitHaloSize = 1;
 
-const float PARTICLE_RADIUS = 0.5f;
+const float PARTICLE_RADIUS = 0.2f;
 
 const unsigned int maxParticles = 500000;
 const unsigned int maxTimestampCount = 2048;
 
 struct PBMPMConstants {
+	// Actually 22 floats
 	XMUINT3 gridSize; //2 -> 3
 	float deltaTime;
 	float gravityStrength;
@@ -47,14 +48,23 @@ struct PBMPMConstants {
 	float elasticRelaxation;
 	float elasticityRatio;
 
-
-	//mouse stuff
+	// Not passed to GPU as part of this struct
 	XMFLOAT4 mousePosition;
-	XMFLOAT4 mouseDirection;
+	XMFLOAT4 mouseRayDirection;
 	unsigned int mouseActivation;
-	unsigned int mouseRadius;
+	float mouseRadius;
 	unsigned int mouseFunction;
-	float mouseVelocity;
+	float mouseStrength;
+};
+
+struct MouseConstants {
+	// Struct used to pass to GPU
+	XMFLOAT4 mousePosition;
+	XMFLOAT4 mouseRayDirection;
+	unsigned int mouseActivation;
+	float mouseRadius;
+	unsigned int mouseFunction;
+	float mouseStrength;
 };
 
 struct SimShape {
@@ -185,7 +195,7 @@ private:
 
 	void bukkitizeParticles();
 
-	void doEmission(StructuredBuffer* gridBuffer);
+	void doEmission(StructuredBuffer* gridBuffer, MouseConstants& mc);
 
 	unsigned int frameCount{ 0 };
 	unsigned int startTime{ 0 };

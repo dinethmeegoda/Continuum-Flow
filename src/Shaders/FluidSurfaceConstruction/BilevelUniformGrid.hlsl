@@ -28,7 +28,6 @@ void main(uint3 globalThreadId : SV_DispatchThreadID) {
         return;
     }
 
-    // Check that the particle is water, return otherwise
 	if (materialsBuffer[globalThreadId.x] != 0) {
 		return;
 	}
