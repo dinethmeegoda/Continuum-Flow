@@ -368,7 +368,9 @@ These parameters tune how the particles behave, and the speed and accuracy of th
 
 ![](app/image/meshshaderparams.png)
 
-The parameters here tune how the mesh shading algorithm will scale the kernel and isovalue for rendering of the particles.
+- Isovalue: determines what fluid density constitutes the "surface."
+- Kernel scale: generally speaking, controls the "blobiness" of the fluid.
+- Kkernel radius: controls the search radius for neighboring cells in the algorithm.
 
 ### Render Parameters
 
