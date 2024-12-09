@@ -19,7 +19,7 @@ We built our project on top of the DirectX 12 graphics API, creating our own eng
 
 For the graphical interface (which includes interactive sliders for the simulation and rendering parameters), we used ImGUI.
 
-## PBMPM
+## Position Based Material Point Method
 
 *Breakpoint* includes a 3D implemention of EA's Position Based Material Point Method. The public repository for PBMPM is a 2D WebGPU version, and there is an EA in-house 3D version on the CPU. *Breakpoint* is the first instance of PBMPM in DirectX on the GPU in 3D. 
 
@@ -361,7 +361,7 @@ These parameters tune how the particles behave, and the speed and accuracy of th
 
 ### Mesh Shading Parameters
 
-![](app/image/meshshaderparams.png
+![](app/image/meshshaderparams.png)
 
 The parameters here tune how the mesh shading algorithm will scale the kernel and isovalue for rendering of the particles.
 
