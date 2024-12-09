@@ -104,7 +104,7 @@ void main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID) {
     // fetch its surrounding extra-surface cells (and itself).
     // This follows the same strategy as the bilevel uniform grid shader.
     float halfCellsPerBlockEdgeMinusOne = ((CELLS_PER_BLOCK_EDGE - 1) / 2.0);
-    int kernelOffset = int(cb.kernelRadius / cb.resolution);
+    int kernelOffset = int(0.999 * cb.kernelRadius / cb.resolution);
     int3 edge = int3(trunc((localCellIndex3d - halfCellsPerBlockEdgeMinusOne) / halfCellsPerBlockEdgeMinusOne));
     edge *= kernelOffset;
     // By converting neighbors to global-space here, we can clamp to the grid bounds and avoid 
@@ -132,8 +132,8 @@ void main(uint3 localThreadId : SV_GroupThreadID, uint3 groupId : SV_GroupID) {
     GroupMemoryBarrierWithGroupSync();
 
     // Similar trick as before to get the search bounds, but this time we're iterating over the full range of block cells (within grid bounds).
-    minSearchBounds = clamp(globalCellIndex3d - int3(kernelOffset, kernelOffset, kernelOffset), int3(0, 0, 0), cb.dimensions - 1);
-    maxSearchBounds = clamp(globalCellIndex3d + int3(kernelOffset, kernelOffset, kernelOffset), int3(0, 0, 0), cb.dimensions - 1);
+    minSearchBounds = clamp(globalCellIndex3d - int3(1, 1, 1) - int3(kernelOffset, kernelOffset, kernelOffset), int3(0, 0, 0), cb.dimensions - 1);
+    maxSearchBounds = clamp(globalCellIndex3d + int3(1, 1, 1) + int3(kernelOffset, kernelOffset, kernelOffset), int3(0, 0, 0), cb.dimensions - 1);
 
     // A cell is NOT a surface cell if either:
     // 1. All of its neighbors and itself are empty
