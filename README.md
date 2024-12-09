@@ -306,7 +306,14 @@ Now for the elephant in the room: why are the last 3 stages slower in our implem
 
 ## PBD Voxelization
 
-The Mesh Mortal Kombat paper focuses on using PBD particles to seperate a mesh into pieces that can break apart like a realistic soft body. This works by enforcing distance constraints within the voxels and face to face constraints between them. We initially wanted to use PBMPM particles to cause the destruction of the soft body materials. However, as the project progressed and we hit milestone 2, we realized it was not realistic to get a working PBMPM and PBD integration. This is largely caused because there is not much detail on the math behind the constraints and approach used for the soft body destruction. We decided it was best to focus our time on a solid PBMPM rendering rather than trying to work out the details of the soft body destruction.
+The project initially aimed to integrate [Position-Based Dynamics (PBD)](https://dl.acm.org/doi/pdf/10.1145/3677388.3696322) into a particle-based material point method (PBMPM) for soft-body deformation and destruction, inspired by the methodology described in the Mesh Mortal Kombat paper. The paper proposes using PBD particles to simulate destructible meshes by enforcing distance and face-to-face voxel constraints through a Gram-Schmidt orthogonalization-based method. These constraints allow the soft-body to break apart while maintaining visually plausible deformations.
+At the start of the project, we successfully implemented the basic PBD particle framework, including the initialization of constraints between particles. However, as we progressed and reached Milestone 2, several challenges became apparent:
+* Lack of Detailed Mathematical Framework: The Mesh Mortal Kombat paper provides a high-level description of the methodology but lacks sufficient detail on the mathematical underpinnings of the Gram-Schmidt constraints for real-time destructible soft bodies. Implementing these constraints in a way that integrates seamlessly with the PBMPM pipeline proved to be nontrivial without additional theoretical guidance.
+* Integration Complexity: Integrating the PBD-based soft-body deformation into the PBMPM pipeline created challenges due to the differences in how the two frameworks handle deformation and constraints. PBD is inherently position-based, while PBMPM relies on deformation gradients and stress tensors. Bridging these paradigms would have required significant restructuring of the particle and grid interactions.
+* Performance Considerations: Real-time performance was a key goal of this project. The additional computational overhead of implementing and solving the PBD constraints, especially in 3D with face-to-face voxel interactions, introduced performance bottlenecks that conflicted with our performance objectives.
+
+By prioritizing the core objectives of the project—developing a scalable and visually realistic PBMPM rendering system—we were able to achieve a stable and efficient framework for soft-body deformation. Although we chose not to implement the PBD-based soft-body destruction this time, the team decided to further explore the method to integrate PBD into this project in the future. 
+
 
 # Performance Review
 
@@ -350,6 +357,7 @@ Helpful resources:
 - [PBMPM](https://www.ea.com/seed/news/siggraph2024-pbmpm)
 - [Fluid Mesh Shading](https://dl.acm.org/doi/10.1145/3651285)
 - [Disney Snow](https://media.disneyanimation.com/uploads/production/publication_asset/94/asset/SSCTS13_2.pdf)
+- [PBD softbody](https://dl.acm.org/doi/pdf/10.1145/3677388.3696322)
 - For the DX12 basics and compointer class, we used this great tutorial series resource: https://github.com/Ohjurot/D3D12Ez
 
 # Citations / Attributions
