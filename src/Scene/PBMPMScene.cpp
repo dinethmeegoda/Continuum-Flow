@@ -391,9 +391,9 @@ void PBMPMScene::constructScene() {
 	
 	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 9.8f, 0.2f, 0.02f,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 4, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.9f, 1.4f, 2.0f,
+		1, 4, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.9f, 1.4f, 2.0f, 1.5f, 0.5f,
 		// Mouse Defaults
-		{0, 0, 0, 0}, {0, 0, 0, 0}, 0, 6, 0, 10
+		{0, 0, 0, 0}, {0, 0, 0, 0}, 0, 6, 0, 10, 
 	};
 	
 	// Create Vertex & Index Buffer
@@ -447,9 +447,9 @@ void PBMPMScene::constructScene() {
 	shapes.push_back(SimShape(0, { 32, 5, 40 }, 0, { 5, 5, 5 },
 		0, 1, 0, 1, 100));
 
-	// Visco Cube
-	shapes.push_back(SimShape(0, { 10, 10, 54 }, 0, { 8, 8, 8 },
-		0, 3, 2, 1, 100));
+	// Sand Cube
+	shapes.push_back(SimShape(0, { 10, 20, 54 }, 0, { 3, 1, 2 },
+		0, 0, 2, 1, 100));
 
 	// Snow
 	//shapes.push_back(SimShape(0, { 20, 58, 20 }, 0, { 4, 3, 4 },
@@ -615,7 +615,7 @@ void PBMPMScene::compute() {
 			cmdList->SetPipelineState(g2p2gPipeline.getPSO());
 			cmdList->SetComputeRootSignature(g2p2gPipeline.getRootSignature());
 
-			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 22, &constants, 0);
+			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 24, &constants, 0);
 			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(1, 12, &mouseConstants, 0);
 			g2p2gPipeline.getCommandList()->SetComputeRootConstantBufferView(2, shapeBuffer.getGPUVirtualAddress());
 
@@ -778,6 +778,8 @@ void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {
 	constants.elasticRelaxation = newConstants.elasticRelaxation;
 	constants.elasticityRatio = newConstants.elasticityRatio;
 	constants.iterationCount = newConstants.iterationCount;
+	constants.sandRatio = newConstants.sandRatio;
+	constants.sandRelaxation = newConstants.sandRelaxation;
 
 	constants.mousePosition = newConstants.mousePosition;
 	constants.mouseRayDirection = newConstants.mouseRayDirection;
@@ -798,6 +800,8 @@ bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {
 		one.borderFriction == two.borderFriction &&
 		one.elasticRelaxation == two.elasticRelaxation &&
 		one.elasticityRatio == two.elasticityRatio &&
+		one.sandRelaxation == two.sandRelaxation &&
+		one.sandRatio == two.sandRatio &&
 		one.iterationCount == two.iterationCount &&
 		one.mouseActivation == two.mouseActivation &&
 		one.mouseRadius == two.mouseRadius &&

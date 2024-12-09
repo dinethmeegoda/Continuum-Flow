@@ -521,7 +521,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                             }
                         frobNrm = sqrt(frobNrm);
 
-                        float elasticityRatio = g_simConstants.elasticityRatio;
+                        float sandRatio = g_simConstants.sandRatio;
                         if (trace >= 0.0f) {
 
                             svdResult.Sigma = lerp(svdResult.Sigma, float3(1.0f, 1.0f, 1.0f), 0.5f);
@@ -530,7 +530,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                             particle.logJp = beta * trace;
                         }
                         else {
-                            float deltaGammaI = frobNrm + (elasticityRatio + 1.0f) * trace * alpha;
+                            float deltaGammaI = frobNrm + (sandRatio + 1.0f) * trace * alpha;
                             if (deltaGammaI > 0.0f) {
 
                                 float meanStrain = trace / 3.0f;
@@ -686,11 +686,8 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 // Perform SVD in 3D
                 SVDResult svdResult = svd(F);
 
-                
-
-
-                float elasticRelaxation = g_simConstants.elasticRelaxation;
-                float elasticityRatio = g_simConstants.elasticityRatio;
+                float elasticRelaxation = g_simConstants.sandRelaxation;
+                float elasticityRatio = g_simConstants.sandRatio;
 
                 // Handle initial state
                 if (particle.logJp == 0)
