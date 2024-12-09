@@ -91,7 +91,7 @@ float4 main(PSInput input) : SV_Target
     float3 meshPos = planeRayIntersect(cb.cameraPos, dir);
     float dist = distance(pos, meshPos);
     float3 trans = clamp(exp(-remapTo01(dist, 1.0, 30.0)), 0.0, 1.0) * baseColor;
-    refraction = trans * float4(GROUND_PLANE_COLOR, 1.0); // plane background color
+    refraction = trans * float3(GROUND_PLANE_COLOR); // plane background color
 
     float3 baseColor = refraction * (1.0 - fr) + reflection * fr;
     return float4(gammaCorrect(baseColor), 1.0);
