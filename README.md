@@ -68,6 +68,20 @@ The Mesh Mortal Kombat paper focuses on using PBD particles to seperate a mesh i
 
 ![](app/image/particlecount.png)
 
+![](app/image/itercount.png)
+
+![](app/image/substepcount.png)
+
+![](app/image/gridsize.png)
+
+![](app/image/griddispatch.png)
+
+![](app/image/particledispatch.png)
+
+![](app/image/cellaxis.png)
+
+![](app/image/bukkithalosize.png)
+
 ## Fluid Mesh Shading
 
 Helpful resources: 
