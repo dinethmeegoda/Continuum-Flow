@@ -390,3 +390,25 @@ Helpful resources:
 ```
 Chris Lewin. [A Position Based Material Point Method](https://www.ea.com/seed). ACM SIGGRAPH 2024.
 ```
+
+```
+@article{10.1145/2897824.2925906,
+    author = {Kl\'{a}r, Gergely and Gast, Theodore and Pradhana, Andre and Fu, Chuyuan and Schroeder, Craig and Jiang, Chenfanfu and Teran, Joseph},
+    title = {Drucker-prager elastoplasticity for sand animation},
+    year = {2016},
+    issue_date = {July 2016},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    volume = {35},
+    number = {4},
+    issn = {0730-0301},
+    url = {https://doi.org/10.1145/2897824.2925906},
+    doi = {10.1145/2897824.2925906},
+    abstract = {We simulate sand dynamics using an elastoplastic, continuum assumption. We demonstrate that the Drucker-Prager plastic flow model combined with a Hencky-strain-based hyperelasticity accurately recreates a wide range of visual sand phenomena with moderate computational expense. We use the Material Point Method (MPM) to discretize the governing equations for its natural treatment of contact, topological change and history dependent constitutive relations. The Drucker-Prager model naturally represents the frictional relation between shear and normal stresses through a yield stress criterion. We develop a stress projection algorithm used for enforcing this condition with a non-associative flow rule that works naturally with both implicit and explicit time integration. We demonstrate the efficacy of our approach on examples undergoing large deformation, collisions and topological changes necessary for producing modern visual effects.},
+    journal = {ACM Trans. Graph.},
+    month = jul,
+    articleno = {103},
+    numpages = {12},
+    keywords = {sand, granular, elastoplasticity, MPM, APIC}
+}
+```
