@@ -2,12 +2,22 @@
 
 Our project combines a novel particle simulation technique - the Position Based Material Point Method(PBMPM), developed by EA - with a state-of-the-art fluid surface construction method, using mesh shading and a bilevel-grid, all running in real time. 
 
-# Breakpoint - Project Overview
+# Breakpoint
 
 <p align="center">
   <img src="/app/image/mouseDemo.gif" alt="mousedemo" />
   <br>
 </p>
+
+## Contents
+
+- [Build the Project and Controls](#build-the-project-and-controls)
+- [DirectX Core](#directx-core)
+- [Position Based Material Point Method](#position-based-material-point-method)
+- [Fluid mesh shading](#fluid-mesh-shading)
+- [Simulation Analysis and Performance Review](#simulation-analysis-performance-review)
+- [Citations and attributions](#citations--attributions)
+- [Bloopers](#bloopers-and-cool-shots)
 
 ## Build the Project and Controls
 
@@ -463,6 +473,9 @@ Helpful resources:
 - For the DescriptorHeap class and management, we used this [resource](https://github.com/stefanpgd/Compute-DirectX12-Tutorial/).
 
 # Citations / Attributions
+
+Thank you to Chris Lewin, Ishaan Singh, and Yuki Nishidate for corresponding with us and offering implementation advice throughout the course of this project
+
 ```
 @article{10.1145/3651285,
     author = {Nishidate, Yuki and Fujishiro, Issei},
@@ -515,30 +528,46 @@ http://doi.acm.org/10.1145/2461912.2461948.
 
 # Bloopers and Cool Shots
 
-Inside of the mesh shaded fluid:
+<p align="center">
+  <i>Inside the mesh-shaded fluid in PIX debug view</i>
+  </br>
+  <img src="app/image/indamesh.png" alt="inside the mesh" />
+</p>
 
-![](app/image/indamesh.png)
 
-![](app/image/indamesh2.png)
+<p align="center">
+  <img src="app/image/indamesh2.png" alt="inside the mesh 2" />
+</p>
 
-Celebration splash when we first got 2D working:
+<p align="center">
+  <i>Celebration splash when we first got 2D working</i>
+  </br>
+  <img src="app/image/firstFluid.gif" alt="First fluid, 2D" />
+</p>
 
-![](app/image/firstFluid.gif)
+<p align="center">
+  <img src="app/image/waterfall.gif" alt="More 2D fluid" />
+</p>
 
-Another 2D gif:
+<p align="center">
+  <i>Accidental meshlet couch, forgot the depth buffer!</i>
+  </br>
+  <img src="app/image/meshcouch.png" alt="More 2D fluid" />
+</p>
 
-![](app/image/waterfall.gif)
+<p align="center">
+  <i>First attempt at going from 2D to 3D PBMPM</i>
+  </br>
+  <img src="app/image/startOf3D.gif" alt="First attempt at porting 2D to 3D" />
+</p>
 
-Accidental meshlet couch:
+<p align="center">
+  <i>Some angry particles</i>
+  </br>
+  <img src="app/image/swirly-wirly.gif" alt="Some angry particles" />
+</p>
 
-![](app/image/meshcouch.png)
-
-First attempt at porting 2D to 3D:
-
-![](app/image/startOf3D.gif)
-
-Some angry particles:
-
-![](app/image/swirly-wirly.gif)
-
-![](app/image/evilwhirl.gif)
+<p align="center">
+  </br>
+  <img src="app/image/evilwhirl.gif" alt="Evil whirl" />
+</p>
