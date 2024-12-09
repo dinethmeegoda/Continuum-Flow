@@ -44,7 +44,7 @@ if (particle.material == MaterialLiquid)
 }
 ```
 
-### Sand
+#### Sand
 
 The sand implementation is based on the [Drucker-Prager plasticity model](https://dl.acm.org/doi/10.1145/2897824.2925906). 
 
@@ -75,7 +75,7 @@ The main update loop handles the elastic-plastic decomposition of deformation an
     float3x3 tgt = alpha_blend * elasticPart + (1.0 - alpha_blend) * Q;
 ```
 
-### Visco
+#### Visco
 
 The Visco material model in this project represents a highly viscous, non-Newtonian fluid-like material that bridges the gap between purely elastic solids and fully fluid materials. It is intended for scenarios where you want to simulate materials that flow under prolonged stress but still maintain some structural integrity under short loading times—such as pitch, wax, or thick mud. By carefully tuning the parameters, you can achieve a range of behaviors from a slow-creeping putty to a thick slurry.
 
@@ -104,7 +104,7 @@ The Visco material model in this project represents a highly viscous, non-Newton
     particle.deformationGradient = mul(mul(svdResult.U, diag(svdResult.Sigma)), svdResult.Vt);
 ```
 
-### Elastic
+#### Elastic
 
 The Elastic material in this project simulates a solid-like material that deforms under load but returns to its original shape once forces are removed, analogous to rubber or soft metals (in their elastic range). It is the simplest and most fundamental of the material implemented, serving as a baseline for understanding more complex behaviors like plasticity or viscosity.
 
@@ -134,7 +134,7 @@ Unlike plastic or granular materials, the Elastic material does not accumulate p
     particle.deformationDisplacement += elasticRelaxation * diff;
 ```
 
-### Snow
+#### Snow
 
 The Snow material model is based on the elastoplastic framework described in [Stomakhin et al. 2013, A Material Point Method for Snow Simulation](https://media.disneyanimation.com/uploads/production/publication_asset/94/asset/SSCTS13_2.pdf). This model treats snow as a porous, elastoplastic medium that resists deformation elastically up to certain critical thresholds, after which it undergoes permanent (plastic) rearrangements. The approach enables simulating both firm, rigid snowpacks and flowing avalanches within a unified formulation.
 
@@ -319,7 +319,41 @@ At the start of the project, we successfully implemented the basic PBD particle 
 By prioritizing the core objectives of the project—developing a scalable and visually realistic PBMPM rendering system—we were able to achieve a stable and efficient framework for soft-body deformation. Although we chose not to implement the PBD-based soft-body destruction this time, the team decided to further explore the method to integrate PBD into this project in the future. 
 
 
-# Performance Review
+# Simulation Analysis, Performance Review
+
+## ImGui Toggles
+
+We have implemented some helpful debug views and quick switch parameters with ImGui for tuning.
+
+### Simulation Parameters
+
+![](app/image/simparams.png)
+
+These parameters tune how the particles behave, and the speed and accuracy of the simulation.
+
+### Mesh Shading Parameters
+
+![](app/image/meshshaderparams.png
+
+The parameters here tune how the mesh shading algorithm will scale the kernel and isovalue for rendering of the particles.
+
+### Render Parameters
+
+![](app/image/renderparams.png)
+
+There are three render modes to toggle between, and some debug view options.
+
+![](app/image/griddebugview.png)
+
+Toggling on the grid view will color the different simulation shapes(colliders, drains, emitters, the grid). There are also render modes for particles with mesh shading, and just mesh shading, pictured here respectively: 
+
+![](app/image/rendermode2.png)
+
+![](app/image/rendermode3.png)
+
+Lastly, there is a toggle to see the meshlets in the mesh shader:
+
+![](app/image/meshletrendertoggle.png)
 
 ## PBMPM
 
@@ -418,3 +452,27 @@ Chris Lewin. [A Position Based Material Point Method](https://www.ea.com/seed). 
 Stomakhin, A., Schroeder, C., Chai, L., Teran, J., Selle, A. 2013. A Material Point Method for Snow Simulation. ACM Trans. Graph. 32, 4, Article 102 (July 2013), 12 pages. DOI = 10.1145/2461912.2461948
 http://doi.acm.org/10.1145/2461912.2461948.
 ```
+
+# Bloopers and Cool Shots
+
+Inside of the mesh shaded fluid:
+
+![](app/image/indamesh.png)
+
+![](app/image/indamesh2.png)
+
+Celebration splash when we first got 2D working:
+
+![](app/image/firstFluid.gif)
+
+Another 2D gif:
+
+![](app/image/waterfall.gif)
+
+Accidental meshlet couch:
+
+![](app/image/meshcouch.png)
+
+First attempt at porting 2D to 3D:
+
+![](app/image/startOf3D.gif)

@@ -99,7 +99,6 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
     }
 
     if (ImGui::CollapsingHeader("Mesh Shading Parameters")) {
-        ImGui::TextColored({ 0, 1, 0, 1 }, "Mesh Shading Parameters");
         ImGui::SliderFloat("Isovalue", isovalue, 0.01f, 1.0f);
         ImGui::SliderFloat("Kernel Scale", kernelScale, 2.5f, 12.0f);
         ImGui::SliderFloat("Kernel Radius", kernelRadius, 0.3f, 3.0f);
