@@ -50,13 +50,15 @@ struct PBMPMConstants {
 	float borderFriction;
     float elasticRelaxation;
     float elasticityRatio;
+};
 
-    //mouse stuff
+struct MouseConstants {
     float4 mousePosition;
+    float4 mouseRayDirection;
     unsigned int mouseActivation;
-    unsigned int mouseRadius;
+    float mouseRadius;
     unsigned int mouseFunction;
-    unsigned int mouseVelocity;
+    float mouseStrength;
 };
 
 // Define constants for identity and zero matrices

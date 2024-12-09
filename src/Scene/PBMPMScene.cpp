@@ -192,7 +192,7 @@ void PBMPMScene::resetBuffers(bool resetGrids) {
 	context->resetCommandList(bukkitInsertPipeline.getCommandListID());
 }
 
-void PBMPMScene::doEmission(StructuredBuffer* gridBuffer) {
+void PBMPMScene::doEmission(StructuredBuffer* gridBuffer, MouseConstants& mc) {
 	unsigned int threadGroupCountX = (unsigned int)std::floor((constants.gridSize.x + GridDispatchSize - 1) / GridDispatchSize);
 	unsigned int threadGroupCountY = (unsigned int)std::floor((constants.gridSize.y + GridDispatchSize - 1) / GridDispatchSize);
 	unsigned int threadGroupCountZ = (unsigned int)std::floor((constants.gridSize.z + GridDispatchSize - 1) / GridDispatchSize);
@@ -212,11 +212,12 @@ void PBMPMScene::doEmission(StructuredBuffer* gridBuffer) {
 	emissionCmd->ResourceBarrier(1, &gridBufferBarrier);
 
 	// Set Root Descriptors
-	emissionCmd->SetComputeRoot32BitConstants(0, 30, &constants, 0);
-	emissionCmd->SetComputeRootConstantBufferView(1, shapeBuffer.getGPUVirtualAddress());
-	emissionCmd->SetComputeRootDescriptorTable(2, particleBuffer.getUAVGPUDescriptorHandle());
-	emissionCmd->SetComputeRootDescriptorTable(3, gridBuffer->getSRVGPUDescriptorHandle());
-	emissionCmd->SetComputeRootDescriptorTable(4, positionBuffer.getUAVGPUDescriptorHandle());
+	emissionCmd->SetComputeRoot32BitConstants(0, 22, &constants, 0);
+	emissionCmd->SetComputeRoot32BitConstants(1, 12, &mc, 0);
+	emissionCmd->SetComputeRootConstantBufferView(2, shapeBuffer.getGPUVirtualAddress());
+	emissionCmd->SetComputeRootDescriptorTable(3, particleBuffer.getUAVGPUDescriptorHandle());
+	emissionCmd->SetComputeRootDescriptorTable(4, gridBuffer->getSRVGPUDescriptorHandle());
+	emissionCmd->SetComputeRootDescriptorTable(5, positionBuffer.getUAVGPUDescriptorHandle());
 
 	emissionCmd->Dispatch(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
 
@@ -276,7 +277,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitCountPipeline.getCommandList()->ResourceBarrier(1, &particlePositionsBarrier);
 
 	// Properly set the Descriptors & Resource Transitions
-	bukkitCountPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 30, &constants, 0);
+	bukkitCountPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 22, &constants, 0);
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(1, particleCount.getSRVGPUDescriptorHandle());
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(2, particleBuffer.getSRVGPUDescriptorHandle());
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(3, positionBuffer.getSRVGPUDescriptorHandle());
@@ -314,7 +315,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitAllocatePipeline.getCommandList()->ResourceBarrier(1, &bukkitCountBarrier);
 
 	// Properly set the Descriptors & Resource Transitions
-	bukkitAllocatePipeline.getCommandList()->SetComputeRoot32BitConstants(0, 30, &constants, 0);
+	bukkitAllocatePipeline.getCommandList()->SetComputeRoot32BitConstants(0, 34, &constants, 0);
 	bukkitAllocatePipeline.getCommandList()->SetComputeRootDescriptorTable(1, bukkitSystem.countBuffer.getSRVGPUDescriptorHandle());
 	bukkitAllocatePipeline.getCommandList()->SetComputeRootDescriptorTable(2, bukkitSystem.threadData.getUAVGPUDescriptorHandle());
 
@@ -352,7 +353,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitInsertPipeline.getCommandList()->ResourceBarrier(2, barriers);
 
 	// Properly set the Descriptors
-	bukkitInsertPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 30, &constants, 0);
+	bukkitInsertPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 34, &constants, 0);
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(1, particleBuffer.getSRVGPUDescriptorHandle());
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(2, bukkitSystem.countBuffer2.getUAVGPUDescriptorHandle());
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(3, bukkitSystem.indexStart.getSRVGPUDescriptorHandle());
@@ -556,6 +557,10 @@ void PBMPMScene::compute() {
 	auto duration = now.time_since_epoch();
 	startTime += (unsigned int)std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();*/
 
+	// Create Mouse Constants from PBMPM Constants
+	MouseConstants mouseConstants = { constants.mousePosition, constants.mouseRayDirection,
+		constants.mouseActivation, constants.mouseRadius, constants.mouseFunction, constants.mouseStrength };
+
 	int bufferIdx = 0;
 	
 	resetBuffers(true);
@@ -593,18 +598,19 @@ void PBMPMScene::compute() {
 			cmdList->SetPipelineState(g2p2gPipeline.getPSO());
 			cmdList->SetComputeRootSignature(g2p2gPipeline.getRootSignature());
 
-			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 30, &constants, 0);
+			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 22, &constants, 0);
+			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(1, 12, &mouseConstants, 0);
 
 			ID3D12DescriptorHeap* computeDescriptorHeaps[] = { g2p2gPipeline.getDescriptorHeap()->Get() };
 			cmdList->SetDescriptorHeaps(_countof(computeDescriptorHeaps), computeDescriptorHeaps);
 
-			cmdList->SetComputeRootDescriptorTable(1, particleBuffer.getUAVGPUDescriptorHandle());
-			cmdList->SetComputeRootDescriptorTable(2, bukkitSystem.particleData.getSRVGPUDescriptorHandle());
-			cmdList->SetComputeRootDescriptorTable(3, currentGrid->getSRVGPUDescriptorHandle());
-			cmdList->SetComputeRootDescriptorTable(4, nextGrid->getUAVGPUDescriptorHandle());
-			cmdList->SetComputeRootDescriptorTable(5, nextNextGrid->getUAVGPUDescriptorHandle());
-			cmdList->SetComputeRootDescriptorTable(6, tempTileDataBuffer.getUAVGPUDescriptorHandle());
-			cmdList->SetComputeRootDescriptorTable(7, positionBuffer.getUAVGPUDescriptorHandle());
+			cmdList->SetComputeRootDescriptorTable(2, particleBuffer.getUAVGPUDescriptorHandle());
+			cmdList->SetComputeRootDescriptorTable(3, bukkitSystem.particleData.getSRVGPUDescriptorHandle());
+			cmdList->SetComputeRootDescriptorTable(4, currentGrid->getSRVGPUDescriptorHandle());
+			cmdList->SetComputeRootDescriptorTable(5, nextGrid->getUAVGPUDescriptorHandle());
+			cmdList->SetComputeRootDescriptorTable(6, nextNextGrid->getUAVGPUDescriptorHandle());
+			cmdList->SetComputeRootDescriptorTable(7, tempTileDataBuffer.getUAVGPUDescriptorHandle());
+			cmdList->SetComputeRootDescriptorTable(8, positionBuffer.getUAVGPUDescriptorHandle());
 
 			// Transition dispatch buffer to an indirect argument
 			auto dispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(bukkitSystem.dispatch.getBuffer(),
@@ -638,7 +644,7 @@ void PBMPMScene::compute() {
 			// Reinitialize command list
 			context->resetCommandList(g2p2gPipeline.getCommandListID());
 		}
-		doEmission(currentGrid);
+		doEmission(currentGrid, mouseConstants);
 		bukkitizeParticles();
 
 		substepIndex++;
@@ -655,7 +661,7 @@ void PBMPMScene::compute() {
 	//}
 }
 
-void PBMPMScene::draw(Camera* cam) {
+void PBMPMScene::draw(Camera* cam, unsigned int renderMode) {
 	auto cmdList = renderPipeline->getCommandList();
 
 	// IA
@@ -686,6 +692,7 @@ void PBMPMScene::draw(Camera* cam) {
 	cmdList->SetGraphicsRoot32BitConstants(0, 16, &viewMat, 0);
 	cmdList->SetGraphicsRoot32BitConstants(0, 16, &projMat, 16);
 	cmdList->SetGraphicsRoot32BitConstants(0, 16, &modelMat, 32);
+	cmdList->SetGraphicsRoot32BitConstants(0, 1, &renderMode, 48);
 	cmdList->SetGraphicsRootDescriptorTable(1, positionBuffer.getSRVGPUDescriptorHandle()); // Descriptor table slot 1 for position & mat SRV
 
 	// Draw
@@ -753,6 +760,13 @@ void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {
 	constants.elasticRelaxation = newConstants.elasticRelaxation;
 	constants.elasticityRatio = newConstants.elasticityRatio;
 	constants.iterationCount = newConstants.iterationCount;
+
+	constants.mousePosition = newConstants.mousePosition;
+	constants.mouseRayDirection = newConstants.mouseRayDirection;
+	constants.mouseActivation = newConstants.mouseActivation;
+	constants.mouseRadius = newConstants.mouseRadius;
+	constants.mouseFunction = newConstants.mouseFunction;
+	constants.mouseStrength = newConstants.mouseStrength;
 }
 
 bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {

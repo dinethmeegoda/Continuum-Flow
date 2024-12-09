@@ -29,7 +29,7 @@ static int fixedPointExponent = 7;
 static bool useGridVolume = true;
 static bool renderGrid = false;
 
-const char* modes[] = { "Mesh Shaded Fluid", "Particles", "Mesh Shaded Fluid with Particles" };
+const char* modes[] = { "Mesh Shaded Fluid, Non-Fluid Particles", "Mesh Shaded Fluid, All Particles", "No Mesh Shaded Fluid, All Particles" };
 
 ImGuiIO& initImGUI(DXContext& context) {
     IMGUI_CHECKVERSION();
@@ -116,4 +116,46 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
     }
 
     ImGui::End();
+}
+
+void ComputeMouseRay(
+    HWND hwnd,
+    float ndcX,
+    float ndcY,
+    const XMMATRIX& projectionMatrix,
+    const XMMATRIX& viewMatrix,
+    XMFLOAT4& rayOrigin,
+    XMFLOAT4& rayDirection
+) {
+    // Invert the projection and view matrices
+    XMMATRIX invProj = XMMatrixInverse(nullptr, projectionMatrix);
+    XMMATRIX invView = XMMatrixInverse(nullptr, viewMatrix);
+
+    // Define the mouse's NDC position on the near and far planes
+    XMVECTOR ndcNear = XMVectorSet(ndcX, ndcY, 0.0f, 1.0f); // Near plane
+    XMVECTOR ndcFar = XMVectorSet(ndcX, ndcY, 1.0f, 1.0f);   // Far plane
+
+    // Unproject the NDC points to view space
+    XMVECTOR viewNear = XMVector3TransformCoord(ndcNear, invProj);
+    XMVECTOR viewFar = XMVector3TransformCoord(ndcFar, invProj);
+
+    // Transform the points from view space to world space
+    XMVECTOR worldNear = XMVector3TransformCoord(viewNear, invView);
+    XMVECTOR worldFar = XMVector3TransformCoord(viewFar, invView);
+
+    // Calculate the ray origin (camera position) and direction
+    rayOrigin = XMFLOAT4(
+        XMVectorGetX(worldNear),
+        XMVectorGetY(worldNear),
+        XMVectorGetZ(worldNear),
+        1.0f
+    );
+
+    XMVECTOR rayDir = XMVector3Normalize(XMVectorSubtract(worldFar, worldNear));
+    rayDirection = XMFLOAT4(
+        XMVectorGetX(rayDir),
+        XMVectorGetY(rayDir),
+        XMVectorGetZ(rayDir),
+        0.0f
+    );
 }

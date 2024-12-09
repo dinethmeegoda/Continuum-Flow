@@ -21,6 +21,12 @@ int main() {
     //set mouse to use the window
     mouse->SetWindow(Window::get().getHWND());
 
+    // Get the client area of the window
+    RECT rect;
+    GetClientRect(Window::get().getHWND(), &rect);
+    float clientWidth = static_cast<float>(rect.right - rect.left);
+    float clientHeight = static_cast<float>(rect.bottom - rect.top);
+
     //initialize scene
     Scene scene{camera.get(), &context};
 
@@ -46,29 +52,52 @@ int main() {
         camera->kmStateCheck(kState, mState);
 
         if (mState.rightButton) {
-            //enable mouse force
+
+			// If right mouse button is pressed, we should update constants
+
+            if (kState.LeftShift) {
+                // Pulling Fluid
+                pbmpmIterConstants.mouseFunction = 2;
+            }
+            else if (kState.LeftAlt) {
+                // Grab Fluid Ball
+                pbmpmIterConstants.mouseFunction = 1;
+            }
+            else {
+                // Pushing Fluid
+                pbmpmIterConstants.mouseFunction = 0;
+            }
+
+            // enable mouse force
             pbmpmIterConstants.mouseActivation = 1;
 
-            POINT cursorPos;
-            GetCursorPos(&cursorPos);
+            POINT mousePos;
+            GetCursorPos(&mousePos);
+            ScreenToClient(Window::get().getHWND(), &mousePos);
+            float ndcX = (2.0f * mousePos.x / clientWidth) - 1.0f;
+            float ndcY = 1.0f - (2.0f * mousePos.y / clientHeight);
 
-            float ndcX = (2.0f * cursorPos.x) / SCREEN_WIDTH - 1.0f;
-            float ndcY = -(2.0f * cursorPos.y) / SCREEN_HEIGHT + 1.0f;
+            XMFLOAT4 prevMousePos = pbmpmIterConstants.mousePosition;
+            ComputeMouseRay(
+                Window::get().getHWND(),
+                ndcX,
+                ndcY,
+                camera->getProjMat(),
+                camera->getViewMat(),
+                pbmpmIterConstants.mousePosition,
+                pbmpmIterConstants.mouseRayDirection
+            );
 
-            XMVECTOR screenCursorPos = XMVectorSet(ndcX, ndcY, 0.0f, 1.0f);
-            XMVECTOR worldCursorPos = XMVector4Transform(screenCursorPos, camera->getInvViewProjMat());
-            XMStoreFloat4(&(pbmpmIterConstants.mousePosition), worldCursorPos);
-
-            pbmpmIterConstants.mouseFunction = 0;
-            pbmpmIterConstants.mouseRadius = 1000;
-            scene.updatePBMPMConstants(pbmpmIterConstants);
+            // Should be controlled by IMGUI
+            pbmpmIterConstants.mouseRadius = 8.0;
+            pbmpmIterConstants.mouseStrength = 1.0;
         }
         else {
             pbmpmIterConstants.mouseActivation = 0;
         }
 
         //compute pbmpm + mesh shader
-        scene.compute();
+        scene.compute(renderMode != 2);
 
         //get pipelines
         auto renderPipeline = scene.getPBMPMRenderPipeline();
@@ -97,16 +126,16 @@ int main() {
         scene.drawSolidObjects();
         context.executeCommandList(objectSolidPipeline->getCommandListID());
 
-        //mesh render pass
-        Window::get().setRT(meshPipeline->getCommandList());
-        Window::get().setViewport(vp, meshPipeline->getCommandList());
-        if (renderMode != 1) scene.drawFluid(renderMeshlets);
-        context.executeCommandList(meshPipeline->getCommandListID());
-
         //particles + imgui render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
-        if (renderMode != 0) scene.drawPBMPM();
+        scene.drawPBMPM(renderMode);
+
+        //mesh render pass
+        Window::get().setRT(meshPipeline->getCommandList());
+        Window::get().setViewport(vp, meshPipeline->getCommandList());
+        if (renderMode != 2) scene.drawFluid(renderMeshlets);
+        context.executeCommandList(meshPipeline->getCommandListID());
 
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();
@@ -123,7 +152,7 @@ int main() {
 
         //render ImGUI
         ImGui::Render();
-        if (!PBMPMScene::constantsEqual(pbmpmIterConstants, pbmpmCurrConstants)) {
+        if (pbmpmIterConstants.mouseActivation == 1 || !PBMPMScene::constantsEqual(pbmpmIterConstants, pbmpmCurrConstants)) {
             scene.updatePBMPMConstants(pbmpmIterConstants);
             pbmpmCurrConstants = pbmpmIterConstants;
         }

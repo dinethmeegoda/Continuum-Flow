@@ -3,11 +3,17 @@
 
 // Taken from https://github.com/electronicarts/pbmpm
 
-// Root constants bound to b0
-ConstantBuffer<PBMPMConstants> g_simConstants : register(b0);
+// Root constants bound to b0 & b1
+cbuffer simConstants : register(b0) {
+	PBMPMConstants g_simConstants;
+};
+
+cbuffer mouseConstants : register(b1) {
+    MouseConstants g_mouseConstants;
+};
 
 // Define the constant buffer with an array of SimShapes
-cbuffer shapes : register(b1)
+cbuffer shapes : register(b2)
 {
     SimShape g_shapes[MaxSimShapes]; // Adjust the size of the array as needed
 };

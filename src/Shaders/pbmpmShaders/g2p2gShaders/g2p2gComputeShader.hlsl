@@ -4,7 +4,13 @@
 // Taken from https://github.com/electronicarts/pbmpm
 
 // Root constants bound to b0
-ConstantBuffer<PBMPMConstants> g_simConstants : register(b0);
+cbuffer simConstants : register(b0) {
+	PBMPMConstants g_simConstants;
+};
+
+cbuffer mouseConstants : register(b1) {
+    MouseConstants g_mouseConstants;
+};
 
 // Structured Buffer for particles (read-write UAV)
 RWStructuredBuffer<Particle> g_particles : register(u0);
@@ -562,23 +568,29 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 p += particle.displacement;
                 
                 // Mouse Iteraction
-                if (g_simConstants.mouseActivation == 1) {
+                if (g_mouseConstants.mouseActivation == 1) {
                     float t;
-                    bool intersected = intersectRaySphere(g_simConstants.mousePosition.xyz, float3(0, 0, 1), p, 2.f, t);
-                    float3 offset = p - float3(g_simConstants.mousePosition.xyz);
+                    bool intersected = intersectRaySphere(g_mouseConstants.mousePosition.xyz, g_mouseConstants.mouseRayDirection.xyz, p, g_mouseConstants.mouseRadius, t);
+                    float3 offset = p - float3(g_mouseConstants.mousePosition.xyz);
                     float lenOffset = max(length(offset), 0.0001);
                     if (intersected)
                     {
                         float3 normOffset = offset / lenOffset;
 
-                        if (g_simConstants.mouseFunction == 0)
+						if (g_mouseConstants.mouseFunction == 0) // Push
                         {
-                            particle.displacement += normOffset * 500.f;
+                            particle.displacement += normOffset * g_mouseConstants.mouseActivation * g_mouseConstants.mouseStrength * g_simConstants.deltaTime;
                         }
-                        else if (g_simConstants.mouseFunction == 1)
+                        else if (g_mouseConstants.mouseFunction == 1) // Grab
                         {
-                            particle.displacement = g_simConstants.mouseVelocity * g_simConstants.deltaTime;
+                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * 80;
+                            particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength;
                         }
+                        else if (g_mouseConstants.mouseFunction == 2) // Pull
+						{
+                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * t;
+                            particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength;
+						}
                     }
                 }
                 
