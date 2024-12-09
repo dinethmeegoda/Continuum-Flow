@@ -4,9 +4,10 @@
 #include <stdexcept>
 #include <array>
 
-#define NUM_CMDLISTS 24
+#define NUM_CMDLISTS 26
 enum CommandListID {
-    OBJECT_RENDER_ID,
+    OBJECT_RENDER_WIRE_ID,
+    OBJECT_RENDER_SOLID_ID,
     PBMPM_RENDER_ID,
     PBMPM_G2P2G_COMPUTE_ID,
     PBMPM_BUKKITCOUNT_COMPUTE_ID,
@@ -24,6 +25,7 @@ enum CommandListID {
     SURFACE_VERTEX_COMPACTION_COMPUTE_ID,
     SURFACE_VERTEX_DENSITY_COMPUTE_ID,
     SURFACE_VERTEX_NORMAL_COMPUTE_ID,
+    FLUID_BUFFER_CLEAR_COMPUTE_ID,
     FLUID_MESH_ID,
 
     PBD_Render_ID,
@@ -53,8 +55,16 @@ public:
     ComPointer<ID3D12CommandQueue>& getCommandQueue();
     ComPointer<ID3D12CommandAllocator>& getCommandAllocator(CommandListID id) { return cmdAllocators[id]; };
     ID3D12GraphicsCommandList6* createCommandList(CommandListID id);
+    double readTimingQueryData();
+    void startTimingQuery(ID3D12GraphicsCommandList6* cmdList);
+    void endTimingQuery(ID3D12GraphicsCommandList6* cmdList);
 
 private:
+    void initTimingResources();
+
+    ComPointer<ID3D12QueryHeap> queryHeap;
+    ComPointer<ID3D12Resource> queryResultBuffer;
+
     ComPointer<IDXGIFactory7> dxgiFactory;
 
     ComPointer<ID3D12Device6> device;

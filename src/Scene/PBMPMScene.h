@@ -7,6 +7,7 @@
 #include "../D3D/IndexBuffer.h"
 #include "../D3D/Pipeline/ComputePipeline.h"
 #include "Geometry.h"
+#include <iostream>
 #include <math.h>
 
 // Keep consistent with PBMPMCommon.hlsl
@@ -17,32 +18,37 @@ const unsigned int BukkitSize = 2;
 const unsigned int BukkitHaloSize = 1;
 const unsigned int GuardianSize = 3;
 
+const float PARTICLE_RADIUS = 0.5f;
+
 const unsigned int maxParticles = 500000;
 const unsigned int maxTimestampCount = 2048;
 
 struct PBMPMConstants {
 	XMUINT3 gridSize; //2 -> 3
 	float deltaTime;
-
 	float gravityStrength;
+
 	float liquidRelaxation;
 	float liquidViscosity;
 	unsigned int fixedPointMultiplier;
 
 	unsigned int useGridVolumeForLiquid;
 	unsigned int particlesPerCellAxis;
+
 	float frictionAngle;
 	unsigned int shapeCount;
-
 	unsigned int simFrame;
+
 	unsigned int bukkitCount;
 	unsigned int bukkitCountX;
 	unsigned int bukkitCountY;
-
 	unsigned int bukkitCountZ; //added
 	unsigned int iteration;
 	unsigned int iterationCount;
 	float borderFriction;
+	float elasticRelaxation;
+	float elasticityRatio;
+
 
 	//mouse stuff
 	XMFLOAT4 mousePosition;
@@ -103,7 +109,7 @@ struct BukkitThreadData {
 
 class PBMPMScene : public Drawable {
 public:
-	PBMPMScene(DXContext* context, RenderPipeline* renderPipeline, unsigned int instanceCount);
+	PBMPMScene(DXContext* context, RenderPipeline* renderPipeline);
 
 	void constructScene();
 
@@ -119,9 +125,14 @@ public:
 
 	StructuredBuffer* getPositionBuffer() { return &positionBuffer; }
 
+	int transferAndGetNumParticles();
+	unsigned int getNumParticles() { return numParticles; }
+
 	PBMPMConstants getConstants() { return constants; }
 
-	int getParticleCount();
+	std::vector<SimShape>& getSimShapes() { return shapes; }
+
+	unsigned int* getSubstepCount() { return &substepCount; }
 
 private:
 	DXContext* context;
@@ -143,7 +154,6 @@ private:
 	D3D12_INDEX_BUFFER_VIEW ibv;
 	VertexBuffer vertexBuffer;
 	IndexBuffer indexBuffer;
-	unsigned int instanceCount;
 	ID3D12CommandSignature* commandSignature = nullptr;
 	ID3D12CommandSignature* renderCommandSignature = nullptr;
 	UINT64 fenceValue = 1;
@@ -167,6 +177,8 @@ private:
 
 	std::array<StructuredBuffer, 3> gridBuffers;
 
+	std::vector<SimShape> shapes;
+
 	void createBukkitSystem();
 
 	void updateSimUniforms(unsigned int iteration);
@@ -176,4 +188,11 @@ private:
 	void bukkitizeParticles();
 
 	void doEmission(StructuredBuffer* gridBuffer);
+
+	unsigned int frameCount{ 0 };
+	unsigned int startTime{ 0 };
+	unsigned int endTime{ 0 };
+
+	unsigned int substepCount{ 5 };
+	unsigned int numParticles{ 0 };
 };

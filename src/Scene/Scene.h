@@ -7,41 +7,45 @@
 #include "../D3D/Pipeline/ComputePipeline.h"
 #include "../D3D/Pipeline/MeshPipeline.h"
 
-enum RenderScene {
-	Object,
-	PBMPM,
-	Physics,
-	Fluid
-};
-
 class Scene {
 public:
 	Scene() = delete;
-	Scene(RenderScene renderScene, Camera* camera, DXContext* context);
+	Scene(Camera* camera, DXContext* context);
 
-	RenderPipeline* getRenderPipeline();
-	MeshPipeline* getMeshPipeline();
+	RenderPipeline* getObjectWirePipeline();
+	RenderPipeline* getObjectSolidPipeline();
+	RenderPipeline* getPBMPMRenderPipeline();
+	MeshPipeline* getFluidMeshPipeline();
 
-	void setRenderScene(RenderScene renderScene);
 	void compute();
-	void draw();
-	void drawFluid();
+	void drawPBMPM();
+	void drawFluid(unsigned int renderMeshlets);
+	void drawWireObjects();
+	void drawSolidObjects();
 
 	void releaseResources();
 
+	PBMPMConstants getPBMPMConstants() { return pbmpmScene.getConstants(); }
 	void updatePBMPMConstants(PBMPMConstants& newConstants);
 
-	PBMPMConstants getPBMPMConstants() { return pbmpmScene.getConstants(); }
+	float* getFluidIsovalue() { return fluidScene.getIsovalue(); }
+	float* getFluidKernelScale() { return fluidScene.getKernelScale(); }
+	float* getFluidKernelRadius() { return fluidScene.getKernelRadius(); }
+
+	unsigned int* getPBMPMSubstepCount() { return pbmpmScene.getSubstepCount(); }
+
+	int getNumParticles() { return pbmpmScene.getNumParticles(); }
 
 private:
 	Camera* camera;
 
-	RenderPipeline objectRP;
-	ObjectScene objectScene;
-	
 	RenderPipeline pbmpmRP;
-	unsigned int pbmpmIC;
 	PBMPMScene pbmpmScene;
+
+	RenderPipeline objectRPWire;
+	ObjectScene objectSceneWire;
+	RenderPipeline objectRPSolid;
+	ObjectScene objectSceneSolid;
 
 	RenderPipeline fluidRP;
 	ComputePipeline bilevelUniformGridCP;
@@ -50,10 +54,9 @@ private:
 	ComputePipeline surfaceVertexCompactionCP;
 	ComputePipeline surfaceVertexDensityCP;
 	ComputePipeline surfaceVertexNormalCP;
+	ComputePipeline bufferClearCP;
 	MeshPipeline fluidMeshPipeline;
 	FluidScene fluidScene;
-
-	RenderScene scene;
 
 	RenderPipeline* currentRP;
 	ComputePipeline* currentCP;

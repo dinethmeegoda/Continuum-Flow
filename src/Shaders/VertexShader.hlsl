@@ -4,6 +4,7 @@ cbuffer CameraMatrices : register(b0) {
     float4x4 viewMatrix;        // 16 floats
     float4x4 projectionMatrix;  // 16 floats
     float4x4 modelMatrix;
+    float3 color;
 };
 
 struct VSInput

@@ -11,6 +11,8 @@ struct GridConstants {
     XMINT3 gridDim;
     XMFLOAT3 minBounds;
     float resolution;
+    float kernelScale;
+    float kernelRadius;
 };
 
 // TODO: can just combine this with grid constants
@@ -19,8 +21,9 @@ struct MeshShadingConstants {
     XMINT3 dimensions;
     float resolution;
     XMFLOAT3 minBounds;
-    float padding;
+    unsigned int renderMeshlets;
     XMFLOAT3 cameraPos;
+    float isovalue;
 };
 
 struct Cell {
@@ -43,13 +46,14 @@ public:
                ComputePipeline* surfaceVertexCompactionCP,
                ComputePipeline* surfaceVertexDensityCP,
                ComputePipeline* surfaceVertexNormalCP,
+               ComputePipeline* bufferClearCP,
                MeshPipeline* fluidMeshPipeline);
 
     void compute(
         StructuredBuffer* positionsBuffer,
         int numParticles
     );
-    void draw(Camera* camera);
+    void draw(Camera* camera, unsigned int renderMeshlets);
     void constructScene();
     void computeBilevelUniformGrid();
     void computeSurfaceBlockDetection();
@@ -59,9 +63,13 @@ public:
     void computeSurfaceVertexNormal();
     void releaseResources();
 
+    float* getIsovalue() { return &isovalue; }
+    float* getKernelScale() { return &kernelScale; }
+    float* getKernelRadius() { return &kernelRadius; }
+
 private:
     void transitionBuffers(ID3D12GraphicsCommandList6* cmdList, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
-    void resetBuffers(ID3D12GraphicsCommandList6* cmdList);
+    void resetBuffers();
 
     GridConstants gridConstants;
     
@@ -71,6 +79,7 @@ private:
     ComputePipeline* surfaceVertexCompactionCP;
     ComputePipeline* surfaceVertexDensityCP;
     ComputePipeline* surfaceVertexNormalCP;
+    ComputePipeline* bufferClearCP;
 
     MeshPipeline* fluidMeshPipeline;
     
@@ -81,7 +90,8 @@ private:
     ID3D12CommandSignature* meshCommandSignature = nullptr;
 
     StructuredBuffer* positionBuffer;
-    StructuredBuffer cellsBuffer;
+    StructuredBuffer cellParticleCountBuffer;
+    StructuredBuffer cellParticleIndicesBuffer;
     StructuredBuffer blocksBuffer;
     StructuredBuffer surfaceBlockIndicesBuffer;
     StructuredBuffer surfaceBlockDispatch;
@@ -92,9 +102,7 @@ private:
     StructuredBuffer surfaceVertDensityBuffer;
     StructuredBuffer surfaceVertexNormalBuffer;
 
-    StructuredBuffer blankCellsBuffer;
-    StructuredBuffer blankBlocksBuffer;
-    StructuredBuffer blankSurfaceVerticesBuffer;
-    StructuredBuffer blankSurfaceVertDensityBuffer;
-    StructuredBuffer blankSurfaceVertexNormalBuffer;
+    float isovalue{ 0.03f };
+    float kernelScale{ 4.0f };
+    float kernelRadius{ 1.01f };
 };

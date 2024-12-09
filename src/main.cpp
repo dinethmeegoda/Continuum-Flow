@@ -28,11 +28,13 @@ int main() {
     float clientHeight = static_cast<float>(rect.bottom - rect.top);
 
     //initialize scene
-    Scene scene{PBMPM, camera.get(), &context};
+    Scene scene{camera.get(), &context};
 
-	//initialize pbmpm constants
-	PBMPMConstants pbmpmConstants = scene.getPBMPMConstants();
-    PBMPMConstants pbmpmTempConstants = pbmpmConstants;
+    PBMPMConstants pbmpmCurrConstants = scene.getPBMPMConstants();
+    PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
+
+    unsigned int renderMeshlets = 0;
+    unsigned int renderMode = 0;
 
     while (!Window::get().getShouldClose()) {
         //update window
@@ -44,66 +46,28 @@ int main() {
             camera->updateAspect((float)Window::get().getWidth() / (float)Window::get().getHeight());
         }
 
-        //check keyboard state
         auto kState = keyboard->GetState();
-        if (kState.W) {
-            camera->translate({ 0.f, 0.f, 1.0f });
-        }
-        if (kState.A) {
-            camera->translate({ -1.0f, 0.f, 0.f });
-        }
-        if (kState.S) {
-            camera->translate({ 0.f, 0.f, -1.0f });
-        }
-        if (kState.D) {
-            camera->translate({ 1.0f, 0.f, 0.f });
-        }
-        if (kState.Space) {
-            camera->translate({ 0.f, 1.0f, 0.f });
-        }
-        if (kState.LeftControl) {
-            camera->translate({ 0.f, -1.0f, 0.f });
-        }
-        if (kState.D1) {
-            scene.setRenderScene(Object);
-        }
-        if (kState.D2) {
-            scene.setRenderScene(PBMPM);
-        }
-        if (kState.D3) {
-            scene.setRenderScene(Fluid);
-        }
-
-        //check mouse state
         auto mState = mouse->GetState();
-
         mouse->SetMode(mState.leftButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
-
-        if (mState.positionMode == Mouse::MODE_RELATIVE && kState.LeftShift) {
-            camera->rotateOnX(-mState.y * 0.01f);
-            camera->rotateOnY(mState.x * 0.01f);
-            camera->rotate();
-        }
+        camera->kmStateCheck(kState, mState);
 
         if (mState.rightButton) {
 
             if (kState.LeftShift) {
                 // Pulling Fluid
-				pbmpmTempConstants.mouseFunction = 2;
+                pbmpmIterConstants.mouseFunction = 2;
 			}
             else if (kState.LeftAlt) {
                 // Grab Fluid Ball
-                pbmpmTempConstants.mouseFunction = 1;
+                pbmpmIterConstants.mouseFunction = 1;
             }
             else {
 				// Pushing Fluid
-				pbmpmTempConstants.mouseFunction = 0;
+                pbmpmIterConstants.mouseFunction = 0;
 			}
 
             //enable mouse force
-			bool previousMouseActivation = pbmpmTempConstants.mouseActivation > 0;
-
-            pbmpmTempConstants.mouseActivation = 1;
+            pbmpmIterConstants.mouseActivation = 1;
 
             POINT mousePos;
             GetCursorPos(&mousePos);
@@ -113,38 +77,37 @@ int main() {
             float ndcX = (2.0f * mousePos.x / clientWidth) - 1.0f;
             float ndcY = 1.0f - (2.0f * mousePos.y / clientHeight);
 
-			XMFLOAT4 prevMousePos = pbmpmTempConstants.mousePosition;
+			XMFLOAT4 prevMousePos = pbmpmIterConstants.mousePosition;
 			ComputeMouseRay(
 				Window::get().getHWND(),
 				ndcX,
 				ndcY,
 				camera->getProjMat(),
 				camera->getViewMat(),
-				pbmpmTempConstants.mousePosition,
-				pbmpmTempConstants.mouseDirection
+                pbmpmIterConstants.mousePosition,
+                pbmpmIterConstants.mouseDirection
 			);
 
-            pbmpmTempConstants.mouseRadius = 5.0;
-			pbmpmTempConstants.mouseVelocity = 1.0;
+            pbmpmIterConstants.mouseRadius = 5.0;
+            pbmpmIterConstants.mouseVelocity = 1.0;
 
-            scene.updatePBMPMConstants(pbmpmTempConstants);
+            scene.updatePBMPMConstants(pbmpmIterConstants);
         }
         else {
-            pbmpmTempConstants.mouseActivation = 0;
-			scene.updatePBMPMConstants(pbmpmTempConstants);
+            pbmpmIterConstants.mouseActivation = 0;
+			scene.updatePBMPMConstants(pbmpmIterConstants);
         }
-
-        //update camera
-        camera->updateViewMat();
-
-        //get pipelines
-        auto renderPipeline = scene.getRenderPipeline();
-        auto meshPipeline = scene.getMeshPipeline();
-        //whichever pipeline renders first should begin and end the frame
-        auto firstPipeline = renderPipeline;
 
         //compute pbmpm + mesh shader
         scene.compute();
+
+        //get pipelines
+        auto renderPipeline = scene.getPBMPMRenderPipeline();
+        auto meshPipeline = scene.getFluidMeshPipeline();
+        auto objectWirePipeline = scene.getObjectWirePipeline();
+        auto objectSolidPipeline = scene.getObjectSolidPipeline();
+        //whichever pipeline renders first should begin and end the frame
+        auto firstPipeline = objectWirePipeline;
 
         //begin frame
         Window::get().beginFrame(firstPipeline->getCommandList());
@@ -153,16 +116,28 @@ int main() {
         D3D12_VIEWPORT vp;
         Window::get().createViewport(vp, firstPipeline->getCommandList());
 
-        //mesh render pass
-        //Window::get().setRT(meshPipeline->getCommandList());
-        //Window::get().setViewport(vp, meshPipeline->getCommandList());
-        //scene.drawFluid();
-        //context.executeCommandList(meshPipeline->getCommandListID());
+        //wire object render pass
+        Window::get().setRT(objectWirePipeline->getCommandList());
+        Window::get().setViewport(vp, objectWirePipeline->getCommandList());
+        if (renderGrid) scene.drawWireObjects();
+        context.executeCommandList(objectWirePipeline->getCommandListID());
 
-        //first render pass
+        //solid object render pass
+        Window::get().setRT(objectSolidPipeline->getCommandList());
+        Window::get().setViewport(vp, objectSolidPipeline->getCommandList());
+        scene.drawSolidObjects();
+        context.executeCommandList(objectSolidPipeline->getCommandListID());
+
+        //mesh render pass
+        Window::get().setRT(meshPipeline->getCommandList());
+        Window::get().setViewport(vp, meshPipeline->getCommandList());
+        if (renderMode != 1) scene.drawFluid(renderMeshlets);
+        context.executeCommandList(meshPipeline->getCommandListID());
+
+        //particles + imgui render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
-        scene.draw();
+        if (renderMode != 0) scene.drawPBMPM();
 
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();
@@ -170,13 +145,18 @@ int main() {
         ImGui::NewFrame();
 
         //draw ImGUI
-        drawImGUIWindow(pbmpmTempConstants, io);
+        drawImGUIWindow(pbmpmIterConstants, io, &renderMeshlets, &renderMode, 
+            scene.getFluidIsovalue(), 
+            scene.getFluidKernelScale(), 
+            scene.getFluidKernelRadius(), 
+            scene.getPBMPMSubstepCount(),
+            scene.getNumParticles());
 
         //render ImGUI
         ImGui::Render();
-        if (!PBMPMScene::constantsEqual(pbmpmTempConstants, pbmpmConstants)) {
-            scene.updatePBMPMConstants(pbmpmTempConstants);
-            pbmpmConstants = pbmpmTempConstants;
+        if (!PBMPMScene::constantsEqual(pbmpmIterConstants, pbmpmCurrConstants)) {
+            scene.updatePBMPMConstants(pbmpmIterConstants);
+            pbmpmCurrConstants = pbmpmIterConstants;
         }
 
         renderPipeline->getCommandList()->SetDescriptorHeaps(1, &imguiSRVHeap);
@@ -189,7 +169,9 @@ int main() {
 
         Window::get().present();
 		context.resetCommandList(renderPipeline->getCommandListID());
-        //context.resetCommandList(meshPipeline->getCommandListID());
+        context.resetCommandList(meshPipeline->getCommandListID());
+        context.resetCommandList(objectWirePipeline->getCommandListID());
+        context.resetCommandList(objectSolidPipeline->getCommandListID());
     }
 
     // Scene should release all resources, including their pipelines

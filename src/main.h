@@ -23,6 +23,14 @@
 static ImGUIDescriptorHeapAllocator imguiHeapAllocator;
 static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
 
+static bool meshletRenderType = false;
+static unsigned int renderModeType = 0; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
+static int fixedPointExponent = 7;
+static bool useGridVolume = true;
+static bool renderGrid = false;
+
+const char* modes[] = { "Mesh Shaded Fluid", "Particles", "Mesh Shaded Fluid with Particles" };
+
 ImGuiIO& initImGUI(DXContext& context) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -60,35 +68,54 @@ ImGuiIO& initImGUI(DXContext& context) {
     return io;
 }
 
-void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io) {
-    ImGui::Begin("Parameters");
+void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, unsigned int* renderMode, float* isovalue, float* kernelScale, float* kernelRadius, unsigned int* substepCount, int numParticles) {
+    ImGui::Begin("Scene Options");
 
-    // General parameters
-    ImGui::Text("Simulation Parameters");
-
-    // Sliders for float values
-    ImGui::SliderFloat("Gravity Strength", &pbmpmConstants.gravityStrength, 0.0f, 20.0f);
-
-    // Parameters for liquid simulation
-    ImGui::SliderFloat("Liquid Relaxation", &pbmpmConstants.liquidRelaxation, 0.1f, 10.0f);
-    ImGui::SliderFloat("Liquid Viscosity", &pbmpmConstants.liquidViscosity, 0.0f, 10.0f);
-    ImGui::SliderFloat("Friction Angle", &pbmpmConstants.frictionAngle, 0.0f, 90.0f);
-
-    // Input for unsigned integers (e.g., counts and iterations)
-    ImGui::InputInt3("Grid Size", (int*)&pbmpmConstants.gridSize);
-    ImGui::InputInt("Fixed Point Multiplier", (int*)&pbmpmConstants.fixedPointMultiplier);
-    ImGui::InputInt("Particles Per Cell Axis", (int*)&pbmpmConstants.particlesPerCellAxis);
-
-    ImGui::Checkbox("Use Grid Volume for Liquid", (bool*)&pbmpmConstants.useGridVolumeForLiquid);
-
-    ImGui::SliderFloat("Border Friction", &pbmpmConstants.borderFriction, 0.0f, 1.0f);
-
-    // Optional display of FPS and frame info
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+    ImGui::Text("Number of Particles: %d", numParticles);
+
+    if (ImGui::CollapsingHeader("Simulation Parameters")) {
+        ImGui::SliderFloat("Gravity Strength", &pbmpmConstants.gravityStrength, 0.0f, 20.0f);
+        ImGui::SliderFloat("Liquid Relaxation", &pbmpmConstants.liquidRelaxation, 0.0f, 10.0f);
+        ImGui::SliderFloat("Liquid Viscosity", &pbmpmConstants.liquidViscosity, 0.0f, 1.0f);
+        ImGui::SliderFloat("Friction Angle", &pbmpmConstants.frictionAngle, 0.0f, 90.0f);
+
+        ImGui::SliderFloat("Elastic Relaxation", &pbmpmConstants.elasticRelaxation, 0.0f, 10.0f);
+        ImGui::SliderFloat("Elastic Ratio", &pbmpmConstants.elasticityRatio, 0.0f, 2.0f);
+
+        ImGui::SliderInt("Particles Per Cell Axis", (int*)&pbmpmConstants.particlesPerCellAxis, 1, 8);
+        ImGui::SliderInt("Fixed Point Multiplier", (int*)&fixedPointExponent, 4, 13);
+        pbmpmConstants.fixedPointMultiplier = (unsigned int)pow(10, fixedPointExponent);
+
+        ImGui::SliderFloat("Border Friction", &pbmpmConstants.borderFriction, 0.0f, 1.0f);
+
+        ImGui::SliderInt("Iteration Count", (int*)&pbmpmConstants.iterationCount, 1, 10);
+        ImGui::SliderInt("Substep Count", (int*)substepCount, 1, 20);
+
+        ImGui::Checkbox("Use Grid Volume for Liquid", (bool*)&useGridVolume);
+        pbmpmConstants.useGridVolumeForLiquid = useGridVolume;
+    }
+
+    if (ImGui::CollapsingHeader("Mesh Shading Parameters")) {
+        ImGui::TextColored({ 0, 1, 0, 1 }, "Mesh Shading Parameters");
+        ImGui::SliderFloat("Isovalue", isovalue, 0.01f, 1.0f);
+        ImGui::SliderFloat("Kernel Scale", kernelScale, 2.5f, 12.0f);
+        ImGui::SliderFloat("Kernel Radius", kernelRadius, 0.3f, 3.0f);
+    }
+
+    if (ImGui::CollapsingHeader("Render Parameters")) {
+        if (ImGui::Combo("Select Render Mode", (int*)&renderModeType, modes, IM_ARRAYSIZE(modes)))
+        {
+            *renderMode = renderModeType;
+        }
+
+        ImGui::Checkbox("Render Grid", &renderGrid);
+
+        ImGui::Checkbox("Render Meshlets", &meshletRenderType);
+        *renderMeshlets = meshletRenderType;
+    }
 
     ImGui::End();
-
-    
 }
 
 void ComputeMouseRay(

@@ -32,6 +32,7 @@ public:
 
 	XMMATRIX getInvViewProjMat();
 	
+	void kmStateCheck(DirectX::Keyboard::State kState, DirectX::Mouse::State mState);
 
 private:
 	float FOVY;
