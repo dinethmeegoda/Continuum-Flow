@@ -1,10 +1,13 @@
 *Breakpoint* is a project created by [Daniel Gerhardt](https://www.danieljgerhardt.com/), [Dineth Meegoda](https://dinethmeegoda.com/), [Matt Schwartz](https://www.linkedin.com/in/matthew-schwartz-37019016b/), [Zixiao Wang](https://www.linkedin.com/in/zixiao-wang-826a5a255/), for CIS 5650 GPU Programming at the University of Pennsylvania.
 
-Our project combines a novel particle simulation technique - PBMPM, developed by EA - with a state-of-the-art fluid surface construction method, using mesh shading and a bilevel-grid, all running in real time. 
+Our project combines a novel particle simulation technique - PBMPM, developed by EA - with a state-of-the-art fluid surface construction method, using mesh shading and a bilevel-grid, all running in real time.   
 
 # Breakpoint - Project Overview
 
-![Demo](images/mouseDemo.gif)
+<p align="center">
+  <img src="/app/image/mouseDemo.gif" alt="mousedemo" />
+  <br>
+</p>
 
 ## Build the Project and Controls
 
@@ -29,7 +32,10 @@ Most of the materials we have are based on the original public PBMPM paper 2D ma
 #### Liquid
 The liquid material implementation in our MPM system combines volume preservation with viscosity control to simulate fluid behavior. The implementation is primarily based on the Position Based Fluids (PBF) approach, adapted for the MPM grid-based framework.
 
-![water_gif](https://github.com/user-attachments/assets/0955bb5e-0b57-44a3-99a4-0507d0363bd0)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/0955bb5e-0b57-44a3-99a4-0507d0363bd0" alt="watergif" />
+</p>
+
 
 The main liquid update happens in the constraint solving phase:
 ``` 
@@ -48,8 +54,9 @@ if (particle.material == MaterialLiquid)
 
 The sand implementation is based on the [Drucker-Prager plasticity model](https://dl.acm.org/doi/10.1145/2897824.2925906). 
 
-![sand_gif](https://github.com/user-attachments/assets/398053a0-9ff3-46f8-8599-1fca57875b9a)
-
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/398053a0-9ff3-46f8-8599-1fca57875b9a" alt="sandgif" />
+</p>
 
 The main update loop handles the elastic-plastic decomposition of deformation and volume preservation.
 
@@ -79,7 +86,9 @@ The main update loop handles the elastic-plastic decomposition of deformation an
 
 The Visco material model in this project represents a highly viscous, non-Newtonian fluid-like material that bridges the gap between purely elastic solids and fully fluid materials. It is intended for scenarios where you want to simulate materials that flow under prolonged stress but still maintain some structural integrity under short loading times—such as pitch, wax, or thick mud. By carefully tuning the parameters, you can achieve a range of behaviors from a slow-creeping putty to a thick slurry.
 
-![Visco](https://github.com/user-attachments/assets/ec075d50-fb89-4a0b-87cb-33b81c5707e6)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/ec075d50-fb89-4a0b-87cb-33b81c5707e6" alt="indexmath" />
+</p>
 
 ```
     // Step 1: Compute deformation gradient
@@ -108,7 +117,9 @@ The Visco material model in this project represents a highly viscous, non-Newton
 
 The Elastic material in this project simulates a solid-like material that deforms under load but returns to its original shape once forces are removed, analogous to rubber or soft metals (in their elastic range). It is the simplest and most fundamental of the material implemented, serving as a baseline for understanding more complex behaviors like plasticity or viscosity.
 
-![elastic_cube](https://github.com/user-attachments/assets/2a5f9f94-91db-4c92-ac6a-1ac438c9783e)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/2a5f9f94-91db-4c92-ac6a-1ac438c9783e" alt="indexmath" />
+</p>
 
 Unlike plastic or granular materials, the Elastic material does not accumulate permanent changes. Once the external force or displacement is removed, the elastic material returns to its initial state. If you stretch it and let go, it rebounds. So there is no need to update and accumulate the deform shape, the main update loop is in the particles update section.
 ```
@@ -138,8 +149,10 @@ Unlike plastic or granular materials, the Elastic material does not accumulate p
 
 The Snow material model is based on the elastoplastic framework described in [Stomakhin et al. 2013, A Material Point Method for Snow Simulation](https://media.disneyanimation.com/uploads/production/publication_asset/94/asset/SSCTS13_2.pdf). This model treats snow as a porous, elastoplastic medium that resists deformation elastically up to certain critical thresholds, after which it undergoes permanent (plastic) rearrangements. The approach enables simulating both firm, rigid snowpacks and flowing avalanches within a unified formulation.
 
-
-![Snow_gif](https://github.com/user-attachments/assets/31ac755b-1a6d-47b0-9b45-f3190500acb4)
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/31ac755b-1a6d-47b0-9b45-f3190500acb4" alt="snowgif" />
+  <br>
+</p>
 
 Unlike purely elastic materials, snow undergoes permanent changes when overstressed. The deformation gradient F is multiplicatively decomposed into elastic (Fe) and plastic (Fp) components:
 
@@ -327,37 +340,51 @@ There are a number of parameters that affect how PBMPM performs, due to the comp
 
 The primary 2 are the iteration count and substep count. The substep count runs bukkiting and emission as well as g2p2g for each update within a frame. The iteration count is a subroutine of substep count that determines how many times g2p2g is run within each substep. The two of these have major impacts on performance.
 
-![](app/image/itercount.png)
-
-![](app/image/substepcount.png)
+<p align="center">
+  <img src="app/image/itercount.png" alt="itercount" />
+</p>
 
 These parameters, along with many others that are tied to the simulation, are at the user's discretion to choose between performance, stability, and accuracy. Having a higher iteration and substep count will increase the stability and accuracy at the cost of performance. A nice sweet spot is what we used for our basic testing setup.
 
-![](app/image/particlecount.png)
+<p align="center">
+  <img src="app/image/particlecount.png" alt="particlecount" />
+</p>
 
 The simulation has an expected albeit high falloff in performance as particle count increases. The large memory overhead creates a big disparity in performance between high and low particle counts. This is the biggest determining factor in performance, because the number of dispatches is based in thef number of bukkits containing particles.
 
-![](app/image/gridsize.png)
+<p align="center">
+  <img src="app/image/gridsize.png" alt="gridsize" />
+</p>
 
 The grid size performance is connected to the number of bukkits within the grid. Generally as the grid grows, performance decreases, but due to the limit of memory in the 3d implementation, the grid could not be stably tested past 256x256x256. 32x32x32 is likely slower than 64x64x64 because it is more likely particles were reaching edge conditions and causing branching behavior due to border friction.
 
-![](app/image/griddispatch.png)
+<p align="center">
+  <img src="app/image/griddispatch.png" alt="griddispatch" />
+</p>
 
 Grid dispatch size is the dispatch size for any compute shader that runs per grid cell. It didn't have a noticable performance impact outside the margin of error, and the simulation did not function when the grid dispatch was not between 4 and 10.
 
-![](app/image/particledispatch.png)
+<p align="center">
+  <img src="app/image/particledispatch.png" alt="particledispatch" />
+</p>
 
 Particle dispatch size, similarly to grid dispatch, is the disaptch size for any compute shader that runs per particle. Performance decreased when particle dispatch size increased. This was a marginal decrease. It is likely caused by larger workgroups increasing the number of threads within a single workgroup that need to access memory.
 
-![](app/image/cellaxis.png)
+<p align="center">
+  <img src="app/image/cellaxis.png" alt="cellaxis" />
+</p>
 
 Particles per cell axis is for 2 things. The first is the volume calculation, capping out how much volume can be allotted within a cell to the particles. The second use is emission - the amount of particles per cell axis is tied to the amount of cells emitted per axis. This did not affect performance past the margin of error, as the computations involved in the two use cases are both equally performant regardless of the value of particles per cell axis.
 
-![](app/image/bukkithalosize.png)
+<p align="center">
+  <img src="app/image/bukkithalosize.png" alt="cellaxis" />
+</p>
 
 Bukkit size and bukkit halo size determine the size of the cells that particles are grouped into and how far particles can look around them to determine the influence of surrounding cells respectively. Due to the constraints of memory usage in 3D, the 4 configurations above are the only viable ones that allow the shaders to run. This is due to the shared memory limitation of DirectX 12, which is 32kb in compute shaders. Decreasing the bukkit size increases performance, as does bukkit halo size. The halo size has a greater effect, which is expected since the halo size increase causes a vast increase in the memory access of each thread. However, it is not advised to reduce these past 2 for bukkit size and 1 for halo size, since the simulation does not perform stably below these values. Ideally, these values could be increased, but because of shared memory limitations, they cannot be in the current implementation. One avenue of investigation is determining whether a greater bukkit size with no shared memory would yield performance improvements.
 
-![](app/image/materials.png)
+<p align="center">
+  <img src="app/image/materials.png" alt="materials" />
+</p>
 
 The above chart analyze the average FPS lost when adding 1 cube of 2000 particles of varying material types. The average FPS lost corresponds to the complexity of the simulation equations for each of the materials. Adding various materials increases thread divergence and computational weight at the cost of increased realism and scene depth.
 
