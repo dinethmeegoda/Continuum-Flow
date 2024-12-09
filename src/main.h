@@ -68,7 +68,7 @@ ImGuiIO& initImGUI(DXContext& context) {
     return io;
 }
 
-void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, unsigned int* renderMode, float* isovalue, float* kernelScale) {
+void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, unsigned int* renderMode, float* isovalue, float* kernelScale, float* kernelRadius) {
     ImGui::Begin("Scene Options");
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
@@ -96,8 +96,9 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
     pbmpmConstants.useGridVolumeForLiquid = useGridVolume;
 
     ImGui::TextColored({ 0, 1, 0, 1 }, "Mesh Shading Parameters");
-    ImGui::SliderFloat("Isovalue", isovalue, 0.0f, 1.0f);
-    ImGui::SliderFloat("Kernel Scale", kernelScale, 0.1f, 5.f);
+    ImGui::SliderFloat("Isovalue", isovalue, 0.01f, 1.0f);
+    ImGui::SliderFloat("Kernel Scale", kernelScale, 2.5f, 7.5f);
+    ImGui::SliderFloat("Kernel Radius", kernelRadius, 1.01f, 3.0f);
 
     ImGui::TextColored({ 0, 1, 0, 1 }, "Render Parameters");
 

@@ -30,6 +30,7 @@ public:
 
 	float* getFluidIsovalue() { return fluidScene.getIsovalue(); }
 	float* getFluidKernelScale() { return fluidScene.getKernelScale(); }
+	float* getFluidKernelRadius() { return fluidScene.getKernelRadius(); }
 
 private:
 	Camera* camera;
