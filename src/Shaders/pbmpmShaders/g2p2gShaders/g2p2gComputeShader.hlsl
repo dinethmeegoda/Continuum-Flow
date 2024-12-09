@@ -302,29 +302,31 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
         float3 gridDisplacement = float3(dx, dy, dz);
 
-		// Collision detection against shapes
-		for (int shapeIndex = 0; shapeIndex < g_simConstants.shapeCount; shapeIndex++)
-		{
-			SimShape shape = g_shapes[shapeIndex];
+        // Collision detection against shapes
+        for (int shapeIndex = 0; shapeIndex < g_simConstants.shapeCount; shapeIndex++)
+        {
+            SimShape shape = g_shapes[shapeIndex];
 
-			// Check if the shape is a guardian
-			if (shape.functionality == ShapeFunctionCollider)
-			{
-				float3 displacedGridPosition = gridPosition + gridDisplacement;
+            // Check if the shape is a collider (guardian)
+            if (shape.functionality == ShapeFunctionCollider)
+            {
+                float3 displacedGridPosition = gridPosition + gridDisplacement;
 
-				CollideResult c = collide(shape, displacedGridPosition);
+                CollideResult c = collide(shape, displacedGridPosition);
 
                 if (c.collides)
                 {
-					float gap = min(0, dot(c.normal, c.pointOnCollider - gridPosition));
-					float penetration = dot(c.normal, gridDisplacement) - gap;
+                    // Calculate penetration directly based on the displacement along the normal
+                    float penetration = max(dot(c.normal, gridDisplacement), 0.0f);
 
-                    // Prevent further penetration in radial direction
-					float radialImpulse = max(penetration, 0.0f);
-					gridDisplacement -= radialImpulse * c.normal * (1.0 - g_simConstants.borderFriction);
+                    // Prevent further penetration in the radial direction
+                    float radialImpulse = penetration;
+
+                    // Adjust the displacement based on radial impulse and friction
+                    gridDisplacement -= radialImpulse * c.normal * (1.0 - g_simConstants.borderFriction);
                 }
-			}
-		}
+            }
+        }
 
         // Collision detection against guardian shape
 
@@ -489,8 +491,8 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                     SVDResult svdResult = svd(particle.deformationGradient);
                     // Safety clamp to prevent numerical instability
                     // Clamp each singular value to prevent extreme deformation
-                    // 
-                    svdResult.Sigma = clamp(svdResult.Sigma, float3(0.1, 0.1, 0.1), float3(10000.0, 10000.0, 10000.0));
+                    
+                    svdResult.Sigma = clamp(svdResult.Sigma, float3(0.1, 0.1, 0.1), float3(1000.0, 1000.0, 1000.0));
 
                     if (material == MaterialSand) {
                         // Drucker - Prager sand based on :
@@ -498,14 +500,10 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         // Drucker-prager elastoplasticity for sand animation. ACM Trans. Graph. 35, 4, Article 103 (July 2016), 12 pages.
                         // https://doi.org/10.1145/2897824.2925906
                         
-                        
-
                         float sinPhi = sin(g_simConstants.frictionAngle * 3.14159f / 180.0f);
                         float alpha = sqrt(2.0f / 3.0f) * (2.0f * sinPhi) / (3.0f - sinPhi);
                         float beta = 0.5f;
 
-                        
-                          
                         float3 safeSigma = max(abs(svdResult.Sigma), float3(1e-6f, 1e-6f, 1e-6f));
                         float3 eDiag = float3(log(safeSigma.x), log(safeSigma.y), log(safeSigma.z));
                         float3x3 eps = diag(eDiag);
@@ -522,8 +520,6 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                                     }
                             }
                         frobNrm = sqrt(frobNrm);
-
-
 
                         float elasticityRatio = g_simConstants.elasticityRatio;
                         if (trace >= 0.0f) {
@@ -864,14 +860,14 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
         int wi = s_tileDataDst[tileDataIndex + 3];
         int vi = s_tileDataDst[tileDataIndex + 4];
 
-    // Atomic adds to the destination buffer
+        // Atomic adds to the destination buffer
         InterlockedAdd(g_gridDst[gridVertexAddress + 0], dxi);
         InterlockedAdd(g_gridDst[gridVertexAddress + 1], dyi);
         InterlockedAdd(g_gridDst[gridVertexAddress + 2], dzi);
         InterlockedAdd(g_gridDst[gridVertexAddress + 3], wi);
         InterlockedAdd(g_gridDst[gridVertexAddress + 4], vi);
     
-    // Clear the entries in g_gridToBeCleared
+        // Clear the entries in g_gridToBeCleared
         g_gridToBeCleared[gridVertexAddress + 0] = 0;
         g_gridToBeCleared[gridVertexAddress + 1] = 0;
         g_gridToBeCleared[gridVertexAddress + 2] = 0;

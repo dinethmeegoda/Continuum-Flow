@@ -447,9 +447,9 @@ void PBMPMScene::constructScene() {
 	shapes.push_back(SimShape(0, { 32, 5, 40 }, 0, { 5, 5, 5 },
 		0, 1, 0, 1, 100));
 
-	// Jelly Cube
-	//shapes.push_back(SimShape(0, { 10, 10, 54 }, 0, { 8, 8, 8 },
-	//	0, 3, 1, 1, 100));
+	// Visco Cube
+	shapes.push_back(SimShape(0, { 10, 10, 54 }, 0, { 8, 8, 8 },
+		0, 3, 3, 1, 100));
 
 	// Snow
 	//shapes.push_back(SimShape(0, { 20, 58, 20 }, 0, { 4, 3, 4 },

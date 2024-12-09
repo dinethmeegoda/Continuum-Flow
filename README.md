@@ -355,6 +355,10 @@ Particles per cell axis is for 2 things. The first is the volume calculation, ca
 
 Bukkit size and bukkit halo size determine the size of the cells that particles are grouped into and how far particles can look around them to determine the influence of surrounding cells respectively. Due to the constraints of memory usage in 3D, the 4 configurations above are the only viable ones that allow the shaders to run. This is due to the shared memory limitation of DirectX 12, which is 32kb in compute shaders. Decreasing the bukkit size increases performance, as does bukkit halo size. The halo size has a greater effect, which is expected since the halo size increase causes a vast increase in the memory access of each thread. However, it is not advised to reduce these past 2 for bukkit size and 1 for halo size, since the simulation does not perform stably below these values. Ideally, these values could be increased, but because of shared memory limitations, they cannot be in the current implementation. One avenue of investigation is determining whether a greater bukkit size with no shared memory would yield performance improvements.
 
+![](app/image/materials.png)
+
+The above chart analyze the average FPS lost when adding 1 cube of 2000 particles of varying material types. The average FPS lost corresponds to the complexity of the simulation equations for each of the materials. Adding various materials increases thread divergence and computational weight at the cost of increased realism and scene depth.
+
 Helpful resources: 
 - [PBMPM](https://www.ea.com/seed/news/siggraph2024-pbmpm)
 - [Fluid Mesh Shading](https://dl.acm.org/doi/10.1145/3651285)
@@ -380,5 +384,31 @@ Helpful resources:
     month = {may},
     articleno = {1},
     numpages = {14},
+}
+```
+
+```
+Chris Lewin. [A Position Based Material Point Method](https://www.ea.com/seed). ACM SIGGRAPH 2024.
+```
+
+```
+@article{10.1145/2897824.2925906,
+    author = {Kl\'{a}r, Gergely and Gast, Theodore and Pradhana, Andre and Fu, Chuyuan and Schroeder, Craig and Jiang, Chenfanfu and Teran, Joseph},
+    title = {Drucker-prager elastoplasticity for sand animation},
+    year = {2016},
+    issue_date = {July 2016},
+    publisher = {Association for Computing Machinery},
+    address = {New York, NY, USA},
+    volume = {35},
+    number = {4},
+    issn = {0730-0301},
+    url = {https://doi.org/10.1145/2897824.2925906},
+    doi = {10.1145/2897824.2925906},
+    abstract = {We simulate sand dynamics using an elastoplastic, continuum assumption. We demonstrate that the Drucker-Prager plastic flow model combined with a Hencky-strain-based hyperelasticity accurately recreates a wide range of visual sand phenomena with moderate computational expense. We use the Material Point Method (MPM) to discretize the governing equations for its natural treatment of contact, topological change and history dependent constitutive relations. The Drucker-Prager model naturally represents the frictional relation between shear and normal stresses through a yield stress criterion. We develop a stress projection algorithm used for enforcing this condition with a non-associative flow rule that works naturally with both implicit and explicit time integration. We demonstrate the efficacy of our approach on examples undergoing large deformation, collisions and topological changes necessary for producing modern visual effects.},
+    journal = {ACM Trans. Graph.},
+    month = jul,
+    articleno = {103},
+    numpages = {12},
+    keywords = {sand, granular, elastoplasticity, MPM, APIC}
 }
 ```
