@@ -390,7 +390,7 @@ void PBMPMScene::constructScene() {
 	
 	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 9.8f, 0.2f, 0.02f,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 4, 30, 1, 0, 0, 0, 0, 0, 0, 5, 0.2f, 0, 0};
+		1, 4, 30, 4, 0, 0, 0, 0, 0, 0, 5, 0.2f, 0, 0};
 	
 	// Create Vertex & Index Buffer
 	auto sphereData = generateSphere(PARTICLE_RADIUS, 16, 16);
@@ -399,6 +399,10 @@ void PBMPMScene::constructScene() {
 	std::vector<XMFLOAT4> positions;
 	positions.resize(maxParticles);
 	positionBuffer = StructuredBuffer(positions.data(), (unsigned int)positions.size(), sizeof(XMFLOAT4));
+
+	std::vector<int> materials;
+	materials.resize(maxParticles);
+	materialBuffer = StructuredBuffer(materials.data(), (unsigned int)materials.size(), sizeof(int));
 
 	std::vector<PBMPMParticle> particles;
 	particles.resize(maxParticles);
@@ -428,7 +432,10 @@ void PBMPMScene::constructScene() {
 	// Shape Buffer
 
 	shapes.push_back(SimShape(0, { 32, 32, 32 }, 0, { 3, 3, 3 },
-		0, 3, 0, 1, 100));
+		0, 0, 0, 1, 100));
+	
+	shapes.push_back(SimShape(0, { 16, 32, 16 }, 0, { 3, 3, 3 },
+		0, 3, 1, 1, 100));
 
 	shapeBuffer = StructuredBuffer(shapes.data(), (unsigned int)shapes.size(), sizeof(SimShape));
 
@@ -439,6 +446,7 @@ void PBMPMScene::constructScene() {
 
 	// Pass Structured Buffers to Compute Pipeline
 	positionBuffer.passDataToGPU(*context, g2p2gPipeline.getCommandList(), computeId);
+	materialBuffer.passDataToGPU(*context, g2p2gPipeline.getCommandList(), computeId);
 	particleBuffer.passDataToGPU(*context, g2p2gPipeline.getCommandList(), computeId);
 	particleFreeIndicesBuffer.passDataToGPU(*context, g2p2gPipeline.getCommandList(), computeId);
 	particleCount.passDataToGPU(*context, g2p2gPipeline.getCommandList(), computeId);
@@ -449,6 +457,7 @@ void PBMPMScene::constructScene() {
 
 	// Create UAV's for each buffer
 	positionBuffer.createUAV(*context, g2p2gPipeline.getDescriptorHeap());
+	materialBuffer.createUAV(*context, g2p2gPipeline.getDescriptorHeap());
 	particleBuffer.createUAV(*context, g2p2gPipeline.getDescriptorHeap());
 	particleFreeIndicesBuffer.createUAV(*context, g2p2gPipeline.getDescriptorHeap());
 	particleCount.createUAV(*context, g2p2gPipeline.getDescriptorHeap());
@@ -458,6 +467,7 @@ void PBMPMScene::constructScene() {
 
 	// Create SRV's for particleBuffer & particleCount
 	positionBuffer.createSRV(*context, g2p2gPipeline.getDescriptorHeap());
+	materialBuffer.createSRV(*context, g2p2gPipeline.getDescriptorHeap());
 	particleBuffer.createSRV(*context, g2p2gPipeline.getDescriptorHeap());
 	particleCount.createSRV(*context, g2p2gPipeline.getDescriptorHeap());
 
@@ -707,6 +717,7 @@ void PBMPMScene::releaseResources() {
 	setIndirectArgsPipeline.releaseResources();
 
 	positionBuffer.releaseResources();
+	materialBuffer.releaseResources();
 	particleBuffer.releaseResources();
 	particleFreeIndicesBuffer.releaseResources();
 	particleCount.releaseResources();

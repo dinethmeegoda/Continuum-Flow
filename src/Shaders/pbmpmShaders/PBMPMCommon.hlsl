@@ -5,6 +5,7 @@
 #define BukkitSize 2
 #define BukkitHaloSize 1
 #define GuardianSize 3
+#define MaxSimShapes 4
 
 #define MaterialLiquid 0
 #define MaterialElastic 1
@@ -66,7 +67,6 @@ struct Particle {
 	float3 displacement; //2->3
 	float mass;
     float3x3 deformationGradient;
-	float material;
 	float volume;
 	float lambda;
     float3x3 deformationDisplacement;
@@ -93,6 +93,7 @@ struct SimShape {
 	int material;
 	float emissionRate;
 	int radius;
+    float3 padding;
 };
 
 // Helper Functions

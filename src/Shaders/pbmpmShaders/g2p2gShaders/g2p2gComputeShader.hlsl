@@ -31,6 +31,8 @@ RWStructuredBuffer<int> g_tempTileData : register(u4);
 
 RWStructuredBuffer<float4> g_positions : register(u5);
 
+RWStructuredBuffer<int> g_materials : register(u6);
+
 //groupshared int s_tileData[TileDataSize];
 groupshared int s_tileDataDst[TileDataSize];
 
@@ -341,6 +343,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
         
         Particle particle = g_particles[myParticleIndex];
         float liquidDensity = g_positions[myParticleIndex].w;
+		int material = g_materials[myParticleIndex];
         
         float3 p = g_positions[myParticleIndex].xyz;
         QuadraticWeightInfo weightInfo = quadraticWeightInit(p);
@@ -416,7 +419,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
             // Integration
             if (g_simConstants.iteration == g_simConstants.iterationCount - 1)
             {
-                if (particle.material == MaterialLiquid)
+                if (material == MaterialLiquid)
                 {
                     // The liquid material only cares about the determinant of the deformation gradient.
                     // We can use the regular MPM integration below to evolve the deformation gradient, but
@@ -435,7 +438,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                     particle.deformationGradient = (Identity + particle.deformationDisplacement) * particle.deformationGradient;
                 }
 
-                if (particle.material != MaterialLiquid) {
+                if (material != MaterialLiquid) {
 
 
                     SVDResult svdResult = svd(particle.deformationGradient);
@@ -444,7 +447,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                     // 
                     svdResult.Sigma = clamp(svdResult.Sigma, float3(0.1, 0.1, 0.1), float3(10000.0, 10000.0, 10000.0));
 
-                    if (particle.material == MaterialSand) {
+                    if (material == MaterialSand) {
                         // Drucker - Prager sand based on :
                         // Gergely Klár, Theodore Gast, Andre Pradhana, Chuyuan Fu, Craig Schroeder, Chenfanfu Jiang, and Joseph Teran. 2016.
                         // Drucker-prager elastoplasticity for sand animation. ACM Trans. Graph. 35, 4, Article 103 (July 2016), 12 pages.
@@ -504,7 +507,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         particle.deformationGradient = expandToFloat4x4(Fp);
                        
                     }
-                    else if (particle.material == MaterialVisco)
+                    else if (material == MaterialVisco)
                     {
                         //SVDResult svdResult = svd(particle.deformationGradient);
                          float plasticity = 0.9f;
@@ -522,7 +525,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                          
                          particle.deformationGradient = mul(mul(svdResult.U, diag(svdResult.Sigma)), svdResult.Vt);
                     }
-                    /*else if (particle.material == MaterialSnow) {
+                    /*else if (material == MaterialSnow) {
                         //SVDResult svdResult = svd(particle.deformationGradient);
                         // Even stricter snow parameters
                         float criticalCompression = 5.0e-3;  // Much smaller to resist compression
@@ -545,7 +548,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
                     }*/
                     
-                    if (particle.material != MaterialSnow) {
+                    if (material != MaterialSnow) {
                         particle.deformationGradient = expandToFloat4x4(mul(mul(svdResult.U, diag(svdResult.Sigma)), svdResult.Vt));
                     }
                     
@@ -596,7 +599,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
         
         {
             // Particle update
-            if (particle.material == MaterialLiquid)
+            if (material == MaterialLiquid)
             {
                 // Simple liquid viscosity: just remove deviatoric part of the deformation displacement
                 float3x3 deviatoric = -1.0 * (particle.deformationDisplacement + transpose(particle.deformationDisplacement));
@@ -605,7 +608,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 float alpha = 0.5 * (1.0 / liquidDensity - tr3D(particle.deformationDisplacement) - 1.0);
                 particle.deformationDisplacement += g_simConstants.liquidRelaxation * alpha * Identity;
             }
-            else if (particle.material == MaterialSand)
+            else if (material == MaterialSand)
             {
                 // Compute deformation gradient F
                 float3x3 F = mul(Identity + particle.deformationDisplacement, particle.deformationGradient);
@@ -647,7 +650,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 particle.deformationDisplacement += g_simConstants.liquidViscosity * 0.5 * deviatoric;
 
             }
-            else if (particle.material == MaterialVisco) {
+            else if (material == MaterialVisco) {
              
                 float3x3 F = mul(Identity + particle.deformationDisplacement, particle.deformationGradient);
                 SVDResult svdResult = svd(F);
@@ -668,7 +671,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 // Apply relaxation
                 particle.deformationDisplacement += elasticRelaxation * diff;
             }
-            else if (particle.material == MaterialElastic) {
+            else if (material == MaterialElastic) {
 
                 float3x3 F = mul(Identity + particle.deformationDisplacement, particle.deformationGradient);
                 SVDResult svdResult = svd(F);
@@ -689,7 +692,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 // Apply relaxation
                 particle.deformationDisplacement += elasticRelaxation * diff;
             }
-            /*else if (particle.material == MaterialSnow) {
+            /*else if (material == MaterialSnow) {
                 float3x3 F = mul(Identity + particle.deformationDisplacement, particle.deformationGradient);
                 SVDResult svdResult = svd(F);
 
