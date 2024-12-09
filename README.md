@@ -521,6 +521,6 @@ First attempt at porting 2D to 3D:
 
 Some angry particles:
 
-![](app/image/swirlywhirly.gif)
+![](app/image/swirly-wirly.gif)
 
 ![](app/image/evilwhirl.gif)
