@@ -5,7 +5,7 @@
 #define BukkitSize 2
 #define BukkitHaloSize 1
 #define GuardianSize 3
-#define MaxSimShapes 4
+#define MaxSimShapes 8
 
 #define MaterialLiquid 0
 #define MaterialElastic 1

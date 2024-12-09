@@ -22,10 +22,35 @@ void ObjectScene::constructSceneWire() {
     XMFLOAT4X4 gridModelMatrix;
     XMStoreFloat4x4(&gridModelMatrix, XMMatrixScaling(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH));
     modelMatrices.push_back(gridModelMatrix);
+
+	// vector for colors of grid lines
+	std::vector<XMFLOAT3> colors = { XMFLOAT3(0.0f, 1.0f, 0.0f) };
     
     //cubes for shapes
     for (const auto& shape : shapes) {
         inputStrings.push_back("objs\\cube.obj");
+
+        // Decide color based on shape function
+		XMFLOAT3 color;
+        switch (shape.functionality) {
+		case 0: // Emitter
+			color = XMFLOAT3(0.0f, 0.7f, 0.8f);
+			break;
+		case 1: // Obstacle
+			color = XMFLOAT3(0.0f, 0.0f, 0.0f);
+			break;
+		case 2: // Drain
+			color = XMFLOAT3(1.0f, 0.0f, 0.25f);
+			break;
+		case 3: // Initial Emitter
+			color = XMFLOAT3(0.0f, 0.0f, 0.9f);
+			break;
+		default:
+			color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+			break;
+        }
+		colors.push_back(color);
+
         XMFLOAT4X4 simShapeMatrix;
         XMStoreFloat4x4(&simShapeMatrix, XMMatrixMultiply(
             XMMatrixScaling(shape.halfSize.x * 2, shape.halfSize.y * 2, shape.halfSize.z * 2),
@@ -36,7 +61,7 @@ void ObjectScene::constructSceneWire() {
 
     auto string = inputStrings.front();
     auto m = modelMatrices.front();
-    Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true, {0, 1, 0});
+    Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true, colors.front());
     meshes.push_back(newMesh);
     sceneSize += newMesh.getNumTriangles();
 
@@ -44,7 +69,7 @@ void ObjectScene::constructSceneWire() {
     for (int i = 1; i < inputStrings.size(); i++) {
         auto string = inputStrings.at(i);
         auto m = modelMatrices.at(i);
-		Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true, { 1, 0, 0 });
+		Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, true, colors.at(i));
 		meshes.push_back(newMesh);
 		sceneSize += newMesh.getNumTriangles();
 	}
@@ -55,17 +80,45 @@ void ObjectScene::constructSceneSolid() {
     inputStrings.push_back("objs\\cube.obj");
     XMFLOAT4X4 groundModelMatrix;
     XMStoreFloat4x4(&groundModelMatrix, XMMatrixMultiply(
-        XMMatrixScaling(1.5 * GRID_WIDTH, -5.0f, 1.5 * GRID_DEPTH),
+        XMMatrixScaling(1.1 * GRID_WIDTH, -5.0f, 1.1 * GRID_DEPTH),
         XMMatrixTranslation(0.f, 3.5f, 0.f)
     ));
     modelMatrices.push_back(groundModelMatrix);
 
+    // vector for colors of grid lines
+    std::vector<XMFLOAT3> colors = { XMFLOAT3(GROUND_PLANE_COLOR) };
+
+    //cubes for obstacles
+    for (const auto& shape : shapes) {
+		// if the shape is an obstacle, add it to the scene
+        if (shape.functionality == 1) {
+            inputStrings.push_back("objs\\cube.obj");
+            colors.push_back({ 0.75, 0.8, 0.82 });
+
+            XMFLOAT4X4 simShapeMatrix;
+            XMStoreFloat4x4(&simShapeMatrix, XMMatrixMultiply(
+                XMMatrixScaling(shape.halfSize.x * 2, shape.halfSize.y * 2, shape.halfSize.z * 2),
+                XMMatrixTranslation(shape.position.x - shape.halfSize.x, shape.position.y - shape.halfSize.y, shape.position.z - shape.halfSize.z)
+            ));
+            modelMatrices.push_back(simShapeMatrix);
+        }
+    }
+
     //push ground as solid
-    auto string = inputStrings.back();
-    auto m = modelMatrices.back();
-    Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, false, XMFLOAT3(GROUND_PLANE_COLOR));
+    auto string = inputStrings.front();
+    auto m = modelMatrices.front();
+    Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, false, colors.front());
     meshes.push_back(newMesh);
     sceneSize += newMesh.getNumTriangles();
+
+    //push shapes as wireframe
+    for (int i = 1; i < inputStrings.size(); i++) {
+        auto string = inputStrings.at(i);
+        auto m = modelMatrices.at(i);
+        Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, m, false, colors.at(i));
+        meshes.push_back(newMesh);
+        sceneSize += newMesh.getNumTriangles();
+    }
 }
 
 void ObjectScene::draw(Camera* camera) {
