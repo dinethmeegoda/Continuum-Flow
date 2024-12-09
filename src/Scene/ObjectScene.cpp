@@ -80,7 +80,7 @@ void ObjectScene::constructSceneSolid() {
     inputStrings.push_back("objs\\cube.obj");
     XMFLOAT4X4 groundModelMatrix;
     XMStoreFloat4x4(&groundModelMatrix, XMMatrixMultiply(
-        XMMatrixScaling(1.1 * GRID_WIDTH, -5.0f, 1.1 * GRID_DEPTH),
+        XMMatrixScaling(1.1f * GRID_WIDTH, -5.0f, 1.1f * GRID_DEPTH),
         XMMatrixTranslation(0.f, 3.5f, 0.f)
     ));
     modelMatrices.push_back(groundModelMatrix);
@@ -93,7 +93,7 @@ void ObjectScene::constructSceneSolid() {
 		// if the shape is an obstacle, add it to the scene
         if (shape.functionality == 1) {
             inputStrings.push_back("objs\\cube.obj");
-            colors.push_back({ 0.75, 0.8, 0.82 });
+            colors.push_back({ 0.75f, 0.8f, 0.82f });
 
             XMFLOAT4X4 simShapeMatrix;
             XMStoreFloat4x4(&simShapeMatrix, XMMatrixMultiply(

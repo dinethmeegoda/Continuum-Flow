@@ -362,10 +362,9 @@ The above chart analyze the average FPS lost when adding 1 cube of 2000 particle
 Helpful resources: 
 - [PBMPM](https://www.ea.com/seed/news/siggraph2024-pbmpm)
 - [Fluid Mesh Shading](https://dl.acm.org/doi/10.1145/3651285)
-- [Disney Snow](https://media.disneyanimation.com/uploads/production/publication_asset/94/asset/SSCTS13_2.pdf)
 - [PBD softbody](https://dl.acm.org/doi/pdf/10.1145/3677388.3696322)
 - For the DX12 basics and compointer class, we used this great [tutorial series!]( https://github.com/Ohjurot/D3D12Ez)
-- For the DescriptorHeap class and management, we used this [resource,](https://github.com/stefanpgd/Compute-DirectX12-Tutorial/)
+- For the DescriptorHeap class and management, we used this [resource](https://github.com/stefanpgd/Compute-DirectX12-Tutorial/).
 
 # Citations / Attributions
 ```
@@ -411,4 +410,9 @@ Chris Lewin. [A Position Based Material Point Method](https://www.ea.com/seed). 
     numpages = {12},
     keywords = {sand, granular, elastoplasticity, MPM, APIC}
 }
+```
+
+```
+Stomakhin, A., Schroeder, C., Chai, L., Teran, J., Selle, A. 2013. A Material Point Method for Snow Simulation. ACM Trans. Graph. 32, 4, Article 102 (July 2013), 12 pages. DOI = 10.1145/2461912.2461948
+http://doi.acm.org/10.1145/2461912.2461948.
 ```

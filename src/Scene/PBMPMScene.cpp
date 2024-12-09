@@ -391,7 +391,7 @@ void PBMPMScene::constructScene() {
 	
 	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 9.8f, 0.2f, 0.02f,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 4, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.9f, 1.4, 2.0,
+		1, 4, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.9f, 1.4f, 2.0f,
 		// Mouse Defaults
 		{0, 0, 0, 0}, {0, 0, 0, 0}, 0, 6, 0, 10
 	};
