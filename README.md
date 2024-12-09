@@ -19,7 +19,7 @@ We built our project on top of the DirectX 12 graphics API, creating our own eng
 
 For the graphical interface (which includes interactive sliders for the simulation and rendering parameters), we used ImGUI.
 
-## PBMPM
+## Position Based Material Point Method
 
 *Breakpoint* includes a 3D implemention of EA's Position Based Material Point Method. The public repository for PBMPM is a 2D WebGPU version, and there is an EA in-house 3D version on the CPU. *Breakpoint* is the first instance of PBMPM in DirectX on the GPU in 3D. 
 
@@ -361,7 +361,7 @@ These parameters tune how the particles behave, and the speed and accuracy of th
 
 ### Mesh Shading Parameters
 
-![](app/image/meshshaderparams.png
+![](app/image/meshshaderparams.png)
 
 The parameters here tune how the mesh shading algorithm will scale the kernel and isovalue for rendering of the particles.
 
@@ -383,7 +383,7 @@ Lastly, there is a toggle to see the meshlets in the mesh shader:
 
 ![](app/image/meshletrendertoggle.png)
 
-## PBMPM
+## Position Based Material Point Method Performance
 
 There are a number of parameters that affect how PBMPM performs, due to the complexity of the simulation algorithm. The following is a list of performance tests for PBMPM, analyzing the various parameters and attributes of the particle simulation. For the setup, unless otherwise stated the iteration and substep count are 5, the grid is 64x64x64, there are 2000 particles emitted by an initial emitter, mesh shading is on, the particles per cell axis is 4, and the fixed point multiplier is 7. These tests were performed in release mode on a personal laptop with Windows 23H2, an AMD Ryzen 9 7940HS @ 4GHz 32GB, and a RTX 4070 8 GB.
 
