@@ -12,11 +12,9 @@
 
 // Keep consistent with PBMPMCommon.hlsl
 
-const unsigned int ParticleDispatchSize = 64;
 const unsigned int GridDispatchSize = 8;
 const unsigned int BukkitSize = 2;
 const unsigned int BukkitHaloSize = 1;
-const unsigned int GuardianSize = 3;
 
 const float PARTICLE_RADIUS = 0.5f;
 
