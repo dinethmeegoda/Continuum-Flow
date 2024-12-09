@@ -124,7 +124,8 @@ public:
 
 	StructuredBuffer* getPositionBuffer() { return &positionBuffer; }
 
-	int getParticleCount();
+	int transferAndGetNumParticles();
+	unsigned int getNumParticles() { return numParticles; }
 
 	PBMPMConstants getConstants() { return constants; }
 
@@ -191,4 +192,5 @@ private:
 	unsigned int endTime{ 0 };
 
 	unsigned int substepCount{ 5 };
+	unsigned int numParticles{ 0 };
 };

@@ -68,10 +68,11 @@ ImGuiIO& initImGUI(DXContext& context) {
     return io;
 }
 
-void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, unsigned int* renderMode, float* isovalue, float* kernelScale, float* kernelRadius, unsigned int* substepCount) {
+void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, unsigned int* renderMode, float* isovalue, float* kernelScale, float* kernelRadius, unsigned int* substepCount, int numParticles) {
     ImGui::Begin("Scene Options");
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+    ImGui::Text("Number of Particles: %d", numParticles);
 
     if (ImGui::CollapsingHeader("Simulation Parameters")) {
         ImGui::SliderFloat("Gravity Strength", &pbmpmConstants.gravityStrength, 0.0f, 20.0f);

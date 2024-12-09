@@ -34,6 +34,8 @@ public:
 
 	unsigned int* getPBMPMSubstepCount() { return pbmpmScene.getSubstepCount(); }
 
+	int getNumParticles() { return pbmpmScene.getNumParticles(); }
+
 private:
 	Camera* camera;
 

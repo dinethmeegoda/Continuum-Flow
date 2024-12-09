@@ -118,7 +118,8 @@ int main() {
             scene.getFluidIsovalue(), 
             scene.getFluidKernelScale(), 
             scene.getFluidKernelRadius(), 
-            scene.getPBMPMSubstepCount());
+            scene.getPBMPMSubstepCount(),
+            scene.getNumParticles());
 
         //render ImGUI
         ImGui::Render();
