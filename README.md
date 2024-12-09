@@ -439,7 +439,7 @@ The above chart analyze the average FPS lost when adding 1 cube of 2000 particle
 
 Helpful resources: 
 - [PBMPM](https://www.ea.com/seed/news/siggraph2024-pbmpm)
-- [Fluid Mesh Shading](https://dl.acm.org/doi/10.1145/3651285)
+- [Fluid Mesh Shading Repository](https://github.com/yknishidate/mesh_shader_surface_reconstruction/tree/main/shader)
 - [PBD softbody](https://dl.acm.org/doi/pdf/10.1145/3677388.3696322)
 - For the DX12 basics and compointer class, we used this great [tutorial series!]( https://github.com/Ohjurot/D3D12Ez)
 - For the DescriptorHeap class and management, we used this [resource](https://github.com/stefanpgd/Compute-DirectX12-Tutorial/).
