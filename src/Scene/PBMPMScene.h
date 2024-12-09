@@ -50,10 +50,11 @@ struct PBMPMConstants {
 
 	//mouse stuff
 	XMFLOAT4 mousePosition;
+	XMFLOAT4 mouseDirection;
 	unsigned int mouseActivation;
 	unsigned int mouseRadius;
 	unsigned int mouseFunction;
-	unsigned int mouseVelocity;
+	float mouseVelocity;
 };
 
 struct SimShape {
@@ -67,13 +68,13 @@ struct SimShape {
 	int material;
 	float emissionRate;
 	int radius;
+	XMFLOAT3 padding;
 };
 
 struct PBMPMParticle {
 	XMFLOAT3 displacement; //2->3
 	float mass;
 	XMFLOAT3X3 deformationGradient;
-	float material;
 	float volume;
 	float lambda;
 	XMFLOAT3X3 deformationDisplacement;
@@ -161,6 +162,7 @@ private:
 
 	// Particle Buffers
 	StructuredBuffer positionBuffer;
+	StructuredBuffer materialBuffer;
 
 	// Scene Buffers
 	StructuredBuffer particleBuffer;
