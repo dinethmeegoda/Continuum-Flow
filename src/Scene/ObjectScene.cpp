@@ -80,7 +80,7 @@ void ObjectScene::constructSceneSolid() {
     inputStrings.push_back("objs\\cube.obj");
     XMFLOAT4X4 groundModelMatrix;
     XMStoreFloat4x4(&groundModelMatrix, XMMatrixMultiply(
-        XMMatrixScaling(1.1f * GRID_WIDTH, -5.0f, 1.1f * GRID_DEPTH),
+        XMMatrixScaling(1.1f * GRID_WIDTH, 1.f, 1.1f * GRID_DEPTH),
         XMMatrixTranslation(-0.05f * GRID_WIDTH, 3.5f, -0.05f * GRID_DEPTH)
     ));
     modelMatrices.push_back(groundModelMatrix);
