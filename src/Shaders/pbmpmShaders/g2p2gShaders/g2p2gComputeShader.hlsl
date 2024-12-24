@@ -403,7 +403,6 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                     for (int k = 0; k < 3; k++) {
                         // Weight corresponding to this neighborhood cell
                         float weight = weightInfo.weights[i].x * weightInfo.weights[j].y * weightInfo.weights[k].z;
-
                         // Grid vertex index
                         int3 neighborCellIndex = int3(weightInfo.cellIndex) + int3(i, j, k);
 
@@ -420,19 +419,13 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         int fixedPoint2;
                         InterlockedAdd(g_tempTileData[(groupId.x * TileDataSize) + gridVertexIdx + 2], 0, fixedPoint2);
 
-                        uint particleIndexInCell = g_bukkitParticleData[threadData.rangeStart + indexInGroup];
-                        int cellMaterial = g_materials[particleIndexInCell];
-
                         float3 weightedDisplacement = weight * float3(
                             decodeFixedPoint(fixedPoint0, g_simConstants.fixedPointMultiplier),
                             decodeFixedPoint(fixedPoint1, g_simConstants.fixedPointMultiplier),
                             decodeFixedPoint(fixedPoint2, g_simConstants.fixedPointMultiplier));
 
-                        if (cellMaterial == currentMaterial)
-                        {
-                            float3 offset = float3(neighborCellIndex) - p + 0.5;
-                            B += outerProduct(weightedDisplacement, offset);
-                        }
+                        float3 offset = float3(neighborCellIndex) - p + 0.5;
+                        B += outerProduct(weightedDisplacement, offset);
 
                         d += weightedDisplacement;
 
@@ -801,7 +794,6 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
             }
 
             // P2G
-
             // Iterate over local 3x3 neighborhood
             for (int i = 0; i < 3; i++)
             {
@@ -822,7 +814,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         uint gridVertexIdx = localGridIndex(uint3(neighborCellIndexLocal));
 
                         // Update grid data
-                        float3 offset = float3(neighborCellIndex) - p + 0.5;
+                        float3 offset = float3(neighborCellIndex) - p +0.5;
 
                         float weightedMass = weight * particle.mass;
                         float3 momentum = weightedMass * (particle.displacement + mul(particle.deformationDisplacement, offset));

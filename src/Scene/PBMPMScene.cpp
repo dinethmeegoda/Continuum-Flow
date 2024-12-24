@@ -459,7 +459,7 @@ void PBMPMScene::constructScene() {
 
 	//Temp tile data buffer
 	std::vector<int> tempTileData;
-	tempTileData.resize(100000000);
+	tempTileData.resize(1000000000);
 	tempTileDataBuffer = StructuredBuffer(tempTileData.data(), (unsigned int)tempTileData.size(), sizeof(int));
 
 	// Pass Structured Buffers to Compute Pipeline

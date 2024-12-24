@@ -4,7 +4,7 @@
 #define GridDispatchSize 8
 #define BukkitSize 2
 #define BukkitHaloSize 1
-#define GuardianSize 3
+#define GuardianSize 0
 #define MaxSimShapes 8
 
 #define MaterialLiquid 0
@@ -138,13 +138,13 @@ float3 pow2(float3 x) {
 QuadraticWeightInfo quadraticWeightInit(float3 position)
 {
     float3 roundDownPosition = floor(position);
-    float3 offset = (position - roundDownPosition) - 0.5;
+    float3 offset = (position - roundDownPosition) -0.5;
 
     QuadraticWeightInfo result;
     result.weights[0] = 0.5 * pow2(0.5 - offset);
     result.weights[1] = 0.75 - pow2(offset);
     result.weights[2] = 0.5 * pow2(0.5 + offset);
-    result.cellIndex = roundDownPosition - float3(1, 1, 1);
+    result.cellIndex = roundDownPosition -float3(1, 1, 1);
 
     return result;
 }
