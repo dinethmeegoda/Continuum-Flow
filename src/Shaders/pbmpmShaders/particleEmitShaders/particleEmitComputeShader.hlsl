@@ -36,6 +36,12 @@ RWStructuredBuffer<float4> g_positions : register(u3);
 // Structured Buffer for materials (read-write UAV)
 RWStructuredBuffer<int> g_materials : register(u4);
 
+// Structured Buffer for displacement (read-write UAV)
+RWStructuredBuffer<float4> g_displacement : register(u5);
+
+// Structured Buffer for mass and volume (read-write UAV)
+RWStructuredBuffer<float4> g_massVolume : register(u6);
+
 uint hash(uint input)
 {
     uint state = input * 747796405 + 2891336453;
@@ -60,16 +66,12 @@ bool insideGuardian(uint3 id, uint3 gridSize, uint guardianSize)
     return true;
 }
 
-Particle createParticle(float mass, float volume)
+Particle createParticle()
 {
     Particle particle;
 
-    particle.displacement = float3(0, 0, 0);
     particle.deformationGradient = Identity;
     particle.deformationDisplacement = ZeroMatrix;
-
-    particle.mass = mass;
-    particle.volume = volume;
 
     particle.lambda = 0.0;
     particle.logJp = 1.0;
@@ -100,14 +102,13 @@ void addParticle(float3 position, int material, float volume, float density, flo
 
     float2 jitter = float2(-0.25, -0.25) + 0.5 * float2(float(jitterX % 10) / 10, float(jitterY % 10) / 10);
 
-    Particle newParticle = createParticle(
-        volume * density,
-        volume
-    );
+    Particle newParticle = createParticle();
 
     g_particles[particleIndex] = newParticle;
 	g_materials[particleIndex] = material;
 	g_positions[particleIndex] = float4(position + float3(jitter.x, jitter.y, 0.f) * jitterScale, 1.0);
+	g_displacement[particleIndex] = float4(0, 0, 0, 0);
+	g_massVolume[particleIndex] = float4(volume * density, volume, 0, 0);
 }
 
 [numthreads(GridDispatchSize, GridDispatchSize, GridDispatchSize)]

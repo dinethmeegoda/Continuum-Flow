@@ -45,6 +45,11 @@ RWStructuredBuffer<float4> g_positions : register(u5);
 
 RWStructuredBuffer<int> g_materials : register(u6);
 
+// Structured Buffer for displacements (read-write UAV)
+RWStructuredBuffer<float4> g_displacements : register(u7);
+
+StructuredBuffer<float4> g_massVolumeData : register(t3);
+
 //groupshared int s_tileData[TileDataSize];
 groupshared int s_tileDataDst[TileDataSize];
 
@@ -385,6 +390,8 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
         
         float3 p = g_positions[myParticleIndex].xyz;
         QuadraticWeightInfo weightInfo = quadraticWeightInit(p);
+
+		float3 displacement = g_displacements[myParticleIndex].xyz;
         
         if (g_simConstants.iteration != 0)
         {
@@ -454,7 +461,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
             
             // Save the deformation gradient as a 3x3 matrix by adding the identity matrix to the rest
             particle.deformationDisplacement = B * 4.0;
-            particle.displacement = d;
+            displacement = d;
             
             // Integration
             if (g_simConstants.iteration == g_simConstants.iterationCount - 1)
@@ -585,7 +592,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 }
                 
                 // Update particle position
-                p += particle.displacement;
+                p += displacement;
                 
                 // Mouse Iteraction
                 if (g_mouseConstants.mouseActivation == 1) {
@@ -599,23 +606,23 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
 						if (g_mouseConstants.mouseFunction == 0) // Push
                         {
-                            particle.displacement += normOffset * g_mouseConstants.mouseActivation * g_mouseConstants.mouseStrength * g_simConstants.deltaTime * 3.f;
+                            displacement += normOffset * g_mouseConstants.mouseActivation * g_mouseConstants.mouseStrength * g_simConstants.deltaTime * 3.f;
                         }
                         else if (g_mouseConstants.mouseFunction == 1) // Grab
                         {
                             float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * 80;
-                            particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 0.5;
+                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 0.5;
                         }
                         else if (g_mouseConstants.mouseFunction == 2) // Pull
 						{
                             float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * t;
-                            particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 0.5;
+                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 0.5;
 						}
                     }
                 }
                 
                 // Gravity Acceleration is normalized to the vertical size of the window
-                particle.displacement.y -= float(g_simConstants.gridSize.y) * g_simConstants.gravityStrength * g_simConstants.deltaTime * g_simConstants.deltaTime;
+                displacement.y -= float(g_simConstants.gridSize.y) * g_simConstants.gravityStrength * g_simConstants.deltaTime * g_simConstants.deltaTime;
                 
                 // Free count may be negative because of emission. So make sure it is at last zero before incrementing.
                 int originalMax; // Needed for InterlockedMax output parameter
@@ -632,7 +639,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
                         if (c.collides)
                         {
-							particle.displacement -= c.penetration * c.normal * (1.0 - g_simConstants.borderFriction);
+							displacement -= c.penetration * c.normal * (1.0 - g_simConstants.borderFriction);
                         }
                     }
 
@@ -658,6 +665,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
             // Save the particle back to the buffer
             g_particles[myParticleIndex] = particle;
 			g_positions[myParticleIndex] = float4(p, liquidDensity);
+			g_displacements[myParticleIndex] = float4(displacement, 0);
         }
         
         {
@@ -814,10 +822,10 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         uint gridVertexIdx = localGridIndex(uint3(neighborCellIndexLocal));
 
                         // Update grid data
-                        float3 offset = float3(neighborCellIndex) - p +0.5;
+                        float3 offset = float3(neighborCellIndex) - p + 0.5;
 
-                        float weightedMass = weight * particle.mass;
-                        float3 momentum = weightedMass * (particle.displacement + mul(particle.deformationDisplacement, offset));
+                        float weightedMass = weight * g_massVolumeData[myParticleIndex].x;
+                        float3 momentum = weightedMass * (displacement + mul(particle.deformationDisplacement, offset));
 
                         InterlockedAdd(s_tileDataDst[gridVertexIdx + 0], encodeFixedPoint(momentum.x, g_simConstants.fixedPointMultiplier));
                         InterlockedAdd(s_tileDataDst[gridVertexIdx + 1], encodeFixedPoint(momentum.y, g_simConstants.fixedPointMultiplier));
@@ -826,7 +834,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
                         if (g_simConstants.useGridVolumeForLiquid != 0)
                         {
-                            InterlockedAdd(s_tileDataDst[gridVertexIdx + 4], encodeFixedPoint(weight * particle.volume, g_simConstants.fixedPointMultiplier));
+                            InterlockedAdd(s_tileDataDst[gridVertexIdx + 4], encodeFixedPoint(weight * g_massVolumeData[myParticleIndex].y, g_simConstants.fixedPointMultiplier));
                         }
                     }
                 }

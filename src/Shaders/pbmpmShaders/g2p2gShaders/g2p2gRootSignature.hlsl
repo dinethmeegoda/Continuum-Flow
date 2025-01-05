@@ -9,6 +9,7 @@
 "DescriptorTable(UAV(u2, numDescriptors=1))," /* Table for next grid */ \
 "DescriptorTable(UAV(u3, numDescriptors=1))," /* Table for nextnext grid */ \
 "DescriptorTable(UAV(u4, numDescriptors=1))," /* Table for temp tile data */ \
-"DescriptorTable(UAV(u5, numDescriptors=2))" /* Table for g_positions & materials*/
+"DescriptorTable(UAV(u5, numDescriptors=3))," /* Table for g_positions & materials & displacement*/ \
+"DescriptorTable(SRV(t3, numDescriptors=1))" /* Table for read only volume mass data */
 
 

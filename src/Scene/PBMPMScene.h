@@ -85,10 +85,7 @@ struct SimShape {
 };
 
 struct PBMPMParticle {
-	XMFLOAT3 displacement; //2->3
-	float mass;
 	XMFLOAT3X3 deformationGradient;
-	float volume;
 	float lambda;
 	XMFLOAT3X3 deformationDisplacement;
 	float logJp;
@@ -176,6 +173,8 @@ private:
 	// Particle Buffers
 	StructuredBuffer positionBuffer;
 	StructuredBuffer materialBuffer;
+	StructuredBuffer displacementBuffer;
+	StructuredBuffer massVolumeBuffer;
 
 	// Scene Buffers
 	StructuredBuffer particleBuffer;
