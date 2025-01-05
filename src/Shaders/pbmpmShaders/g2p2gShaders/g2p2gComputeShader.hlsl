@@ -869,5 +869,4 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
         g_tempTileData[(groupId.x * TileDataSize) + tileDataIndex + 3] = 0;
         g_tempTileData[(groupId.x * TileDataSize) + tileDataIndex + 4] = 0;
     }
-
 }

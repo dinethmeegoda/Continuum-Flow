@@ -103,6 +103,6 @@ private:
     StructuredBuffer surfaceVertexNormalBuffer;
 
     float isovalue{ 0.03f };
-    float kernelScale{ 4.0f };
-    float kernelRadius{ 1.01f };
+    float kernelScale{ 4.2f };
+    float kernelRadius{ 1.3f };
 };

@@ -389,7 +389,7 @@ void PBMPMScene::bukkitizeParticles() {
 void PBMPMScene::constructScene() {
 	auto computeId = g2p2gPipeline.getCommandListID();
 	
-	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 9.8f, 0.2f, 0.02f,
+	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 2.5f, 0.2f, 0.02f,
 		(unsigned int)std::ceil(std::pow(10, 7)),
 		1, 4, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.9f, 1.4f, 2.0f, 1.5f, 0.5f,
 		// Mouse Defaults
@@ -436,8 +436,8 @@ void PBMPMScene::constructScene() {
 	// Shape Buffer
 
 	// Water Cube
-	shapes.push_back(SimShape(0, { 32, 32, 32 }, 0, { 3, 3, 3 },
-		0, 0, 0, 0.5, 100));
+	shapes.push_back(SimShape(0, { 16, 26, 16 }, 0, { 16, 6, 16 },
+		0, 3, 0, 0.5, 100));
 
 	// Drain
 	//shapes.push_back(SimShape(0, { 32, 5, 9 }, 0, { 32, 5, 5 },
