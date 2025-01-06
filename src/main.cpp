@@ -34,7 +34,7 @@ int main() {
     PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
 
     unsigned int renderMeshlets = 0;
-    unsigned int renderMode = 0;
+    unsigned int renderMode = 2;
 
     while (!Window::get().getShouldClose()) {
         //update window

@@ -11,7 +11,7 @@ cbuffer CameraMatrices : register(b0) {
 StructuredBuffer<float4> positions : register(t0);
 
 // Particle materials as an SRV at register t1
-StructuredBuffer<int4> materials : register(t1);
+StructuredBuffer<float4> materials : register(t1);
 
 struct VSInput
 {

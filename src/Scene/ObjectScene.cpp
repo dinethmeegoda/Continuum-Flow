@@ -81,7 +81,7 @@ void ObjectScene::constructSceneSolid() {
     XMFLOAT4X4 groundModelMatrix;
     XMStoreFloat4x4(&groundModelMatrix, XMMatrixMultiply(
         XMMatrixScaling(1.1f * GRID_WIDTH, 1.f, 1.1f * GRID_DEPTH),
-        XMMatrixTranslation(-0.05f * GRID_WIDTH, 0.5f, -0.05f * GRID_DEPTH)
+        XMMatrixTranslation(-0.05f * GRID_WIDTH, -1.0f, -0.05f * GRID_DEPTH)
     ));
     modelMatrices.push_back(groundModelMatrix);
 

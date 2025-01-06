@@ -44,7 +44,7 @@ RWStructuredBuffer<int> g_tempTileData : register(u4);
 RWStructuredBuffer<float4> g_positions : register(u5);
 
 //Structured Buffer for materials(read - write UAV), color in first three components, material enum stored in fourth
-RWStructuredBuffer<int4> g_materials : register(u6);
+RWStructuredBuffer<float4> g_materials : register(u6);
 
 // Structured Buffer for displacements (read-write UAV)
 RWStructuredBuffer<float4> g_displacements : register(u7);
@@ -53,6 +53,24 @@ StructuredBuffer<float4> g_massVolumeData : register(t3);
 
 //groupshared int s_tileData[TileDataSize];
 groupshared int s_tileDataDst[TileDataSize];
+
+static const float3 darkColorTable[] = {
+    float3(0.0, 0.573, 0.878), // Water
+    float3(0.0, 0.8, 0.0), // Elastic
+    float3(0.85, 0.8, 0.0), // Sand
+    float3(0.6, 0.0, 0.7), // Visco
+    float3(0.8, 0.8, 0.8), // Snow
+    float3(0.0, 0.0, 0.0)  // Default
+};
+
+static const float3 lightColorTable[] = {
+    float3(0.094, 0.8, 0.929), // Water
+    float3(0.1, 0.85, 0.0), // Elastic
+    float3(0.95, 0.85, 0.0), // Sand
+    float3(0.85, 0.1, 0.9), // Visco
+    float3(0.9, 0.9, 0.9), // Snow
+    float3(0.5, 0.5, 0.5)  // Default
+};
 
 unsigned int localGridIndex(uint3 index) {
 	return (index.z * TotalBukkitEdgeLength * TotalBukkitEdgeLength + index.y * TotalBukkitEdgeLength + index.x) * 5;
@@ -254,6 +272,12 @@ bool intersectRaySphere(float3 rayOrigin, float3 rayDir, float3 sphereCenter, fl
     return true;
 }
 
+float getBias(float time, float bias)
+{
+    return (time / ((((1.0 / bias) - 2.0) * (1.0 - time)) + 1.0));
+}
+
+
 [numthreads(ParticleDispatchSize, 1, 1)]
 void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 {
@@ -342,7 +366,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
         // with the current velocity and, if it is, setting the displacement so that no further penetration can occur.
 
         float3 displacedGridPosition = gridPosition + gridDisplacement;
-        float3 projectedGridPosition = projectInsideGuardian(displacedGridPosition, g_simConstants.gridSize, GuardianSize + 1);
+        float3 projectedGridPosition = projectInsideGuardian(displacedGridPosition, g_simConstants.gridSize, GuardianSize);
         float3 projectedDifference = projectedGridPosition - displacedGridPosition;
 
         if (any(projectedDifference != 0))
@@ -594,6 +618,13 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 
                 // Update particle position
                 p += displacement;
+
+				// Color the liquid based on the displacement, before external forces
+                float maxDisplacement = 0.03;
+                float displacementRatio = min(abs(getBias(length(displacement), 0.25)) / maxDisplacement, 7.0);
+                float3 darkColor = darkColorTable[material];
+                float3 lightColor = lightColorTable[material];
+                g_materials[myParticleIndex].xyz = lerp(darkColor, lightColor, displacementRatio);
                 
                 // Mouse Iteraction
                 if (g_mouseConstants.mouseActivation == 1) {
@@ -621,10 +652,10 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 						}
                     }
                 }
-                
+
                 // Gravity Acceleration is normalized to the vertical size of the window
                 displacement.y -= float(g_simConstants.gridSize.y) * g_simConstants.gravityStrength * g_simConstants.deltaTime * g_simConstants.deltaTime;
-                
+
                 // Free count may be negative because of emission. So make sure it is at last zero before incrementing.
                 int originalMax; // Needed for InterlockedMax output parameter
                 InterlockedMax(g_freeIndices[0], 0, originalMax); 

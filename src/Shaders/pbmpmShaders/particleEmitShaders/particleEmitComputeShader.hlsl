@@ -34,13 +34,22 @@ StructuredBuffer<int> g_grid : register(t0);
 RWStructuredBuffer<float4> g_positions : register(u3);
 
 // Structured Buffer for materials (read-write UAV), color in first three components, material enum stored in fourth
-RWStructuredBuffer<int4> g_materials : register(u4);
+RWStructuredBuffer<float4> g_materials : register(u4);
 
 // Structured Buffer for displacement (read-write UAV)
 RWStructuredBuffer<float4> g_displacement : register(u5);
 
 // Structured Buffer for mass and volume (read-write UAV)
 RWStructuredBuffer<float4> g_massVolume : register(u6);
+
+static const float3 colorTable[] = {
+    float3(0.0, 0.573, 0.878), // Water
+    float3(0.0, 0.75, 0.0), // Elastic
+    float3(0.8, 0.8, 0.0), // Sand
+    float3(0.7, 0.0, 0.8), // Visco
+    float3(0.8, 0.8, 0.8), // Snow
+    float3(0.0, 0.0, 0.0)  // Default
+};
 
 uint hash(uint input)
 {
@@ -105,7 +114,7 @@ void addParticle(float3 position, int material, float volume, float density, flo
     Particle newParticle = createParticle();
 
     g_particles[particleIndex] = newParticle;
-	g_materials[particleIndex] = int4(0, 0, 0, material);
+    g_materials[particleIndex] = float4(colorTable[material], material);
 	g_positions[particleIndex] = float4(position + float3(jitter.x, jitter.y, 0.f) * jitterScale, 1.0);
 	g_displacement[particleIndex] = float4(0, 0, 0, 0);
 	g_massVolume[particleIndex] = float4(volume * density, volume, 0, 0);
