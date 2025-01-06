@@ -33,8 +33,8 @@ StructuredBuffer<int> g_grid : register(t0);
 // Structured Buffer for positions (read-write UAV)
 RWStructuredBuffer<float4> g_positions : register(u3);
 
-// Structured Buffer for materials (read-write UAV)
-RWStructuredBuffer<int> g_materials : register(u4);
+// Structured Buffer for materials (read-write UAV), color in first three components, material enum stored in fourth
+RWStructuredBuffer<int4> g_materials : register(u4);
 
 // Structured Buffer for displacement (read-write UAV)
 RWStructuredBuffer<float4> g_displacement : register(u5);
@@ -105,7 +105,7 @@ void addParticle(float3 position, int material, float volume, float density, flo
     Particle newParticle = createParticle();
 
     g_particles[particleIndex] = newParticle;
-	g_materials[particleIndex] = material;
+	g_materials[particleIndex] = int4(0, 0, 0, material);
 	g_positions[particleIndex] = float4(position + float3(jitter.x, jitter.y, 0.f) * jitterScale, 1.0);
 	g_displacement[particleIndex] = float4(0, 0, 0, 0);
 	g_massVolume[particleIndex] = float4(volume * density, volume, 0, 0);

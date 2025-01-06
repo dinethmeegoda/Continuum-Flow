@@ -43,7 +43,8 @@ RWStructuredBuffer<int> g_tempTileData : register(u4);
 
 RWStructuredBuffer<float4> g_positions : register(u5);
 
-RWStructuredBuffer<int> g_materials : register(u6);
+//Structured Buffer for materials(read - write UAV), color in first three components, material enum stored in fourth
+RWStructuredBuffer<int4> g_materials : register(u6);
 
 // Structured Buffer for displacements (read-write UAV)
 RWStructuredBuffer<float4> g_displacements : register(u7);
@@ -386,7 +387,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
         
         Particle particle = g_particles[myParticleIndex];
         float liquidDensity = g_positions[myParticleIndex].w;
-		int material = g_materials[myParticleIndex];
+		int material = g_materials[myParticleIndex].w;
         
         float3 p = g_positions[myParticleIndex].xyz;
         QuadraticWeightInfo weightInfo = quadraticWeightInit(p);
@@ -647,7 +648,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         if (collide(shape, p).collides) {
                             particle.enabled = 0;
 							// Change material so that it is not rendered
-							g_materials[myParticleIndex] = 99;
+							g_materials[myParticleIndex].w = 99;
 
                             uint freeIndex;
                             InterlockedAdd(g_freeIndices[0], 1, freeIndex);

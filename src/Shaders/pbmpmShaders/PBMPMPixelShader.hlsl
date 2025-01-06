@@ -1,6 +1,6 @@
 #include "PBMPMRootSignature.hlsl"
 // Particle materials as an SRV at register t1
-StructuredBuffer<int> materials : register(t1);
+StructuredBuffer<int4> materials : register(t1);
 struct PSInput
 {
     float4 Position : SV_Position; // Position passed from vertex shader
@@ -17,7 +17,7 @@ float2 rand_2(in float2 uv) {
 float4 main(PSInput input) : SV_Target
 {
     // Use the instance ID to retrieve the material
-    int materialType = materials[input.InstanceID];
+    int materialType = materials[input.InstanceID].w;
 // Determine the material color based on the material index (example logic)
 if (materialType == 0)
 return float4(0.00, 0.63, 0.98, 1.0f); // Water

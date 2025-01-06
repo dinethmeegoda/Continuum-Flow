@@ -410,9 +410,10 @@ void PBMPMScene::constructScene() {
 	// Create a buffer for the position and liquid density stored in the fourth component for alignment
 	positionBuffer = StructuredBuffer(positions.data(), (unsigned int)positions.size(), sizeof(XMFLOAT4));
 
-	std::vector<int> materials;
+	std::vector<XMINT4> materials;
 	materials.resize(maxParticles);
-	materialBuffer = StructuredBuffer(materials.data(), (unsigned int)materials.size(), sizeof(int));
+	// Create a buffer for the color in the first three components and material enum stored in the fourth component.
+	materialBuffer = StructuredBuffer(materials.data(), (unsigned int)materials.size(), sizeof(XMINT4));
 
 	// Create a buffer for the displacement and nothing (for now) stored in the fourth component for alignment
 	displacementBuffer = StructuredBuffer(positions.data(), (unsigned int)positions.size(), sizeof(XMFLOAT4));

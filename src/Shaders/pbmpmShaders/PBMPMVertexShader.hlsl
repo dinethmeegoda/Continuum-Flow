@@ -11,7 +11,7 @@ cbuffer CameraMatrices : register(b0) {
 StructuredBuffer<float4> positions : register(t0);
 
 // Particle materials as an SRV at register t1
-StructuredBuffer<int> materials : register(t1);
+StructuredBuffer<int4> materials : register(t1);
 
 struct VSInput
 {
@@ -29,7 +29,7 @@ struct VSOutput
 VSOutput main(VSInput input)
 {
     // Discard the particle if it is water
-	if ((materials[input.InstanceID] == 0 || materials[input.InstanceID] == 99) && renderMode == 0)
+	if ((materials[input.InstanceID].w == 0 || materials[input.InstanceID].w == 99) && renderMode == 0)
 	{
 		VSOutput output;
 		output.Position = float4(0.0f, 0.0f, 0.0f, 0.0f);
