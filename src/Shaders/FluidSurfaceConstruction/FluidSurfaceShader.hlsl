@@ -63,7 +63,7 @@ float3 planeRayIntersect(float3 origin, float3 direction)
     return origin - direction * (origin.y / direction.y);
 }
 
-static const float3 baseColor = float3(0.7, 0.9, 1);
+static const float3 baseColor = float3(0.094, 0.8, 0.929);
 
 [RootSignature(ROOTSIG)]
 float4 main(PSInput input) : SV_Target

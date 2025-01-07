@@ -394,7 +394,7 @@ void PBMPMScene::bukkitizeParticles() {
 void PBMPMScene::constructScene() {
 	auto computeId = g2p2gPipeline.getCommandListID();
 	
-	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 2.5f, 0.2f, 0.02f,
+	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 2.5f, 0.2f, 0.01f,
 		(unsigned int)std::ceil(std::pow(10, 7)),
 		1, 3, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.25f, 2.3f, 1.2f, 1.5f, 0.5f,
 		// Mouse Defaults
@@ -450,8 +450,12 @@ void PBMPMScene::constructScene() {
 	// Shape Buffer
 
 	// Waterfall
-	shapes.push_back(SimShape(0, { 16, 27, 16 }, 0, { 4, 4, 4 },
-		0, 0, 0, 0.3, 100));
+	shapes.push_back(SimShape(0, { 16, 27, 16 }, 0, { 2, 2, 2 },
+		0, 0, 0, 0.6, 100));
+
+	// Water Cube
+	/*shapes.push_back(SimShape(0, { 16, 19, 16 }, 0, { 8, 8, 10 },
+		0, 3, 0, 0.6, 100));*/
 
 	// Drain
 	//shapes.push_back(SimShape(0, { 32, 5, 9 }, 0, { 32, 5, 5 },
@@ -462,18 +466,18 @@ void PBMPMScene::constructScene() {
 	//	0, 1, 0, 1, 100));
 
 	// Sand Emitter
-	//shapes.push_back(SimShape(0, { 10, 20, 54 }, 0, { 3, 1, 2 },
-	//	0, 0, 2, 0.1, 100));
+	/*shapes.push_back(SimShape(0, { 16, 20, 16 }, 0, { 3, 3, 3 },
+		0, 0, 2, 0.1, 100));*/
 
 	// Jelly Cubes
-	shapes.push_back(SimShape(0, { 10, 15, 16 }, 0, { 4, 4, 4 },
+	/*shapes.push_back(SimShape(0, { 10, 15, 16 }, 0, { 4, 4, 4 },
 		0, 3, 1, 0.2, 100));
-
-	/*shapes.push_back(SimShape(0, { 15, 25, 16 }, 0, { 4, 4, 4 },
-		0, 3, 1, 0.2, 100));*/
 
 	shapes.push_back(SimShape(0, { 21, 15, 16 }, 0, { 4, 4, 4 },
-		0, 3, 1, 0.2, 100));
+		0, 3, 1, 0.2, 100));*/
+
+	/*shapes.push_back(SimShape(0, { 15, 25, 16 }, 0, { 4, 4, 4 },
+	0, 3, 1, 0.2, 100));*/
 
 
 	shapeBuffer = StructuredBuffer(shapes.data(), (unsigned int)shapes.size(), sizeof(SimShape));

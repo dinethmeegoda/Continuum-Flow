@@ -23,7 +23,7 @@ static ImGUIDescriptorHeapAllocator imguiHeapAllocator;
 static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
 
 static bool meshletRenderType = false;
-static unsigned int renderModeType = 2; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
+static unsigned int renderModeType = 0; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
 static int fixedPointExponent = 7;
 static bool useGridVolume = true;
 static bool renderGrid = true;
@@ -103,9 +103,9 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
     }
 
     if (ImGui::CollapsingHeader("Mesh Shading Parameters")) {
-        ImGui::SliderFloat("Isovalue", isovalue, 0.01f, 1.0f);
-        ImGui::SliderFloat("Kernel Scale", kernelScale, 2.5f, 12.0f);
-        ImGui::SliderFloat("Kernel Radius", kernelRadius, 0.3f, 3.0f);
+        ImGui::SliderFloat("Isovalue", isovalue, 0.01f, 3.0f);
+        ImGui::SliderFloat("Kernel Scale", kernelScale, 0.0f, 12.0f);
+        ImGui::SliderFloat("Kernel Radius", kernelRadius, 0.0f, 5.0f);
     }
 
     if (ImGui::CollapsingHeader("Render Parameters")) {

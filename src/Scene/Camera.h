@@ -5,7 +5,7 @@
 #define SCREEN_WIDTH 1280
 #define SCREEN_HEIGHT 720
 
-#define MOVE_SCALAR 5.f
+#define MOVE_SCALAR 2.f
 
 using namespace DirectX;
 

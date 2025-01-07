@@ -102,7 +102,7 @@ private:
     StructuredBuffer surfaceVertDensityBuffer;
     StructuredBuffer surfaceVertexNormalBuffer;
 
-    float isovalue{ 0.03f };
-    float kernelScale{ 4.2f };
-    float kernelRadius{ 1.3f };
+    float isovalue{ 0.010f };
+    float kernelScale{ 5.9f };
+    float kernelRadius{ 1.010f };
 };

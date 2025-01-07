@@ -24,7 +24,7 @@ void ObjectScene::constructSceneGrid() {
 
     //cube for grid
     XMFLOAT4X4 gridModelMatrix;
-    XMStoreFloat4x4(&gridModelMatrix, XMMatrixScaling(GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH));
+    XMStoreFloat4x4(&gridModelMatrix, XMMatrixScaling(GRID_WIDTH - 1, GRID_HEIGHT - 1, GRID_DEPTH - 1));
     modelMatrices.push_back(gridModelMatrix);
 
 	// vector for colors of grid lines
@@ -97,7 +97,7 @@ void ObjectScene::constructSceneSolid() {
     XMFLOAT4X4 groundModelMatrix;
     XMStoreFloat4x4(&groundModelMatrix, XMMatrixMultiply(
         XMMatrixScaling(1.1f * GRID_WIDTH, 1.f, 1.1f * GRID_DEPTH),
-        XMMatrixTranslation(-0.05f * GRID_WIDTH, -1.0f, -0.05f * GRID_DEPTH)
+        XMMatrixTranslation(-0.05f * GRID_WIDTH, 0.2f, -0.05f * GRID_DEPTH)
     ));
     modelMatrices.push_back(groundModelMatrix);
 

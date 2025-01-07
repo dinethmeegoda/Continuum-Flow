@@ -57,8 +57,8 @@ groupshared int s_tileDataDst[TileDataSize];
 static const float3 darkColorTable[] = {
     float3(0.0, 0.573, 0.878), // Water
     float3(0.0, 0.8, 0.0), // Elastic
-    float3(0.85, 0.8, 0.0), // Sand
-    float3(0.6, 0.0, 0.7), // Visco
+    float3(0.9, 0.83, 0.0), // Sand
+    float3(0.7, 0.0, 0.8), // Visco
     float3(0.8, 0.8, 0.8), // Snow
     float3(0.0, 0.0, 0.0)  // Default
 };
@@ -66,8 +66,8 @@ static const float3 darkColorTable[] = {
 static const float3 lightColorTable[] = {
     float3(0.094, 0.8, 0.929), // Water
     float3(0.1, 0.85, 0.0), // Elastic
-    float3(0.95, 0.85, 0.0), // Sand
-    float3(0.85, 0.1, 0.9), // Visco
+    float3(1.0, 0.9, 0.0), // Sand
+    float3(0.9, 0.15, 0.95), // Visco
     float3(0.9, 0.9, 0.9), // Snow
     float3(0.5, 0.5, 0.5)  // Default
 };
