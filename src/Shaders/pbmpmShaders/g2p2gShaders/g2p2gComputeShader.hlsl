@@ -642,7 +642,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         }
                         else if (g_mouseConstants.mouseFunction == 1) // Grab
                         {
-                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * 80;
+                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * 60;
                             displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 0.5;
                         }
                         else if (g_mouseConstants.mouseFunction == 2) // Pull

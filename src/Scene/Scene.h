@@ -20,7 +20,8 @@ public:
 	void compute(float isMeshShading = false);
 	void drawPBMPM(unsigned int renderMode);
 	void drawFluid(unsigned int renderMeshlets);
-	void drawWireObjects();
+	void drawGrid();
+	void drawSpawners();
 	void drawSolidObjects();
 
 	void releaseResources();
@@ -43,7 +44,8 @@ private:
 	PBMPMScene pbmpmScene;
 
 	RenderPipeline objectRPWire;
-	ObjectScene objectSceneWire;
+	ObjectScene objectSceneGrid;
+	ObjectScene objectSceneSpawners;
 	RenderPipeline objectRPSolid;
 	ObjectScene objectSceneSolid;
 

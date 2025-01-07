@@ -23,10 +23,11 @@ static ImGUIDescriptorHeapAllocator imguiHeapAllocator;
 static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
 
 static bool meshletRenderType = false;
-static unsigned int renderModeType = 0; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
+static unsigned int renderModeType = 2; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
 static int fixedPointExponent = 7;
 static bool useGridVolume = true;
 static bool renderGrid = true;
+static bool renderSpawn = false;
 
 const char* modes[] = { "Mesh Shaded Fluid, Non-Fluid Particles", "Mesh Shaded Fluid, All Particles", "No Mesh Shaded Fluid, All Particles" };
 
@@ -67,7 +68,7 @@ ImGuiIO& initImGUI(DXContext& context) {
     return io;
 }
 
-void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, unsigned int* renderMode, float* isovalue, float* kernelScale, float* kernelRadius, unsigned int* substepCount, int numParticles) {
+void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, float* isovalue, float* kernelScale, float* kernelRadius, unsigned int* substepCount, int numParticles) {
     ImGui::Begin("Scene Options");
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
@@ -108,12 +109,11 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
     }
 
     if (ImGui::CollapsingHeader("Render Parameters")) {
-        if (ImGui::Combo("Select Render Mode", (int*)&renderModeType, modes, IM_ARRAYSIZE(modes)))
-        {
-            *renderMode = renderModeType;
-        }
+        ImGui::Combo("Select Render Mode", (int*)&renderModeType, modes, IM_ARRAYSIZE(modes));
 
         ImGui::Checkbox("Render Grid", &renderGrid);
+
+        ImGui::Checkbox("Render Spawners", &renderSpawn);
 
         ImGui::Checkbox("Render Meshlets", &meshletRenderType);
         *renderMeshlets = meshletRenderType;

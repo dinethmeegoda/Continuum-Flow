@@ -396,13 +396,13 @@ void PBMPMScene::constructScene() {
 	
 	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 2.5f, 0.2f, 0.02f,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 4, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.9f, 3.2f, 1.0f, 1.5f, 0.5f,
+		1, 2, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.25f, 2.3f, 1.2f, 1.5f, 0.5f,
 		// Mouse Defaults
-		{0, 0, 0, 0}, {0, 0, 0, 0}, 0, 6, 0, 20, 
+		{0, 0, 0, 0}, {0, 0, 0, 0}, 0, 4, 0, 10, 
 	};
 	
 	// Create Vertex & Index Buffer
-	auto sphereData = generateSphere(PARTICLE_RADIUS, 16, 16);
+	auto sphereData = generateSphere(PARTICLE_RADIUS, 4, 4);
 	indexCount = (unsigned int)sphereData.second.size();
 
 	std::vector<XMFLOAT4> positions;
@@ -449,9 +449,9 @@ void PBMPMScene::constructScene() {
 
 	// Shape Buffer
 
-	// Water Cube
-	shapes.push_back(SimShape(0, { 32, 26, 32 }, 0, { 3, 3, 3 },
-		0, 0, 2, 0.5, 100));
+	// Waterfall
+	shapes.push_back(SimShape(0, { 16, 27, 16 }, 0, { 4, 4, 4 },
+		0, 0, 0, 0.3, 100));
 
 	// Drain
 	//shapes.push_back(SimShape(0, { 32, 5, 9 }, 0, { 32, 5, 5 },
@@ -465,15 +465,15 @@ void PBMPMScene::constructScene() {
 	//shapes.push_back(SimShape(0, { 10, 20, 54 }, 0, { 3, 1, 2 },
 	//	0, 0, 2, 0.1, 100));
 
-	// Snow
-	/*shapes.push_back(SimShape(0, { 20, 15, 20 }, 0, { 4, 4, 4 },
+	// Jelly Cubes
+	shapes.push_back(SimShape(0, { 10, 15, 16 }, 0, { 4, 4, 4 },
 		0, 3, 1, 0.2, 100));
 
-	shapes.push_back(SimShape(0, { 25, 25, 20 }, 0, { 4, 4, 4 },
-		0, 3, 1, 0.2, 100));
-
-	shapes.push_back(SimShape(0, { 28, 15, 20 }, 0, { 4, 4, 4 },
+	/*shapes.push_back(SimShape(0, { 15, 25, 16 }, 0, { 4, 4, 4 },
 		0, 3, 1, 0.2, 100));*/
+
+	shapes.push_back(SimShape(0, { 21, 15, 16 }, 0, { 4, 4, 4 },
+		0, 3, 1, 0.2, 100));
 
 
 	shapeBuffer = StructuredBuffer(shapes.data(), (unsigned int)shapes.size(), sizeof(SimShape));

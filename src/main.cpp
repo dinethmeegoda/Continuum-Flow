@@ -34,7 +34,7 @@ int main() {
     PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
 
     unsigned int renderMeshlets = 0;
-    unsigned int renderMode = 2;
+    //unsigned int renderMode = 2;
 
     while (!Window::get().getShouldClose()) {
         //update window
@@ -93,7 +93,7 @@ int main() {
         }
 
         //compute pbmpm + mesh shader
-        scene.compute(renderMode != 2);
+        scene.compute(renderModeType != 2);
 
         //get pipelines
         auto renderPipeline = scene.getPBMPMRenderPipeline();
@@ -113,7 +113,8 @@ int main() {
         //wire object render pass
         Window::get().setRT(objectWirePipeline->getCommandList());
         Window::get().setViewport(vp, objectWirePipeline->getCommandList());
-        if (renderGrid) scene.drawWireObjects();
+        if (renderGrid) scene.drawGrid();
+        if (renderSpawn) scene.drawSpawners();
         context.executeCommandList(objectWirePipeline->getCommandListID());
 
         //solid object render pass
@@ -125,12 +126,12 @@ int main() {
         //particles + imgui render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
-        scene.drawPBMPM(renderMode);
+        scene.drawPBMPM(renderModeType);
 
         //mesh render pass
         Window::get().setRT(meshPipeline->getCommandList());
         Window::get().setViewport(vp, meshPipeline->getCommandList());
-        if (renderMode != 2) scene.drawFluid(renderMeshlets);
+        if (renderModeType != 2) scene.drawFluid(renderMeshlets);
         context.executeCommandList(meshPipeline->getCommandListID());
 
         //set up ImGUI for frame
@@ -139,7 +140,7 @@ int main() {
         ImGui::NewFrame();
 
         //draw ImGUI
-        drawImGUIWindow(pbmpmIterConstants, io, &renderMeshlets, &renderMode, 
+        drawImGUIWindow(pbmpmIterConstants, io, &renderMeshlets,
             scene.getFluidIsovalue(), 
             scene.getFluidKernelScale(), 
             scene.getFluidKernelRadius(), 

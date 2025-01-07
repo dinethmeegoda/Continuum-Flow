@@ -203,6 +203,6 @@ private:
 	unsigned int startTime{ 0 };
 	unsigned int endTime{ 0 };
 
-	unsigned int substepCount{ 5 };
+	unsigned int substepCount{ 3 };
 	unsigned int numParticles{ 0 };
 };
