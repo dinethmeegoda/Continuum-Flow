@@ -66,9 +66,10 @@ void FluidScene::draw(Camera* camera, unsigned int renderMeshlets) {
     cmdList->SetGraphicsRootDescriptorTable(0, surfaceBlockIndicesBuffer.getSRVGPUDescriptorHandle());
     cmdList->SetGraphicsRootDescriptorTable(1, surfaceVertDensityBuffer.getSRVGPUDescriptorHandle());
     cmdList->SetGraphicsRootDescriptorTable(2, surfaceVertexNormalBuffer.getSRVGPUDescriptorHandle());
-    cmdList->SetGraphicsRootShaderResourceView(3, surfaceHalfBlockDispatch.getGPUVirtualAddress());
-    cmdList->SetGraphicsRootUnorderedAccessView(4, surfaceVertDensityDispatch.getGPUVirtualAddress());
-    cmdList->SetGraphicsRoot32BitConstants(5, 28, &meshShadingConstants, 0);
+	cmdList->SetGraphicsRootDescriptorTable(3, surfaceVertexColorBuffer.getSRVGPUDescriptorHandle());
+    cmdList->SetGraphicsRootShaderResourceView(4, surfaceHalfBlockDispatch.getGPUVirtualAddress());
+    cmdList->SetGraphicsRootUnorderedAccessView(5, surfaceVertDensityDispatch.getGPUVirtualAddress());
+    cmdList->SetGraphicsRoot32BitConstants(6, 28, &meshShadingConstants, 0);
 
     // Transition surfaceHalfBlockDispatch to indirect argument buffer
     D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -194,6 +195,11 @@ void FluidScene::constructScene() {
     surfaceVertexNormalBuffer.passDataToGPU(*context, bilevelUniformGridCP->getCommandList(), bilevelUniformGridCP->getCommandListID());
     surfaceVertexNormalBuffer.createUAV(*context, bilevelUniformGridCP->getDescriptorHeap()); 
     surfaceVertexNormalBuffer.createSRV(*context, bilevelUniformGridCP->getDescriptorHeap());
+
+	surfaceVertexColorBuffer = StructuredBuffer(surfaceVertexNormals.data(), numVerts, sizeof(XMFLOAT3));
+	surfaceVertexColorBuffer.passDataToGPU(*context, bilevelUniformGridCP->getCommandList(), bilevelUniformGridCP->getCommandListID());
+	surfaceVertexColorBuffer.createUAV(*context, bilevelUniformGridCP->getDescriptorHeap());
+	surfaceVertexColorBuffer.createSRV(*context, bilevelUniformGridCP->getDescriptorHeap());
 
 	// Create Command Signature
 	// Describe the arguments for an indirect dispatch
@@ -450,7 +456,8 @@ void FluidScene::computeSurfaceVertexDensity() {
     cmdList->SetComputeRootShaderResourceView(4, surfaceVertDensityDispatch.getGPUVirtualAddress());
     cmdList->SetComputeRootUnorderedAccessView(5, surfaceBlockDispatch.getGPUVirtualAddress());
     cmdList->SetComputeRootDescriptorTable(6, surfaceVertDensityBuffer.getUAVGPUDescriptorHandle());
-    cmdList->SetComputeRoot32BitConstants(7, 10, &gridConstants, 0);
+    cmdList->SetComputeRootDescriptorTable(7, surfaceVertexColorBuffer.getUAVGPUDescriptorHandle());
+    cmdList->SetComputeRoot32BitConstants(8, 11, &gridConstants, 0);
 
     // Transition surfaceVertDensityDispatch to indirect argument buffer
     D3D12_RESOURCE_BARRIER surfaceVertDensityDispatchBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -607,7 +614,15 @@ void FluidScene::transitionBuffers(ID3D12GraphicsCommandList6* cmdList, D3D12_RE
         afterState
     );
 
-    D3D12_RESOURCE_BARRIER barriers[11] = { 
+    D3D12_RESOURCE_BARRIER surfaceVertexColorBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		surfaceVertexColorBuffer.getBuffer(),
+		beforeState,
+		afterState
+	);
+
+
+
+    D3D12_RESOURCE_BARRIER barriers[12] = { 
         cellParticleCountsBufferBarrier,
         cellParticleIndicesBufferBarrier,
         blocksBufferBarrier,
@@ -618,10 +633,11 @@ void FluidScene::transitionBuffers(ID3D12GraphicsCommandList6* cmdList, D3D12_RE
         surfaceVertexNormalBufferBarrier2, 
         surfaceBlockDispatchBarrier, 
         surfaceHalfBlockDispatchBarrier, 
-        surfaceVertDensityDispatchBarrier 
+        surfaceVertDensityDispatchBarrier,
+        surfaceVertexColorBufferBarrier
     };
 
-    cmdList->ResourceBarrier(11, barriers);
+    cmdList->ResourceBarrier(12, barriers);
 }
 
 void FluidScene::resetBuffers() {

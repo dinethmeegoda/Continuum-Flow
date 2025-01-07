@@ -5,7 +5,7 @@
 // SRV for positions buffer (input buffer)
 StructuredBuffer<float4> positionsBuffer : register(t0);
 // SRV for materials buffer (input buffer), material enum stored in fourth component
-StructuredBuffer<int4> materialsBuffer : register(t1);
+StructuredBuffer<float4> materialsBuffer : register(t1);
 
 // UAV for the bilevel uniform grid (output buffers)
 RWStructuredBuffer<int> cellParticleCounts : register(u0);

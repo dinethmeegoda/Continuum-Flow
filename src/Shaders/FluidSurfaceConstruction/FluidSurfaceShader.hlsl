@@ -7,6 +7,7 @@ struct PSInput {
     float3 normal: NORMAL0;
     float3 worldPos: POSITION1;
     int meshletIndex: COLOR0;
+    float3 color : COLOR1;
 };
 
 ConstantBuffer<MeshShadingConstants> cb : register(b0);
@@ -15,7 +16,7 @@ float3 radiance(float3 dir)
 {
     // Paper uses a sky model for the radiance
     // Return a constant sky-like color
-    return float3(0.53, 0.81, 0.92); // Light sky blue
+    return float3(0.094, 0.8, 0.929); // Light sky blue
 }
 
 float fresnelSchlick(float VdotH, float F0) {
@@ -63,7 +64,7 @@ float3 planeRayIntersect(float3 origin, float3 direction)
     return origin - direction * (origin.y / direction.y);
 }
 
-static const float3 baseColor = float3(0.094, 0.8, 0.929);
+static const float3 baseColor = float3(0.0, 0.373, 0.878);
 
 [RootSignature(ROOTSIG)]
 float4 main(PSInput input) : SV_Target
@@ -90,9 +91,9 @@ float4 main(PSInput input) : SV_Target
 
     float3 meshPos = planeRayIntersect(cb.cameraPos, dir);
     float dist = distance(pos, meshPos);
-    float3 trans = clamp(exp(-remapTo01(dist, 1.0, 30.0)), 0.0, 1.0) * baseColor;
+    float3 trans = clamp(exp(-remapTo01(dist, 1.0, 30.0)), 0.0, 1.0) * input.color;
     refraction = trans * float3(GROUND_PLANE_COLOR); // plane background color
 
     float3 baseColor = refraction * (1.0 - fr) + reflection * fr;
-    return float4(gammaCorrect(baseColor), 1.0);
+    return float4(input.color, 1.0);
 }

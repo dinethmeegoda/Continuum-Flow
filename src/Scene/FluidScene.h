@@ -101,6 +101,7 @@ private:
     StructuredBuffer surfaceVertDensityDispatch;
     StructuredBuffer surfaceVertDensityBuffer;
     StructuredBuffer surfaceVertexNormalBuffer;
+    StructuredBuffer surfaceVertexColorBuffer;
 
     float isovalue{ 0.010f };
     float kernelScale{ 5.9f };
