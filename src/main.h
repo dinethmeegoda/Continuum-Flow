@@ -22,14 +22,20 @@
 static ImGUIDescriptorHeapAllocator imguiHeapAllocator;
 static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
 
-static bool meshletRenderType = false;
+static int meshletRenderType = 0;
 static unsigned int renderModeType = 0; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
+static unsigned int toonShadingLevels = 2;
 static int fixedPointExponent = 7;
 static bool useGridVolume = true;
 static bool renderGrid = true;
 static bool renderSpawn = false;
 
 const char* modes[] = { "Mesh Shaded Fluid, Non-Fluid Particles", "Mesh Shaded Fluid, All Particles", "No Mesh Shaded Fluid, All Particles" };
+const char* meshModes[] = { "Realistic", "Meshlets", "Toon Shaded" };
+
+uint32_t packBytes(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
+    return (uint32_t(a) << 24) | (uint32_t(b) << 16) | (uint32_t(c) << 8) | uint32_t(d);
+}
 
 ImGuiIO& initImGUI(DXContext& context) {
     IMGUI_CHECKVERSION();
@@ -68,7 +74,7 @@ ImGuiIO& initImGUI(DXContext& context) {
     return io;
 }
 
-void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, float* isovalue, float* kernelScale, float* kernelRadius, unsigned int* substepCount, int numParticles) {
+void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, float* isovalue, float* kernelScale, float* kernelRadius, unsigned int* substepCount, int numParticles) {
     ImGui::Begin("Scene Options");
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
@@ -109,14 +115,20 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
     }
 
     if (ImGui::CollapsingHeader("Render Parameters")) {
+
         ImGui::Combo("Select Render Mode", (int*)&renderModeType, modes, IM_ARRAYSIZE(modes));
+
+        if (renderModeType != 2) {
+            ImGui::Combo("Select Mesh Mode", (int*)&meshletRenderType, meshModes, IM_ARRAYSIZE(meshModes));
+        }
+
+        if (meshletRenderType == 2) {
+			ImGui::SliderInt("Toon Shading Levels", (int*)&toonShadingLevels, 1, 10);
+        }
 
         ImGui::Checkbox("Render Grid", &renderGrid);
 
         ImGui::Checkbox("Render Spawners", &renderSpawn);
-
-        ImGui::Checkbox("Render Meshlets", &meshletRenderType);
-        *renderMeshlets = meshletRenderType;
     }
 
     ImGui::End();

@@ -33,9 +33,6 @@ int main() {
     PBMPMConstants pbmpmCurrConstants = scene.getPBMPMConstants();
     PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
 
-    unsigned int renderMeshlets = 0;
-    //unsigned int renderMode = 2;
-
     while (!Window::get().getShouldClose()) {
         //update window
         Window::get().update();
@@ -126,12 +123,15 @@ int main() {
         //particles + imgui render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
-        scene.drawPBMPM(renderModeType);
+		// Only draw particles if we are not in the mesh shading mode
+        if (renderModeType != 0) {
+            scene.drawPBMPM();
+        }
 
         //mesh render pass
         Window::get().setRT(meshPipeline->getCommandList());
         Window::get().setViewport(vp, meshPipeline->getCommandList());
-        if (renderModeType != 2) scene.drawFluid(renderMeshlets);
+        if (renderModeType != 2) scene.drawFluid(meshletRenderType, toonShadingLevels);
         context.executeCommandList(meshPipeline->getCommandListID());
 
         //set up ImGUI for frame
@@ -140,7 +140,7 @@ int main() {
         ImGui::NewFrame();
 
         //draw ImGUI
-        drawImGUIWindow(pbmpmIterConstants, io, &renderMeshlets,
+		drawImGUIWindow(pbmpmIterConstants, io,
             scene.getFluidIsovalue(), 
             scene.getFluidKernelScale(), 
             scene.getFluidKernelRadius(), 

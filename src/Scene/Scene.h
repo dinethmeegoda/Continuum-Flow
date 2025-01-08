@@ -2,7 +2,7 @@
 
 #include "ObjectScene.h"
 #include "PBMPMScene.h"
-#include "FluidScene.h"
+#include "MeshShadingScene.h"
 #include "../D3D/Pipeline/RenderPipeline.h"
 #include "../D3D/Pipeline/ComputePipeline.h"
 #include "../D3D/Pipeline/MeshPipeline.h"
@@ -18,8 +18,8 @@ public:
 	MeshPipeline* getFluidMeshPipeline();
 
 	void compute(float isMeshShading = false);
-	void drawPBMPM(unsigned int renderMode);
-	void drawFluid(unsigned int renderMeshlets);
+	void drawPBMPM();
+	void drawFluid(unsigned int renderMeshlets, unsigned int renderOptions);
 	void drawGrid();
 	void drawSpawners();
 	void drawSolidObjects();
@@ -49,16 +49,17 @@ private:
 	RenderPipeline objectRPSolid;
 	ObjectScene objectSceneSolid;
 
+	// Fluid Mesh
 	RenderPipeline fluidRP;
-	ComputePipeline bilevelUniformGridCP;
-	ComputePipeline surfaceBlockDetectionCP;
-	ComputePipeline surfaceCellDetectionCP;
-	ComputePipeline surfaceVertexCompactionCP;
-	ComputePipeline surfaceVertexDensityCP;
-	ComputePipeline surfaceVertexNormalCP;
-	ComputePipeline bufferClearCP;
+	ComputePipeline fluidBilevelUniformGridCP;
+	ComputePipeline fluidSurfaceBlockDetectionCP;
+	ComputePipeline fluidSurfaceCellDetectionCP;
+	ComputePipeline fluidSurfaceVertexCompactionCP;
+	ComputePipeline fluidSurfaceVertexDensityCP;
+	ComputePipeline fluidSurfaceVertexNormalCP;
+	ComputePipeline fluidBufferClearCP;
 	MeshPipeline fluidMeshPipeline;
-	FluidScene fluidScene;
+	MeshShadingScene fluidScene;
 
 	RenderPipeline* currentRP;
 	ComputePipeline* currentCP;

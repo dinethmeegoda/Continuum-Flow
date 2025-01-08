@@ -5,7 +5,7 @@ PBMPMScene::PBMPMScene(DXContext* context, RenderPipeline* pipeline)
 	: Drawable(context, pipeline), context(context), renderPipeline(pipeline),
 	modelMat(XMMatrixIdentity()),
 	g2p2gPipeline("g2p2gRootSignature.cso", "g2p2gComputeShader.cso", *context, CommandListID::PBMPM_G2P2G_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 36, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 40, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	bukkitCountPipeline("bukkitCountRootSignature.cso", "bukkitCountComputeShader.cso", *context, CommandListID::PBMPM_BUKKITCOUNT_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	bukkitAllocatePipeline("bukkitAllocateRootSignature.cso", "bukkitAllocateComputeShader.cso", *context, CommandListID::PBMPM_BUKKITALLOCATE_COMPUTE_ID,
@@ -470,11 +470,11 @@ void PBMPMScene::constructScene() {
 		0, 0, 2, 0.1, 100));*/
 
 	// Jelly Cubes
-	/*shapes.push_back(SimShape(0, { 10, 15, 16 }, 0, { 4, 4, 4 },
+	shapes.push_back(SimShape(0, { 10, 15, 16 }, 0, { 4, 4, 4 },
 		0, 3, 1, 0.2, 100));
 
 	shapes.push_back(SimShape(0, { 21, 15, 16 }, 0, { 4, 4, 4 },
-		0, 3, 1, 0.2, 100));*/
+		0, 3, 1, 0.2, 100));
 
 	/*shapes.push_back(SimShape(0, { 15, 25, 16 }, 0, { 4, 4, 4 },
 	0, 3, 1, 0.2, 100));*/
@@ -712,7 +712,7 @@ void PBMPMScene::compute() {
 	//}
 }
 
-void PBMPMScene::draw(Camera* cam, unsigned int renderMode) {
+void PBMPMScene::draw(Camera* cam) {
 	auto cmdList = renderPipeline->getCommandList();
 
 	// IA
@@ -743,7 +743,6 @@ void PBMPMScene::draw(Camera* cam, unsigned int renderMode) {
 	cmdList->SetGraphicsRoot32BitConstants(0, 16, &viewMat, 0);
 	cmdList->SetGraphicsRoot32BitConstants(0, 16, &projMat, 16);
 	cmdList->SetGraphicsRoot32BitConstants(0, 16, &modelMat, 32);
-	cmdList->SetGraphicsRoot32BitConstants(0, 1, &renderMode, 48);
 	cmdList->SetGraphicsRootDescriptorTable(1, positionBuffer.getSRVGPUDescriptorHandle()); // Descriptor table slot 1 for position & mat SRV
 
 	// Draw

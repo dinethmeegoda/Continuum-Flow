@@ -31,7 +31,7 @@
     <ClCompile Include="ImGUI\misc\cpp\imgui_stdlib.cpp" />
     <ClCompile Include="Scene\ObjectScene.cpp" />
     <ClCompile Include="Scene\PBMPMScene.cpp" />
-    <ClCompile Include="Scene\FluidScene.cpp" />
+    <ClCompile Include="Scene\MeshShadingScene.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Scene\Camera.cpp" />
     <ClCompile Include="Scene\Geometry.cpp" />
@@ -66,7 +66,7 @@
     <ClInclude Include="Scene\GridConstants.h" />
     <ClInclude Include="Scene\ObjectScene.h" />
     <ClInclude Include="Scene\PBMPMScene.h" />
-    <ClInclude Include="Scene\FluidScene.h" />
+    <ClInclude Include="Scene\MeshShadingScene.h" />
     <ClInclude Include="Scene\PhysicsScene.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Scene\Camera.h" />
@@ -84,7 +84,7 @@
     <None Include="Shaders\FluidSurfaceConstruction\utils.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Shaders\FluidSurfaceConstruction\FluidMeshShader.hlsl">
+    <FxCompile Include="Shaders\FluidSurfaceConstruction\ConstructMeshShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Mesh</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.5</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Mesh</ShaderType>
@@ -162,7 +162,7 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rootsig_1.1</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ROOTSIG</EntryPointName>
     </FxCompile>
-    <FxCompile Include="Shaders\FluidSurfaceConstruction\FluidMeshRootSig.hlsl">
+    <FxCompile Include="Shaders\FluidSurfaceConstruction\ConstructMeshRootSig.hlsl">
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rootsig_1.1</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rootsig_1.1</ShaderModel>
       <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ROOTSIG</EntryPointName>
@@ -214,7 +214,7 @@
     </FxCompile>
     <FxCompile Include="Shaders\pbmpmShaders\PBMPMPixelShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
-	<ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.5</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.5</ShaderModel>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.5</ShaderModel>
     </FxCompile>
@@ -224,7 +224,7 @@
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">6.0</ShaderModel>
     </FxCompile>
-    <FxCompile Include="Shaders\FluidSurfaceConstruction\FluidSurfaceShader.hlsl">
+    <FxCompile Include="Shaders\FluidSurfaceConstruction\ConstructSurfaceShader.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
       <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">6.0</ShaderModel>

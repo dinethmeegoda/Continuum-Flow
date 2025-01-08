@@ -1,4 +1,4 @@
-#include "FluidMeshRootSig.hlsl"
+#include "ConstructMeshRootSig.hlsl"
 #include "../constants.h"
 #include "utils.hlsl"
 #include "MarchingCubesTables.hlsl"
@@ -11,7 +11,7 @@ StructuredBuffer<float> vertexDensities : register(t1);
 // SRV for vertex normals
 StructuredBuffer<float3> vertexNormals : register(t2);
 // SRV for vertex colors
-StructuredBuffer<float3> vertexColors : register(t3);
+StructuredBuffer<float4> vertexColors : register(t3);
 // SRV for dispatch parameters
 StructuredBuffer<int3> surfaceHalfBlockDispatch : register(t4);
 // Root constants
@@ -28,7 +28,7 @@ groupshared int outputVertexIndices[MAX_VERTICES];
 // Rest are vertex attributes (indexed by outputVertexIndices)
 groupshared float3 vertexWorldPositions[MAX_VERTICES];
 groupshared float3 vertexNormalsShared[MAX_VERTICES];
-groupshared float3 vertexColorsShared[MAX_VERTICES];
+groupshared float4 vertexColorsShared[MAX_VERTICES];
 groupshared float4 vertexClipPositions[MAX_VERTICES];
 groupshared float vertexMeshletIndices[MAX_VERTICES];
 
@@ -39,7 +39,7 @@ struct VertexOutput
     float3 normal : NORMAL0;
     float3 worldPos : POSITION1;
     int meshletIndex : COLOR0;
-    float3 color : COLOR1;         // New color component
+    float4 color : COLOR1;         // New color component
 };
 
 // Get the global grid vertex index of both endpoints from the edge index in the block
@@ -79,11 +79,11 @@ float3 getVertexNormals(int3 vertexIndices[2])[2] {
     return normals;
 }
 
-float3 getVertexColors(int3 vertexIndices[2])[2] {
-    float3 color0 = vertexColors[to1D(vertexIndices[0], (cb.dimensions + int3(1, 1, 1)))];
-    float3 color1 = vertexColors[to1D(vertexIndices[1], (cb.dimensions + int3(1, 1, 1)))];
+float4 getVertexColors(int3 vertexIndices[2])[2] {
+    float4 color0 = vertexColors[to1D(vertexIndices[0], (cb.dimensions + int3(1, 1, 1)))];
+    float4 color1 = vertexColors[to1D(vertexIndices[1], (cb.dimensions + int3(1, 1, 1)))];
 
-    float3 colors[2] = { color0, color1 };
+    float4 colors[2] = { color0, color1 };
     return colors;
 }
 
@@ -186,13 +186,13 @@ void main(
         if (!needVertex) continue;
         
         float3 vertexNormals[2] = getVertexNormals(vertexIndices);
-		float3 vertexColors[2] = getVertexColors(vertexIndices);
+		float4 vertexColors[2] = getVertexColors(vertexIndices);
         
         float t = interpolateDensity(density0, density1);
         float3 vertPosWorld = cb.minBounds + cb.resolution * lerp(float3(vertexIndices[0]), float3(vertexIndices[1]), t);
         float4 vertPosClip = mul(cb.viewProj, float4(vertPosWorld, 1.0));
         float3 vertNormal = normalize(lerp(vertexNormals[0], vertexNormals[1], t));
-		float3 vertColor = lerp(vertexColors[0], vertexColors[1], t);
+		float4 vertColor = lerp(vertexColors[0], vertexColors[1], t);
 
         // Store the index of the output vertex in shared memory
         // In next step, each thread acts as a cell and will read several vertex indices, so we need them all in shared memory.

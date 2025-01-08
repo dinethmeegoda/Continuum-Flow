@@ -123,7 +123,7 @@ public:
 
 	void compute();
 
-	void draw(Camera* camera, unsigned int renderMode);
+	void draw(Camera* camera);
 
 	void releaseResources();
 

@@ -25,7 +25,7 @@ RWStructuredBuffer<int3> surfaceBlockDispatch : register(u0);
 // UAV for the surface vertex densities
 RWStructuredBuffer<float> surfaceVertexDensities : register(u1);
 // UAV for the surface vertex colors
-RWStructuredBuffer<float3> surfaceVertexColors : register(u2);
+RWStructuredBuffer<float4> surfaceVertexColors : register(u2);
 
 float P(float d, float h)
 {
@@ -65,7 +65,7 @@ void main( uint3 globalThreadId : SV_DispatchThreadID ) {
 
     float3 vertPos = cb.minBounds + float3(globalSurfaceVertIndex3d) * cb.resolution;
     float totalDensity = 0.0f;
-    float3 averageColor = float3(0.0f, 0.0f, 0.0f);
+    float4 averageColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
     int kernelOffset = int(0.999 * cb.kernelRadius / cb.resolution);
     int3 minLoopBounds = max(globalSurfaceVertIndex3d - kernelOffset - int3(1, 1, 1), int3(0, 0, 0));
@@ -86,7 +86,7 @@ void main( uint3 globalThreadId : SV_DispatchThreadID ) {
                     float3 particlePos = positionsBuffer[particleIdx].xyz;
                     float3 r = vertPos - particlePos;
                     totalDensity += isotropicKernel(r, cb.kernelRadius);
-                    averageColor += materialsBuffer[particleIdx].xyz;
+                    averageColor += materialsBuffer[particleIdx];
 					colorCount++;
                 }
             }

@@ -23,6 +23,8 @@ struct MeshShadingConstants {
     XMFLOAT3 minBounds;
     unsigned int renderMeshlets;
     XMFLOAT3 cameraPos;
+    unsigned int renderOptions;
+    XMFLOAT3 cameraLook;
     float isovalue;
 };
 
@@ -35,10 +37,10 @@ struct Block {
     int nonEmptyCellCount;
 };
 
-class FluidScene : public Drawable {
+class MeshShadingScene : public Drawable {
 public:
-    FluidScene() = delete;
-    FluidScene(DXContext* context, 
+    MeshShadingScene() = delete;
+    MeshShadingScene(DXContext* context, 
                RenderPipeline *pipeline, 
                ComputePipeline* bilevelUniformGridCP, 
                ComputePipeline* surfaceBlockDetectionCP,
@@ -53,7 +55,7 @@ public:
         StructuredBuffer* positionsBuffer,
         int numParticles
     );
-    void draw(Camera* camera, unsigned int renderMeshlets);
+    void draw(Camera* camera, unsigned int renderMeshlets, unsigned int renderOptions);
     void constructScene();
     void computeBilevelUniformGrid();
     void computeSurfaceBlockDetection();

@@ -29,9 +29,9 @@ void main(uint3 globalThreadId : SV_DispatchThreadID) {
         return;
     }
 
-	if (materialsBuffer[globalThreadId.x].w != 0) {
+	/*if (materialsBuffer[globalThreadId.x].w != 0) {
 		return;
-	}
+	}*/
 
     float3 position = positionsBuffer[globalThreadId.x].xyz;
     int3 cellIndices = getCellIndex(position);

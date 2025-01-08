@@ -4,7 +4,6 @@ cbuffer CameraMatrices : register(b0) {
     float4x4 viewMatrix;        // 16 floats
     float4x4 projectionMatrix;  // 16 floats
     float4x4 modelMatrix;       // 16 floats
-    unsigned int renderMode;    // 1 int
 };
 
 // Particle positions as an SRV at register t0
