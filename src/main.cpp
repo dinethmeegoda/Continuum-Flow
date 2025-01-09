@@ -100,7 +100,7 @@ int main() {
 		auto elasticMeshPipeline = scene.getElasticMeshPipeline();
 		auto viscoMeshPipeline = scene.getViscoMeshPipeline();
 		auto sandMeshPipeline = scene.getSandMeshPipeline();
-		auto snowMeshPipeline = scene.getSnowMeshPipeline();
+		//auto snowMeshPipeline = scene.getSnowMeshPipeline();
         auto objectWirePipeline = scene.getObjectWirePipeline();
         auto objectSolidPipeline = scene.getObjectSolidPipeline();
         //whichever pipeline renders first should begin and end the frame
@@ -150,6 +150,30 @@ int main() {
             context.executeCommandList(elasticMeshPipeline->getCommandListID());
         }
 
+        // sand mesh render pass
+        if (scene.renderToggles[2]) {
+            Window::get().setRT(sandMeshPipeline->getCommandList());
+            Window::get().setViewport(vp, sandMeshPipeline->getCommandList());
+            if (renderModeType != 2) scene.drawSand(meshletRenderType, toonShadingLevels);
+            context.executeCommandList(sandMeshPipeline->getCommandListID());
+        }
+
+		// visco mesh render pass
+        if (scene.renderToggles[3]) {
+			Window::get().setRT(viscoMeshPipeline->getCommandList());
+			Window::get().setViewport(vp, viscoMeshPipeline->getCommandList());
+			if (renderModeType != 2) scene.drawVisco(meshletRenderType, toonShadingLevels);
+			context.executeCommandList(viscoMeshPipeline->getCommandListID());
+		}
+
+		// snow mesh render pass
+		/*if (scene.renderToggles[4]) {
+			Window::get().setRT(snowMeshPipeline->getCommandList());
+			Window::get().setViewport(vp, snowMeshPipeline->getCommandList());
+			if (renderModeType != 2) scene.drawSnow(meshletRenderType, toonShadingLevels);
+			context.executeCommandList(snowMeshPipeline->getCommandListID());
+		}*/
+
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();
         ImGui_ImplWin32_NewFrame();
@@ -163,6 +187,12 @@ int main() {
 			scene.getElasticIsovalue(),
 			scene.getElasticKernelScale(),
 			scene.getElasticKernelRadius(),
+			scene.getSandIsovalue(),
+			scene.getSandKernelScale(),
+			scene.getSandKernelRadius(),
+            scene.getViscoIsovalue(),
+            scene.getViscoKernelScale(),
+            scene.getViscoKernelRadius(),
             scene.getPBMPMSubstepCount(),
             scene.getNumParticles());
 
@@ -189,6 +219,15 @@ int main() {
         if (scene.renderToggles[1]) {
             context.resetCommandList(elasticMeshPipeline->getCommandListID());
         }
+        if (scene.renderToggles[2]) {
+			context.resetCommandList(sandMeshPipeline->getCommandListID());
+		}
+		if (scene.renderToggles[3]) {
+			context.resetCommandList(viscoMeshPipeline->getCommandListID());
+		}
+		/*if (scene.renderToggles[4]) {
+			context.resetCommandList(snowMeshPipeline->getCommandListID());
+		}*/
         context.resetCommandList(objectWirePipeline->getCommandListID());
         context.resetCommandList(objectSolidPipeline->getCommandListID());
     }

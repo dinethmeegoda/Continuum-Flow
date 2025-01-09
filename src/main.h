@@ -73,6 +73,8 @@ ImGuiIO& initImGUI(DXContext& context) {
 void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io,
     float* fluidIsovalue, float* fluidKernelScale, float* fluidKernelRadius, 
     float* elasticIsovalue, float* elasticKernelScale, float* elasticKernelRadius,
+	float* sandIsovalue, float* sandKernelScale, float* sandKernelRadius,
+	float* viscoIsovalue, float* viscoKernelScale, float* viscoKernelRadius,
     unsigned int* substepCount, int numParticles) {
     ImGui::Begin("Scene Options");
 
@@ -109,15 +111,30 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io,
 
     if (ImGui::CollapsingHeader("Mesh Shading Parameters")) {
         if (ImGui::CollapsingHeader("Fluid Shading Parameters")) {
-            ImGui::SliderFloat("Isovalue", fluidIsovalue, 0.01f, 3.0f);
-            ImGui::SliderFloat("Kernel Scale", fluidKernelScale, 0.0f, 12.0f);
-            ImGui::SliderFloat("Kernel Radius", fluidKernelRadius, 0.0f, 5.0f);
+            ImGui::SliderFloat("Fluid Isovalue", fluidIsovalue, 0.01f, 3.0f);
+            ImGui::SliderFloat("Fluid Kernel Scale", fluidKernelScale, 0.0f, 12.0f);
+            ImGui::SliderFloat("Fluid Kernel Radius", fluidKernelRadius, 0.0f, 5.0f);
         }
         if (ImGui::CollapsingHeader("Elastic Shading Parameters")) {
-            ImGui::SliderFloat("Isovalue", elasticIsovalue, 0.01f, 3.0f);
-            ImGui::SliderFloat("Kernel Scale", elasticKernelScale, 0.0f, 12.0f);
-            ImGui::SliderFloat("Kernel Radius", elasticKernelRadius, 0.0f, 5.0f);
+            ImGui::SliderFloat("Elastic Isovalue", elasticIsovalue, 0.01f, 3.0f);
+            ImGui::SliderFloat("Elastic Kernel Scale", elasticKernelScale, 0.0f, 12.0f);
+            ImGui::SliderFloat("Elastic Kernel Radius", elasticKernelRadius, 0.0f, 5.0f);
         }
+        if (ImGui::CollapsingHeader("Sand Shading Parameters")) {
+			ImGui::SliderFloat("Sand Isovalue", sandIsovalue, 0.01f, 3.0f);
+			ImGui::SliderFloat("Sand Kernel Scale", sandKernelScale, 0.0f, 12.0f);
+			ImGui::SliderFloat("Sand Kernel Radius", sandKernelRadius, 0.0f, 5.0f);
+		}
+        if (ImGui::CollapsingHeader("Viscoelastic Shading Parameters")) {
+            ImGui::SliderFloat("Visco Isovalue", viscoIsovalue, 0.01f, 3.0f);
+            ImGui::SliderFloat("Visco Kernel Scale", viscoKernelScale, 0.0f, 12.0f);
+            ImGui::SliderFloat("Visco Kernel Radius", viscoKernelRadius, 0.0f, 5.0f);
+        }
+		//if (ImGui::CollapsingHeader("Snow Shading Parameters")) {
+		//	ImGui::SliderFloat("Snow Isovalue", snowIsovalue, 0.01f, 3.0f);
+		//	ImGui::SliderFloat("Snow Kernel Scale", snowKernelScale, 0.0f, 12.0f);
+		//	ImGui::SliderFloat("Snow Kernel Radius", snowKernelRadius, 0.0f, 5.0f);
+		//}
     }
 
     if (ImGui::CollapsingHeader("Render Parameters")) {

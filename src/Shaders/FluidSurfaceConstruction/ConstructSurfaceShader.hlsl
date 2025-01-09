@@ -117,7 +117,8 @@ float4 main(PSInput input) : SV_Target
 
             return float4(baseColor, 0.8);
         }
-        else if (constants.x == 1.0) {
+		// Otherwise, do lambertian shading
+        else {
             float3 lightColor = float3(1.0, 1.0, 1.0); // White light
 
             // Compute Lambertian diffuse lighting
@@ -126,9 +127,6 @@ float4 main(PSInput input) : SV_Target
 
             // Return the final color with full alpha
             return float4(diffuse, 1.0);
-		}
-		else {
-			return float4(input.color.xyz, 1.0);
 		}
     }
 

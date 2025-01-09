@@ -393,21 +393,25 @@ void PBMPMScene::bukkitizeParticles() {
 
 void PBMPMScene::createShapes() {
 	
+	// ==== RENDER TOGGLES ====
 	// Define what materials will compute & render for optimization:
 	// 0 - Water
-	renderToggles[0] = false;
+	renderToggles[0] = true;
 	// 1 - Elastic
 	renderToggles[1] = true;
 	// 2 - Sand
 	renderToggles[2] = false;
 	// 3 - Viscous Paste
-	renderToggles[3] = true;
+	renderToggles[3] = false;
 	// 4 - Snow
 	renderToggles[4] = false;
 
+
+	// ==== DEFINE SHAPES ====
+	
 	// Waterfall
-	/*shapes.push_back(SimShape(0, {16, 27, 16}, 0, {2, 2, 2},
-		0, 0, 0, 0.6, 100));*/
+	shapes.push_back(SimShape(0, {16, 27, 16}, 0, {2, 2, 2},
+		0, 0, 0, 0.6, 100));
 
 	// Water Cube
 	/*shapes.push_back(SimShape(0, { 16, 19, 16 }, 0, { 8, 8, 10 },
@@ -421,10 +425,6 @@ void PBMPMScene::createShapes() {
 	//shapes.push_back(SimShape(0, { 32, 5, 40 }, 0, { 5, 5, 5 },
 	//	0, 1, 0, 1, 100));
 
-	// Sand Emitter
-	/*shapes.push_back(SimShape(0, { 16, 20, 16 }, 0, { 3, 3, 3 },
-		0, 0, 2, 0.1, 100));*/
-
 	// Jelly Cubes
 	shapes.push_back(SimShape(0, { 10, 15, 16 }, 0, { 4, 4, 4 },
 		0, 3, 1, 0.2, 100));
@@ -433,7 +433,19 @@ void PBMPMScene::createShapes() {
 		0, 3, 1, 0.2, 100));
 
 	/*shapes.push_back(SimShape(0, { 15, 25, 16 }, 0, { 4, 4, 4 },
-	0, 3, 1, 0.2, 100));*/
+		0, 3, 1, 0.2, 100));*/
+
+	// Sand Emitter
+	/*shapes.push_back(SimShape(0, { 16, 20, 16 }, 0, { 3, 3, 3 },
+		0, 0, 2, 0.1, 100));*/
+
+	// Visco Emitter
+	/*shapes.push_back(SimShape(0, { 16, 25, 16 }, 0, { 2, 2, 2 },
+		0, 0, 3, 0.7, 100));*/
+
+	// Snow Emitter (only particles, mesh doesn't work)
+	/*shapes.push_back(SimShape(0, { 16, 25, 16 }, 0, { 2, 2, 2 },
+		0, 0, 4, 0.1, 100));*/
 }
 
 void PBMPMScene::constructScene() {

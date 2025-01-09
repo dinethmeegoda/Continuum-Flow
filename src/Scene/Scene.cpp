@@ -56,28 +56,6 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 	elasticScene(context, &elasticRP, &elasticBilevelUniformGridCP, &elasticSurfaceBlockDetectionCP, &elasticSurfaceCellDetectionCP, &elasticSurfaceVertexCompactionCP, 
 		&elasticSurfaceVertexDensityCP, &elasticSurfaceVertexNormalCP, &elasticBufferClearCP, &elasticMeshPipeline, 1, 0.010, 7.6, 1.010),
 
-	// Visco Mesh Shader Pipeline Construction
-	viscoRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::ELASTIC_RENDER_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	viscoBilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::VISCO_BILEVEL_UNIFORM_GRID_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 45, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	viscoSurfaceBlockDetectionCP("SurfaceBlockDetectionRootSig.cso", "SurfaceBlockDetection.cso", *context, CommandListID::VISCO_SURFACE_BLOCK_DETECTION_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	viscoSurfaceCellDetectionCP("SurfaceCellDetectionRootSig.cso", "SurfaceCellDetection.cso", *context, CommandListID::VISCO_SURFACE_CELL_DETECTION_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	viscoSurfaceVertexCompactionCP("SurfaceVertexCompactionRootSig.cso", "SurfaceVertexCompaction.cso", *context, CommandListID::VISCO_SURFACE_VERTEX_COMPACTION_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	viscoSurfaceVertexDensityCP("SurfaceVertexDensityRootSig.cso", "SurfaceVertexDensity.cso", *context, CommandListID::VISCO_SURFACE_VERTEX_DENSITY_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	viscoSurfaceVertexNormalCP("SurfaceVertexNormalsRootSig.cso", "SurfaceVertexNormals.cso", *context, CommandListID::VISCO_SURFACE_VERTEX_NORMAL_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	viscoMeshPipeline("ConstructMeshShader.cso", "ConstructSurfaceShader.cso", "ConstructMeshRootSig.cso", *context, CommandListID::VISCO_MESH_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	viscoBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::VISCO_BUFFER_CLEAR_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	viscoScene(context, &viscoRP, &viscoBilevelUniformGridCP, &viscoSurfaceBlockDetectionCP, &viscoSurfaceCellDetectionCP, &viscoSurfaceVertexCompactionCP,
-		&viscoSurfaceVertexDensityCP, &viscoSurfaceVertexNormalCP, &viscoBufferClearCP, &viscoMeshPipeline, 3, 0.010, 7.6, 1.010),
-
 	// Sand Mesh Shader Pipeline Construction
 	sandRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::SAND_RENDER_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
@@ -98,10 +76,32 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 	sandBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::SAND_BUFFER_CLEAR_COMPUTE_ID, 
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	sandScene(context, &sandRP, &sandBilevelUniformGridCP, &sandSurfaceBlockDetectionCP, &sandSurfaceCellDetectionCP, &sandSurfaceVertexCompactionCP,
-		&sandSurfaceVertexDensityCP, &sandSurfaceVertexNormalCP, &sandBufferClearCP, &sandMeshPipeline, 2, 0.010, 7.6, 1.010),
+		&sandSurfaceVertexDensityCP, &sandSurfaceVertexNormalCP, &sandBufferClearCP, &sandMeshPipeline, 2, 0.010, 5.84, 1.180),
+
+	// Visco Mesh Shader Pipeline Construction
+	viscoRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::ELASTIC_RENDER_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	viscoBilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::VISCO_BILEVEL_UNIFORM_GRID_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 45, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	viscoSurfaceBlockDetectionCP("SurfaceBlockDetectionRootSig.cso", "SurfaceBlockDetection.cso", *context, CommandListID::VISCO_SURFACE_BLOCK_DETECTION_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	viscoSurfaceCellDetectionCP("SurfaceCellDetectionRootSig.cso", "SurfaceCellDetection.cso", *context, CommandListID::VISCO_SURFACE_CELL_DETECTION_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	viscoSurfaceVertexCompactionCP("SurfaceVertexCompactionRootSig.cso", "SurfaceVertexCompaction.cso", *context, CommandListID::VISCO_SURFACE_VERTEX_COMPACTION_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	viscoSurfaceVertexDensityCP("SurfaceVertexDensityRootSig.cso", "SurfaceVertexDensity.cso", *context, CommandListID::VISCO_SURFACE_VERTEX_DENSITY_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	viscoSurfaceVertexNormalCP("SurfaceVertexNormalsRootSig.cso", "SurfaceVertexNormals.cso", *context, CommandListID::VISCO_SURFACE_VERTEX_NORMAL_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	viscoMeshPipeline("ConstructMeshShader.cso", "ConstructSurfaceShader.cso", "ConstructMeshRootSig.cso", *context, CommandListID::VISCO_MESH_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	viscoBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::VISCO_BUFFER_CLEAR_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	viscoScene(context, &viscoRP, &viscoBilevelUniformGridCP, &viscoSurfaceBlockDetectionCP, &viscoSurfaceCellDetectionCP, &viscoSurfaceVertexCompactionCP,
+		&viscoSurfaceVertexDensityCP, &viscoSurfaceVertexNormalCP, &viscoBufferClearCP, &viscoMeshPipeline, 3, 0.010, 4.604, 1.010),
 
 	// Snow Mesh Shader Pipeline Construction
-	snowRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::ELASTIC_RENDER_ID,
+	/*snowRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::ELASTIC_RENDER_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	snowBilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::SNOW_BILEVEL_UNIFORM_GRID_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 45, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
@@ -120,7 +120,7 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 	snowBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::SNOW_BUFFER_CLEAR_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	snowScene(context, &snowRP, &snowBilevelUniformGridCP, &snowSurfaceBlockDetectionCP, &snowSurfaceCellDetectionCP, &snowSurfaceVertexCompactionCP,
-		&snowSurfaceVertexDensityCP, &snowSurfaceVertexNormalCP, &snowBufferClearCP, &snowMeshPipeline, 4, 0.010, 7.6, 1.010),
+		&snowSurfaceVertexDensityCP, &snowSurfaceVertexNormalCP, &snowBufferClearCP, &snowMeshPipeline, 4, 0.010, 7.6, 1.010),*/
 	
 	currentRP(),
 	currentCP()
@@ -146,17 +146,17 @@ MeshPipeline* Scene::getElasticMeshPipeline() {
 	return &elasticMeshPipeline;
 }
 
-MeshPipeline* Scene::getViscoMeshPipeline() {
-	return &viscoMeshPipeline;
-}
-
 MeshPipeline* Scene::getSandMeshPipeline() {
 	return &sandMeshPipeline;
 }
 
-MeshPipeline* Scene::getSnowMeshPipeline() {
-	return &snowMeshPipeline;
+MeshPipeline* Scene::getViscoMeshPipeline() {
+	return &viscoMeshPipeline;
 }
+
+//MeshPipeline* Scene::getSnowMeshPipeline() {
+//	return &snowMeshPipeline;
+//}
 
 void Scene::compute(float isMeshShading) {
 	pbmpmScene.compute();
@@ -174,6 +174,24 @@ void Scene::compute(float isMeshShading) {
 				particles
 			);
 		}
+		if (renderToggles[2]) {
+			sandScene.compute(
+				pbmpmScene.getPositionBuffer(),
+				particles
+			);
+		}
+		if (renderToggles[3]) {
+			viscoScene.compute(
+				pbmpmScene.getPositionBuffer(),
+				particles
+			);
+		}
+		/*if (renderToggles[4]) {
+			snowScene.compute(
+				pbmpmScene.getPositionBuffer(),
+				particles
+			);
+		}*/
 	}
 }
 
@@ -189,17 +207,17 @@ void Scene::drawElastic(unsigned int renderMeshlets, unsigned int renderOptions)
 	elasticScene.draw(camera, renderMeshlets, renderOptions);
 }
 
-void Scene::drawVisco(unsigned int renderMeshlets, unsigned int renderOptions) {
-	viscoScene.draw(camera, renderMeshlets, renderOptions);
-}
-
 void Scene::drawSand(unsigned int renderMeshlets, unsigned int renderOptions) {
 	sandScene.draw(camera, renderMeshlets, renderOptions);
 }
 
-void Scene::drawSnow(unsigned int renderMeshlets, unsigned int renderOptions) {
-	snowScene.draw(camera, renderMeshlets, renderOptions);
+void Scene::drawVisco(unsigned int renderMeshlets, unsigned int renderOptions) {
+	viscoScene.draw(camera, renderMeshlets, renderOptions);
 }
+
+//void Scene::drawSnow(unsigned int renderMeshlets, unsigned int renderOptions) {
+//	snowScene.draw(camera, renderMeshlets, renderOptions);
+//}
 
 void Scene::drawGrid() {
 	objectSceneGrid.draw(camera);
@@ -222,7 +240,7 @@ void Scene::releaseResources() {
 	elasticScene.releaseResources();
 	viscoScene.releaseResources();
 	sandScene.releaseResources();
-	snowScene.releaseResources();
+	//snowScene.releaseResources();
 }
 
 void Scene::updatePBMPMConstants(PBMPMConstants& newConstants) {
