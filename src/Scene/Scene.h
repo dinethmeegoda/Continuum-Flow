@@ -16,10 +16,18 @@ public:
 	RenderPipeline* getObjectSolidPipeline();
 	RenderPipeline* getPBMPMRenderPipeline();
 	MeshPipeline* getFluidMeshPipeline();
+	MeshPipeline* getElasticMeshPipeline();
+	MeshPipeline* getViscoMeshPipeline();
+	MeshPipeline* getSandMeshPipeline();
+	MeshPipeline* getSnowMeshPipeline();
 
 	void compute(float isMeshShading = false);
 	void drawPBMPM();
 	void drawFluid(unsigned int renderMeshlets, unsigned int renderOptions);
+	void drawElastic(unsigned int renderMeshlets, unsigned int renderOptions);
+	void drawVisco(unsigned int renderMeshlets, unsigned int renderOptions);
+	void drawSand(unsigned int renderMeshlets, unsigned int renderOptions);
+	void drawSnow(unsigned int renderMeshlets, unsigned int renderOptions);
 	void drawGrid();
 	void drawSpawners();
 	void drawSolidObjects();
@@ -32,10 +40,28 @@ public:
 	float* getFluidIsovalue() { return fluidScene.getIsovalue(); }
 	float* getFluidKernelScale() { return fluidScene.getKernelScale(); }
 	float* getFluidKernelRadius() { return fluidScene.getKernelRadius(); }
+	
+	float* getElasticIsovalue() { return elasticScene.getIsovalue(); }
+	float* getElasticKernelScale() { return elasticScene.getKernelScale(); }
+	float* getElasticKernelRadius() { return elasticScene.getKernelRadius(); }
+
+	float* getViscoIsovalue() { return viscoScene.getIsovalue(); }
+	float* getViscoKernelScale() { return viscoScene.getKernelScale(); }
+	float* getViscoKernelRadius() { return viscoScene.getKernelRadius(); }
+
+	float* getSandIsovalue() { return sandScene.getIsovalue(); }
+	float* getSandKernelScale() { return sandScene.getKernelScale(); }
+	float* getSandKernelRadius() { return sandScene.getKernelRadius(); }
+
+	float* getSnowIsovalue() { return snowScene.getIsovalue(); }
+	float* getSnowKernelScale() { return snowScene.getKernelScale(); }
+	float* getSnowKernelRadius() { return snowScene.getKernelRadius(); }
 
 	unsigned int* getPBMPMSubstepCount() { return pbmpmScene.getSubstepCount(); }
 
 	int getNumParticles() { return pbmpmScene.getNumParticles(); }
+
+	bool renderToggles[5] = { 1, 1, 1, 1, 1 };
 
 private:
 	Camera* camera;
@@ -60,6 +86,54 @@ private:
 	ComputePipeline fluidBufferClearCP;
 	MeshPipeline fluidMeshPipeline;
 	MeshShadingScene fluidScene;
+
+	// Elastic Mesh
+	RenderPipeline elasticRP;
+	ComputePipeline elasticBilevelUniformGridCP;
+	ComputePipeline elasticSurfaceBlockDetectionCP;
+	ComputePipeline elasticSurfaceCellDetectionCP;
+	ComputePipeline elasticSurfaceVertexCompactionCP;
+	ComputePipeline elasticSurfaceVertexDensityCP;
+	ComputePipeline elasticSurfaceVertexNormalCP;
+	ComputePipeline elasticBufferClearCP;
+	MeshPipeline elasticMeshPipeline;
+	MeshShadingScene elasticScene;
+
+	// Visco Mesh
+	RenderPipeline viscoRP;
+	ComputePipeline viscoBilevelUniformGridCP;
+	ComputePipeline viscoSurfaceBlockDetectionCP;
+	ComputePipeline viscoSurfaceCellDetectionCP;
+	ComputePipeline viscoSurfaceVertexCompactionCP;
+	ComputePipeline viscoSurfaceVertexDensityCP;
+	ComputePipeline viscoSurfaceVertexNormalCP;
+	ComputePipeline viscoBufferClearCP;
+	MeshPipeline viscoMeshPipeline;
+	MeshShadingScene viscoScene;
+
+	// Sand Mesh
+	RenderPipeline sandRP;
+	ComputePipeline sandBilevelUniformGridCP;
+	ComputePipeline sandSurfaceBlockDetectionCP;
+	ComputePipeline sandSurfaceCellDetectionCP;
+	ComputePipeline sandSurfaceVertexCompactionCP;
+	ComputePipeline sandSurfaceVertexDensityCP;
+	ComputePipeline sandSurfaceVertexNormalCP;
+	ComputePipeline sandBufferClearCP;
+	MeshPipeline sandMeshPipeline;
+	MeshShadingScene sandScene;
+
+	// Snow Mesh
+	RenderPipeline snowRP;
+	ComputePipeline snowBilevelUniformGridCP;
+	ComputePipeline snowSurfaceBlockDetectionCP;
+	ComputePipeline snowSurfaceCellDetectionCP;
+	ComputePipeline snowSurfaceVertexCompactionCP;
+	ComputePipeline snowSurfaceVertexDensityCP;
+	ComputePipeline snowSurfaceVertexNormalCP;
+	ComputePipeline snowBufferClearCP;
+	MeshPipeline snowMeshPipeline;
+	MeshShadingScene snowScene;
 
 	RenderPipeline* currentRP;
 	ComputePipeline* currentCP;

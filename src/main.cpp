@@ -33,6 +33,8 @@ int main() {
     PBMPMConstants pbmpmCurrConstants = scene.getPBMPMConstants();
     PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
 
+    unsigned int renderOptions = 0;
+
     while (!Window::get().getShouldClose()) {
         //update window
         Window::get().update();
@@ -94,7 +96,11 @@ int main() {
 
         //get pipelines
         auto renderPipeline = scene.getPBMPMRenderPipeline();
-        auto meshPipeline = scene.getFluidMeshPipeline();
+        auto fluidMeshPipeline = scene.getFluidMeshPipeline();
+		auto elasticMeshPipeline = scene.getElasticMeshPipeline();
+		auto viscoMeshPipeline = scene.getViscoMeshPipeline();
+		auto sandMeshPipeline = scene.getSandMeshPipeline();
+		auto snowMeshPipeline = scene.getSnowMeshPipeline();
         auto objectWirePipeline = scene.getObjectWirePipeline();
         auto objectSolidPipeline = scene.getObjectSolidPipeline();
         //whichever pipeline renders first should begin and end the frame
@@ -128,11 +134,21 @@ int main() {
             scene.drawPBMPM();
         }
 
-        //mesh render pass
-        Window::get().setRT(meshPipeline->getCommandList());
-        Window::get().setViewport(vp, meshPipeline->getCommandList());
-        if (renderModeType != 2) scene.drawFluid(meshletRenderType, toonShadingLevels);
-        context.executeCommandList(meshPipeline->getCommandListID());
+        //fluid mesh render pass
+        if (scene.renderToggles[0]) {
+            Window::get().setRT(fluidMeshPipeline->getCommandList());
+            Window::get().setViewport(vp, fluidMeshPipeline->getCommandList());
+            if (renderModeType != 2) scene.drawFluid(meshletRenderType, toonShadingLevels);
+            context.executeCommandList(fluidMeshPipeline->getCommandListID());
+        }
+
+        // elastic mesh render pass
+        if (scene.renderToggles[1]) {
+            Window::get().setRT(elasticMeshPipeline->getCommandList());
+            Window::get().setViewport(vp, elasticMeshPipeline->getCommandList());
+            if (renderModeType != 2) scene.drawElastic(meshletRenderType, toonShadingLevels);
+            context.executeCommandList(elasticMeshPipeline->getCommandListID());
+        }
 
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();
@@ -143,7 +159,10 @@ int main() {
 		drawImGUIWindow(pbmpmIterConstants, io,
             scene.getFluidIsovalue(), 
             scene.getFluidKernelScale(), 
-            scene.getFluidKernelRadius(), 
+            scene.getFluidKernelRadius(),
+			scene.getElasticIsovalue(),
+			scene.getElasticKernelScale(),
+			scene.getElasticKernelRadius(),
             scene.getPBMPMSubstepCount(),
             scene.getNumParticles());
 
@@ -164,7 +183,12 @@ int main() {
 
         Window::get().present();
 		context.resetCommandList(renderPipeline->getCommandListID());
-        context.resetCommandList(meshPipeline->getCommandListID());
+		if (scene.renderToggles[0]) {
+			context.resetCommandList(fluidMeshPipeline->getCommandListID());
+		}
+        if (scene.renderToggles[1]) {
+            context.resetCommandList(elasticMeshPipeline->getCommandListID());
+        }
         context.resetCommandList(objectWirePipeline->getCommandListID());
         context.resetCommandList(objectSolidPipeline->getCommandListID());
     }

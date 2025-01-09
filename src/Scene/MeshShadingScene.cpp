@@ -10,7 +10,10 @@ MeshShadingScene::MeshShadingScene(DXContext* context,
                        ComputePipeline* surfaceVertexDensityCP,
                        ComputePipeline* surfaceVertexNormalCP,
                        ComputePipeline* bufferClearCP,
-                       MeshPipeline* fluidMeshPipeline)
+                       MeshPipeline* fluidMeshPipeline,
+                       int materialIndex,
+	                   float isovalue, float kernelScale, float kernelRadius
+    )
     : Drawable(context, pipeline), 
       bilevelUniformGridCP(bilevelUniformGridCP), 
       surfaceBlockDetectionCP(surfaceBlockDetectionCP),
@@ -19,16 +22,23 @@ MeshShadingScene::MeshShadingScene(DXContext* context,
       surfaceVertexDensityCP(surfaceVertexDensityCP),
       surfaceVertexNormalCP(surfaceVertexNormalCP),
       bufferClearCP(bufferClearCP),
-      fluidMeshPipeline(fluidMeshPipeline)
+      fluidMeshPipeline(fluidMeshPipeline),
+	  material(materialIndex),
+	  isovalue(isovalue),
+	  kernelScale(kernelScale),
+	  kernelRadius(kernelRadius)
 {
     constructScene();
 }
 
 // In this pipeline, drawing is done via a mesh shader
-void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigned int renderOptions) {
+void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigned int toonShadingLevels) {
     gridConstants.kernelScale = kernelScale;
     gridConstants.kernelRadius = kernelRadius * gridConstants.resolution;
+	gridConstants.material = material;
     
+    int renderOptions = packBytes(material, toonShadingLevels, 0, 0);
+
     auto cmdList = fluidMeshPipeline->getCommandList();
     MeshShadingConstants meshShadingConstants = { camera->getViewProjMat(), gridConstants.gridDim, gridConstants.resolution, gridConstants.minBounds,
         renderMeshlets, camera->getPosition(), renderOptions, XMFLOAT3(camera->getForward().x, camera->getForward().y, camera->getForward().z), isovalue };
@@ -268,7 +278,7 @@ void MeshShadingScene::computeBilevelUniformGrid() {
     cmdList->SetComputeRootDescriptorTable(1, cellParticleCountBuffer.getUAVGPUDescriptorHandle());
     cmdList->SetComputeRootDescriptorTable(2, cellParticleIndicesBuffer.getUAVGPUDescriptorHandle());
     cmdList->SetComputeRootDescriptorTable(3, blocksBuffer.getUAVGPUDescriptorHandle());
-    cmdList->SetComputeRoot32BitConstants(4, 10, &gridConstants, 0);
+    cmdList->SetComputeRoot32BitConstants(4, 11, &gridConstants, 0);
 
     // Dispatch
     int numWorkGroups = (gridConstants.numParticles + BILEVEL_UNIFORM_GRID_THREADS_X - 1) / BILEVEL_UNIFORM_GRID_THREADS_X;

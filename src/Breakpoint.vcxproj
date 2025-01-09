@@ -36,7 +36,6 @@
     <ClCompile Include="Scene\Camera.cpp" />
     <ClCompile Include="Scene\Geometry.cpp" />
     <ClCompile Include="Scene\Mesh.cpp" />
-    <ClCompile Include="Scene\PhysicsScene.cpp" />
     <ClCompile Include="Scene\Drawable.cpp" />
     <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="Support\Shader.cpp" />
@@ -67,7 +66,6 @@
     <ClInclude Include="Scene\ObjectScene.h" />
     <ClInclude Include="Scene\PBMPMScene.h" />
     <ClInclude Include="Scene\MeshShadingScene.h" />
-    <ClInclude Include="Scene\PhysicsScene.h" />
     <ClInclude Include="main.h" />
     <ClInclude Include="Scene\Camera.h" />
     <ClInclude Include="D3D\StructuredBuffer.h" />

@@ -13,6 +13,7 @@ struct GridConstants {
     float resolution;
     float kernelScale;
     float kernelRadius;
+    int material;
 };
 
 // TODO: can just combine this with grid constants
@@ -49,7 +50,8 @@ public:
                ComputePipeline* surfaceVertexDensityCP,
                ComputePipeline* surfaceVertexNormalCP,
                ComputePipeline* bufferClearCP,
-               MeshPipeline* fluidMeshPipeline);
+               MeshPipeline* fluidMeshPipeline,
+		int material, float isovalue, float kernelScale, float kernelRadius);
 
     void compute(
         StructuredBuffer* positionsBuffer,
@@ -105,7 +107,8 @@ private:
     StructuredBuffer surfaceVertexNormalBuffer;
     StructuredBuffer surfaceVertexColorBuffer;
 
-    float isovalue{ 0.010f };
-    float kernelScale{ 5.9f };
-    float kernelRadius{ 1.010f };
+    int material;
+    float isovalue;
+    float kernelScale;
+    float kernelRadius;
 };

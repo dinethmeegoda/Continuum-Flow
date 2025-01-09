@@ -97,6 +97,6 @@ void main( uint3 globalThreadId : SV_DispatchThreadID ) {
 
     // Densities aren't compresed but the only populated entries correspond to verts of surface blocks (of which not all are surface verts).
     surfaceVertexDensities[globalSurfaceVertIndex1d] = totalDensity;
-	// Store average color for the vertex
-	surfaceVertexColors[globalSurfaceVertIndex1d] = averageColor;
+	// Store average color for the vertex, fourth component unused
+	surfaceVertexColors[globalSurfaceVertIndex1d] = float4(averageColor.xyz, 0.0);
 }

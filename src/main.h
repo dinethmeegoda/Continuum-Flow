@@ -24,7 +24,7 @@ static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
 
 static int meshletRenderType = 0;
 static unsigned int renderModeType = 0; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
-static unsigned int toonShadingLevels = 2;
+static int toonShadingLevels = 2;
 static int fixedPointExponent = 7;
 static bool useGridVolume = true;
 static bool renderGrid = true;
@@ -32,10 +32,6 @@ static bool renderSpawn = false;
 
 const char* modes[] = { "Mesh Shaded Fluid, Non-Fluid Particles", "Mesh Shaded Fluid, All Particles", "No Mesh Shaded Fluid, All Particles" };
 const char* meshModes[] = { "Realistic", "Meshlets", "Toon Shaded" };
-
-uint32_t packBytes(uint8_t a, uint8_t b, uint8_t c, uint8_t d) {
-    return (uint32_t(a) << 24) | (uint32_t(b) << 16) | (uint32_t(c) << 8) | uint32_t(d);
-}
 
 ImGuiIO& initImGUI(DXContext& context) {
     IMGUI_CHECKVERSION();
@@ -74,7 +70,10 @@ ImGuiIO& initImGUI(DXContext& context) {
     return io;
 }
 
-void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, float* isovalue, float* kernelScale, float* kernelRadius, unsigned int* substepCount, int numParticles) {
+void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io,
+    float* fluidIsovalue, float* fluidKernelScale, float* fluidKernelRadius, 
+    float* elasticIsovalue, float* elasticKernelScale, float* elasticKernelRadius,
+    unsigned int* substepCount, int numParticles) {
     ImGui::Begin("Scene Options");
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
@@ -109,9 +108,16 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, float* isovalu
     }
 
     if (ImGui::CollapsingHeader("Mesh Shading Parameters")) {
-        ImGui::SliderFloat("Isovalue", isovalue, 0.01f, 3.0f);
-        ImGui::SliderFloat("Kernel Scale", kernelScale, 0.0f, 12.0f);
-        ImGui::SliderFloat("Kernel Radius", kernelRadius, 0.0f, 5.0f);
+        if (ImGui::CollapsingHeader("Fluid Shading Parameters")) {
+            ImGui::SliderFloat("Isovalue", fluidIsovalue, 0.01f, 3.0f);
+            ImGui::SliderFloat("Kernel Scale", fluidKernelScale, 0.0f, 12.0f);
+            ImGui::SliderFloat("Kernel Radius", fluidKernelRadius, 0.0f, 5.0f);
+        }
+        if (ImGui::CollapsingHeader("Elastic Shading Parameters")) {
+            ImGui::SliderFloat("Isovalue", elasticIsovalue, 0.01f, 3.0f);
+            ImGui::SliderFloat("Kernel Scale", elasticKernelScale, 0.0f, 12.0f);
+            ImGui::SliderFloat("Kernel Radius", elasticKernelRadius, 0.0f, 5.0f);
+        }
     }
 
     if (ImGui::CollapsingHeader("Render Parameters")) {

@@ -1,8 +1,8 @@
 #include "PBMPMScene.h"
 #include "SceneConstants.h"
 
-PBMPMScene::PBMPMScene(DXContext* context, RenderPipeline* pipeline)
-	: Drawable(context, pipeline), context(context), renderPipeline(pipeline),
+PBMPMScene::PBMPMScene(DXContext* context, RenderPipeline* pipeline, bool* renderTogglesRef)
+	: Drawable(context, pipeline), context(context), renderPipeline(pipeline), renderToggles(renderTogglesRef),
 	modelMat(XMMatrixIdentity()),
 	g2p2gPipeline("g2p2gRootSignature.cso", "g2p2gComputeShader.cso", *context, CommandListID::PBMPM_G2P2G_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 40, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
@@ -391,6 +391,51 @@ void PBMPMScene::bukkitizeParticles() {
 	context->resetCommandList(bukkitInsertPipeline.getCommandListID());
 }
 
+void PBMPMScene::createShapes() {
+	
+	// Define what materials will compute & render for optimization:
+	// 0 - Water
+	renderToggles[0] = false;
+	// 1 - Elastic
+	renderToggles[1] = true;
+	// 2 - Sand
+	renderToggles[2] = false;
+	// 3 - Viscous Paste
+	renderToggles[3] = true;
+	// 4 - Snow
+	renderToggles[4] = false;
+
+	// Waterfall
+	/*shapes.push_back(SimShape(0, {16, 27, 16}, 0, {2, 2, 2},
+		0, 0, 0, 0.6, 100));*/
+
+	// Water Cube
+	/*shapes.push_back(SimShape(0, { 16, 19, 16 }, 0, { 8, 8, 10 },
+		0, 3, 0, 0.6, 100));*/
+
+	// Drain
+	//shapes.push_back(SimShape(0, { 32, 5, 9 }, 0, { 32, 5, 5 },
+	//	0, 2, 0, 1, 100));
+
+	// Collider
+	//shapes.push_back(SimShape(0, { 32, 5, 40 }, 0, { 5, 5, 5 },
+	//	0, 1, 0, 1, 100));
+
+	// Sand Emitter
+	/*shapes.push_back(SimShape(0, { 16, 20, 16 }, 0, { 3, 3, 3 },
+		0, 0, 2, 0.1, 100));*/
+
+	// Jelly Cubes
+	shapes.push_back(SimShape(0, { 10, 15, 16 }, 0, { 4, 4, 4 },
+		0, 3, 1, 0.2, 100));
+
+	shapes.push_back(SimShape(0, { 21, 15, 16 }, 0, { 4, 4, 4 },
+		0, 3, 1, 0.2, 100));
+
+	/*shapes.push_back(SimShape(0, { 15, 25, 16 }, 0, { 4, 4, 4 },
+	0, 3, 1, 0.2, 100));*/
+}
+
 void PBMPMScene::constructScene() {
 	auto computeId = g2p2gPipeline.getCommandListID();
 	
@@ -447,38 +492,8 @@ void PBMPMScene::constructScene() {
 	renderDispatch.StartInstanceLocation = 0;
 	renderDispatchBuffer = StructuredBuffer(&renderDispatch, 5, sizeof(int));
 
-	// Shape Buffer
-
-	// Waterfall
-	shapes.push_back(SimShape(0, { 16, 27, 16 }, 0, { 2, 2, 2 },
-		0, 0, 0, 0.6, 100));
-
-	// Water Cube
-	/*shapes.push_back(SimShape(0, { 16, 19, 16 }, 0, { 8, 8, 10 },
-		0, 3, 0, 0.6, 100));*/
-
-	// Drain
-	//shapes.push_back(SimShape(0, { 32, 5, 9 }, 0, { 32, 5, 5 },
-	//	0, 2, 0, 1, 100));
-
-	// Collider
-	//shapes.push_back(SimShape(0, { 32, 5, 40 }, 0, { 5, 5, 5 },
-	//	0, 1, 0, 1, 100));
-
-	// Sand Emitter
-	/*shapes.push_back(SimShape(0, { 16, 20, 16 }, 0, { 3, 3, 3 },
-		0, 0, 2, 0.1, 100));*/
-
-	// Jelly Cubes
-	shapes.push_back(SimShape(0, { 10, 15, 16 }, 0, { 4, 4, 4 },
-		0, 3, 1, 0.2, 100));
-
-	shapes.push_back(SimShape(0, { 21, 15, 16 }, 0, { 4, 4, 4 },
-		0, 3, 1, 0.2, 100));
-
-	/*shapes.push_back(SimShape(0, { 15, 25, 16 }, 0, { 4, 4, 4 },
-	0, 3, 1, 0.2, 100));*/
-
+	// Create Shapes
+	createShapes();
 
 	shapeBuffer = StructuredBuffer(shapes.data(), (unsigned int)shapes.size(), sizeof(SimShape));
 

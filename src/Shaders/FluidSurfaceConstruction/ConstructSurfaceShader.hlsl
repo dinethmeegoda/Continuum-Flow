@@ -80,6 +80,11 @@ static const float3 baseColor = float3(0.7, 0.9, 1);
 [RootSignature(ROOTSIG)]
 float4 main(PSInput input) : SV_Target
 {
+	// Unpacked values from render options, currently (material enum, toon shading levels, 0, 0)
+	uint4 constants = unpackBytes(cb.renderOptions);
+
+    float3 lightDir = float3(-0.5, -1, 1); // Directional light direction
+
     if (cb.renderMeshlets == 1) {
         return float4(getMeshletColor(input.meshletIndex), 1.0);
     }
@@ -87,7 +92,7 @@ float4 main(PSInput input) : SV_Target
     else if (cb.renderMeshlets == 0) {
         // Realistic
 		// If water, then do the fancy reflection/refraction
-        if (input.color.w == 0.0) {
+        if (constants.x == 0.0) {
             float3 pos = input.worldPos;
             float3 dir = normalize(pos - cb.cameraPos);
 
@@ -112,8 +117,15 @@ float4 main(PSInput input) : SV_Target
 
             return float4(baseColor, 0.8);
         }
-        else if (input.color.w == 1.0) {
-			return float4(input.color.xyz, 1.0);
+        else if (constants.x == 1.0) {
+            float3 lightColor = float3(1.0, 1.0, 1.0); // White light
+
+            // Compute Lambertian diffuse lighting
+            float NdotL = max(dot(input.normal, lightDir), 0.0); // Use non-normalized normal
+            float3 diffuse = input.color * lightColor * NdotL;
+
+            // Return the final color with full alpha
+            return float4(diffuse, 1.0);
 		}
 		else {
 			return float4(input.color.xyz, 1.0);
@@ -122,14 +134,13 @@ float4 main(PSInput input) : SV_Target
 
     else if (cb.renderMeshlets == 2) {
         // Toon Shading
-        float3 lightDir = float3(-0.5, -1, 1); // Directional light direction
         float3 lightColor = float3(1.2, 1.2, 1.2);          // White light
 
         // Compute Lambertian diffuse lighting
         float NdotL = clamp(dot(input.normal, lightDir), 0.0, 1.0); // Use non-normalized normal
 
         // Quantize the diffuse term into discrete levels
-        float toonLevels = cb.renderOptions;                      // Number of shading levels
+        float toonLevels = constants.y;                      // Number of shading levels
         float quantized = floor(NdotL * toonLevels) / toonLevels;
 
         // Compute final color

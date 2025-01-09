@@ -117,7 +117,7 @@ struct BukkitThreadData {
 
 class PBMPMScene : public Drawable {
 public:
-	PBMPMScene(DXContext* context, RenderPipeline* renderPipeline);
+	PBMPMScene(DXContext* context, RenderPipeline* renderPipeline, bool* renderToggles);
 
 	void constructScene();
 
@@ -199,10 +199,14 @@ private:
 
 	void doEmission(StructuredBuffer* gridBuffer, MouseConstants& mc);
 
+	void createShapes();
+
 	unsigned int frameCount{ 0 };
 	unsigned int startTime{ 0 };
 	unsigned int endTime{ 0 };
 
 	unsigned int substepCount{ 3 };
 	unsigned int numParticles{ 0 };
+
+	bool* renderToggles;
 };
