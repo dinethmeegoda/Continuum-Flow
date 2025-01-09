@@ -43,10 +43,34 @@ RWStructuredBuffer<int> g_tempTileData : register(u4);
 
 RWStructuredBuffer<float4> g_positions : register(u5);
 
-RWStructuredBuffer<int> g_materials : register(u6);
+//Structured Buffer for materials(read - write UAV), color in first three components, material enum stored in fourth
+RWStructuredBuffer<float4> g_materials : register(u6);
+
+// Structured Buffer for displacements (read-write UAV)
+RWStructuredBuffer<float4> g_displacements : register(u7);
+
+StructuredBuffer<float4> g_massVolumeData : register(t3);
 
 //groupshared int s_tileData[TileDataSize];
 groupshared int s_tileDataDst[TileDataSize];
+
+static const float3 darkColorTable[] = {
+    float3(0.0, 0.573, 0.878), // Water
+    float3(0.0, 0.8, 0.0), // Elastic
+    float3(0.9, 0.83, 0.0), // Sand
+    float3(0.7, 0.0, 0.8), // Visco
+    float3(0.8, 0.8, 0.8), // Snow
+    float3(0.0, 0.0, 0.0)  // Default
+};
+
+static const float3 lightColorTable[] = {
+    float3(0.094, 0.8, 0.929), // Water
+    float3(0.1, 0.85, 0.0), // Elastic
+    float3(1.0, 0.9, 0.0), // Sand
+    float3(0.9, 0.15, 0.95), // Visco
+    float3(0.9, 0.9, 0.9), // Snow
+    float3(0.5, 0.5, 0.5)  // Default
+};
 
 unsigned int localGridIndex(uint3 index) {
 	return (index.z * TotalBukkitEdgeLength * TotalBukkitEdgeLength + index.y * TotalBukkitEdgeLength + index.x) * 5;
@@ -106,12 +130,11 @@ float3x3 inverse(float3x3 m) {
     return adj * (1.0 / d);
 }
 
-float3x3 outerProduct(float3 x, float3 y)
-{
+float3x3 outerProduct(float3 x, float3 y) {
     return float3x3(
-        x * y.x,
-       x * y.y,
-       x * y.z
+        x.x * y.x, x.x * y.y, x.x * y.z,
+        x.y * y.x, x.y * y.y, x.y * y.z,
+        x.z * y.x, x.z * y.y, x.z * y.z
     );
 }
 
@@ -249,6 +272,12 @@ bool intersectRaySphere(float3 rayOrigin, float3 rayDir, float3 sphereCenter, fl
     return true;
 }
 
+float getBias(float time, float bias)
+{
+    return (time / ((((1.0 / bias) - 2.0) * (1.0 - time)) + 1.0));
+}
+
+
 [numthreads(ParticleDispatchSize, 1, 1)]
 void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 {
@@ -337,7 +366,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
         // with the current velocity and, if it is, setting the displacement so that no further penetration can occur.
 
         float3 displacedGridPosition = gridPosition + gridDisplacement;
-        float3 projectedGridPosition = projectInsideGuardian(displacedGridPosition, g_simConstants.gridSize, GuardianSize + 1);
+        float3 projectedGridPosition = projectInsideGuardian(displacedGridPosition, g_simConstants.gridSize, GuardianSize);
         float3 projectedDifference = projectedGridPosition - displacedGridPosition;
 
         if (any(projectedDifference != 0))
@@ -382,10 +411,12 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
         
         Particle particle = g_particles[myParticleIndex];
         float liquidDensity = g_positions[myParticleIndex].w;
-		int material = g_materials[myParticleIndex];
+		int material = g_materials[myParticleIndex].w;
         
         float3 p = g_positions[myParticleIndex].xyz;
         QuadraticWeightInfo weightInfo = quadraticWeightInit(p);
+
+		float3 displacement = g_displacements[myParticleIndex].xyz;
         
         if (g_simConstants.iteration != 0)
         {
@@ -404,7 +435,6 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                     for (int k = 0; k < 3; k++) {
                         // Weight corresponding to this neighborhood cell
                         float weight = weightInfo.weights[i].x * weightInfo.weights[j].y * weightInfo.weights[k].z;
-
                         // Grid vertex index
                         int3 neighborCellIndex = int3(weightInfo.cellIndex) + int3(i, j, k);
 
@@ -421,19 +451,13 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         int fixedPoint2;
                         InterlockedAdd(g_tempTileData[(groupId.x * TileDataSize) + gridVertexIdx + 2], 0, fixedPoint2);
 
-                        uint particleIndexInCell = g_bukkitParticleData[threadData.rangeStart + indexInGroup];
-                        int cellMaterial = g_materials[particleIndexInCell];
-
                         float3 weightedDisplacement = weight * float3(
                             decodeFixedPoint(fixedPoint0, g_simConstants.fixedPointMultiplier),
                             decodeFixedPoint(fixedPoint1, g_simConstants.fixedPointMultiplier),
                             decodeFixedPoint(fixedPoint2, g_simConstants.fixedPointMultiplier));
 
-                        if (cellMaterial == currentMaterial)
-                        {
-                            float3 offset = float3(neighborCellIndex) - p + 0.5;
-                            B += outerProduct(weightedDisplacement, offset);
-                        }
+                        float3 offset = float3(neighborCellIndex) - p + 0.5;
+                        B += outerProduct(weightedDisplacement, offset);
 
                         d += weightedDisplacement;
 
@@ -462,7 +486,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
             
             // Save the deformation gradient as a 3x3 matrix by adding the identity matrix to the rest
             particle.deformationDisplacement = B * 4.0;
-            particle.displacement = d;
+            displacement = d;
             
             // Integration
             if (g_simConstants.iteration == g_simConstants.iterationCount - 1)
@@ -593,7 +617,14 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 }
                 
                 // Update particle position
-                p += particle.displacement;
+                p += displacement;
+
+				// Color the liquid based on the displacement, before external forces
+                float maxDisplacement = 0.03;
+                float displacementRatio = min(abs(getBias(length(displacement), 0.25)) / maxDisplacement, 7.0);
+                float3 darkColor = darkColorTable[material];
+                float3 lightColor = lightColorTable[material];
+                g_materials[myParticleIndex].xyz = lerp(darkColor, lightColor, displacementRatio);
                 
                 // Mouse Iteraction
                 if (g_mouseConstants.mouseActivation == 1) {
@@ -607,24 +638,24 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
 						if (g_mouseConstants.mouseFunction == 0) // Push
                         {
-                            particle.displacement += normOffset * g_mouseConstants.mouseActivation * g_mouseConstants.mouseStrength * g_simConstants.deltaTime * 3.f;
+                            displacement += normOffset * g_mouseConstants.mouseActivation * g_mouseConstants.mouseStrength * g_simConstants.deltaTime * 3.f;
                         }
                         else if (g_mouseConstants.mouseFunction == 1) // Grab
                         {
-                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * 80;
-                            particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 0.5;
+                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * 60;
+                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 0.5;
                         }
                         else if (g_mouseConstants.mouseFunction == 2) // Pull
 						{
                             float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * t;
-                            particle.displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 0.5;
+                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 0.5;
 						}
                     }
                 }
-                
+
                 // Gravity Acceleration is normalized to the vertical size of the window
-                particle.displacement.y -= float(g_simConstants.gridSize.y) * g_simConstants.gravityStrength * g_simConstants.deltaTime * g_simConstants.deltaTime;
-                
+                displacement.y -= float(g_simConstants.gridSize.y) * g_simConstants.gravityStrength * g_simConstants.deltaTime * g_simConstants.deltaTime;
+
                 // Free count may be negative because of emission. So make sure it is at last zero before incrementing.
                 int originalMax; // Needed for InterlockedMax output parameter
                 InterlockedMax(g_freeIndices[0], 0, originalMax); 
@@ -640,7 +671,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
                         if (c.collides)
                         {
-							particle.displacement -= c.penetration * c.normal * (1.0 - g_simConstants.borderFriction);
+							displacement -= c.penetration * c.normal * (1.0 - g_simConstants.borderFriction);
                         }
                     }
 
@@ -648,7 +679,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         if (collide(shape, p).collides) {
                             particle.enabled = 0;
 							// Change material so that it is not rendered
-							g_materials[myParticleIndex] = 99;
+							g_materials[myParticleIndex].w = 99;
 
                             uint freeIndex;
                             InterlockedAdd(g_freeIndices[0], 1, freeIndex);
@@ -666,6 +697,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
             // Save the particle back to the buffer
             g_particles[myParticleIndex] = particle;
 			g_positions[myParticleIndex] = float4(p, liquidDensity);
+			g_displacements[myParticleIndex] = float4(displacement, 0);
         }
         
         {
@@ -802,7 +834,6 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
             }
 
             // P2G
-
             // Iterate over local 3x3 neighborhood
             for (int i = 0; i < 3; i++)
             {
@@ -825,8 +856,8 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         // Update grid data
                         float3 offset = float3(neighborCellIndex) - p + 0.5;
 
-                        float weightedMass = weight * particle.mass;
-                        float3 momentum = weightedMass * (particle.displacement + mul(particle.deformationDisplacement, offset));
+                        float weightedMass = weight * g_massVolumeData[myParticleIndex].x;
+                        float3 momentum = weightedMass * (displacement + mul(particle.deformationDisplacement, offset));
 
                         InterlockedAdd(s_tileDataDst[gridVertexIdx + 0], encodeFixedPoint(momentum.x, g_simConstants.fixedPointMultiplier));
                         InterlockedAdd(s_tileDataDst[gridVertexIdx + 1], encodeFixedPoint(momentum.y, g_simConstants.fixedPointMultiplier));
@@ -835,7 +866,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
                         if (g_simConstants.useGridVolumeForLiquid != 0)
                         {
-                            InterlockedAdd(s_tileDataDst[gridVertexIdx + 4], encodeFixedPoint(weight * particle.volume, g_simConstants.fixedPointMultiplier));
+                            InterlockedAdd(s_tileDataDst[gridVertexIdx + 4], encodeFixedPoint(weight * g_massVolumeData[myParticleIndex].y, g_simConstants.fixedPointMultiplier));
                         }
                     }
                 }
@@ -878,5 +909,4 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
         g_tempTileData[(groupId.x * TileDataSize) + tileDataIndex + 3] = 0;
         g_tempTileData[(groupId.x * TileDataSize) + tileDataIndex + 4] = 0;
     }
-
 }

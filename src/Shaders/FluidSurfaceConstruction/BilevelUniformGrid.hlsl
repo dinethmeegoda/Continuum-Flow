@@ -4,7 +4,8 @@
 
 // SRV for positions buffer (input buffer)
 StructuredBuffer<float4> positionsBuffer : register(t0);
-StructuredBuffer<int> materialsBuffer : register(t1);
+// SRV for materials buffer (input buffer), material enum stored in fourth component
+StructuredBuffer<float4> materialsBuffer : register(t1);
 
 // UAV for the bilevel uniform grid (output buffers)
 RWStructuredBuffer<int> cellParticleCounts : register(u0);
@@ -28,7 +29,7 @@ void main(uint3 globalThreadId : SV_DispatchThreadID) {
         return;
     }
 
-	if (materialsBuffer[globalThreadId.x] != 0) {
+	if (materialsBuffer[globalThreadId.x].w != cb.material) {
 		return;
 	}
 

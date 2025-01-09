@@ -33,8 +33,7 @@ int main() {
     PBMPMConstants pbmpmCurrConstants = scene.getPBMPMConstants();
     PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
 
-    unsigned int renderMeshlets = 0;
-    unsigned int renderMode = 0;
+    unsigned int renderOptions = 0;
 
     while (!Window::get().getShouldClose()) {
         //update window
@@ -93,11 +92,15 @@ int main() {
         }
 
         //compute pbmpm + mesh shader
-        scene.compute(renderMode != 2);
+        scene.compute(renderModeType != 2);
 
         //get pipelines
         auto renderPipeline = scene.getPBMPMRenderPipeline();
-        auto meshPipeline = scene.getFluidMeshPipeline();
+        auto fluidMeshPipeline = scene.getFluidMeshPipeline();
+		auto elasticMeshPipeline = scene.getElasticMeshPipeline();
+		auto viscoMeshPipeline = scene.getViscoMeshPipeline();
+		auto sandMeshPipeline = scene.getSandMeshPipeline();
+		//auto snowMeshPipeline = scene.getSnowMeshPipeline();
         auto objectWirePipeline = scene.getObjectWirePipeline();
         auto objectSolidPipeline = scene.getObjectSolidPipeline();
         //whichever pipeline renders first should begin and end the frame
@@ -113,7 +116,8 @@ int main() {
         //wire object render pass
         Window::get().setRT(objectWirePipeline->getCommandList());
         Window::get().setViewport(vp, objectWirePipeline->getCommandList());
-        if (renderGrid) scene.drawWireObjects();
+        if (renderGrid) scene.drawGrid();
+        if (renderSpawn) scene.drawSpawners();
         context.executeCommandList(objectWirePipeline->getCommandListID());
 
         //solid object render pass
@@ -125,13 +129,50 @@ int main() {
         //particles + imgui render pass
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
-        scene.drawPBMPM(renderMode);
+		// Only draw particles if we are not in the mesh shading mode
+        if (renderModeType != 0) {
+            scene.drawPBMPM();
+        }
 
-        //mesh render pass
-        Window::get().setRT(meshPipeline->getCommandList());
-        Window::get().setViewport(vp, meshPipeline->getCommandList());
-        if (renderMode != 2) scene.drawFluid(renderMeshlets);
-        context.executeCommandList(meshPipeline->getCommandListID());
+        //fluid mesh render pass
+        if (scene.renderToggles[0]) {
+            Window::get().setRT(fluidMeshPipeline->getCommandList());
+            Window::get().setViewport(vp, fluidMeshPipeline->getCommandList());
+            if (renderModeType != 2) scene.drawFluid(meshletRenderType, toonShadingLevels);
+            context.executeCommandList(fluidMeshPipeline->getCommandListID());
+        }
+
+        // elastic mesh render pass
+        if (scene.renderToggles[1]) {
+            Window::get().setRT(elasticMeshPipeline->getCommandList());
+            Window::get().setViewport(vp, elasticMeshPipeline->getCommandList());
+            if (renderModeType != 2) scene.drawElastic(meshletRenderType, toonShadingLevels);
+            context.executeCommandList(elasticMeshPipeline->getCommandListID());
+        }
+
+        // sand mesh render pass
+        if (scene.renderToggles[2]) {
+            Window::get().setRT(sandMeshPipeline->getCommandList());
+            Window::get().setViewport(vp, sandMeshPipeline->getCommandList());
+            if (renderModeType != 2) scene.drawSand(meshletRenderType, toonShadingLevels);
+            context.executeCommandList(sandMeshPipeline->getCommandListID());
+        }
+
+		// visco mesh render pass
+        if (scene.renderToggles[3]) {
+			Window::get().setRT(viscoMeshPipeline->getCommandList());
+			Window::get().setViewport(vp, viscoMeshPipeline->getCommandList());
+			if (renderModeType != 2) scene.drawVisco(meshletRenderType, toonShadingLevels);
+			context.executeCommandList(viscoMeshPipeline->getCommandListID());
+		}
+
+		// snow mesh render pass
+		/*if (scene.renderToggles[4]) {
+			Window::get().setRT(snowMeshPipeline->getCommandList());
+			Window::get().setViewport(vp, snowMeshPipeline->getCommandList());
+			if (renderModeType != 2) scene.drawSnow(meshletRenderType, toonShadingLevels);
+			context.executeCommandList(snowMeshPipeline->getCommandListID());
+		}*/
 
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();
@@ -139,10 +180,19 @@ int main() {
         ImGui::NewFrame();
 
         //draw ImGUI
-        drawImGUIWindow(pbmpmIterConstants, io, &renderMeshlets, &renderMode, 
+		drawImGUIWindow(pbmpmIterConstants, io,
             scene.getFluidIsovalue(), 
             scene.getFluidKernelScale(), 
-            scene.getFluidKernelRadius(), 
+            scene.getFluidKernelRadius(),
+			scene.getElasticIsovalue(),
+			scene.getElasticKernelScale(),
+			scene.getElasticKernelRadius(),
+			scene.getSandIsovalue(),
+			scene.getSandKernelScale(),
+			scene.getSandKernelRadius(),
+            scene.getViscoIsovalue(),
+            scene.getViscoKernelScale(),
+            scene.getViscoKernelRadius(),
             scene.getPBMPMSubstepCount(),
             scene.getNumParticles());
 
@@ -163,7 +213,21 @@ int main() {
 
         Window::get().present();
 		context.resetCommandList(renderPipeline->getCommandListID());
-        context.resetCommandList(meshPipeline->getCommandListID());
+		if (scene.renderToggles[0]) {
+			context.resetCommandList(fluidMeshPipeline->getCommandListID());
+		}
+        if (scene.renderToggles[1]) {
+            context.resetCommandList(elasticMeshPipeline->getCommandListID());
+        }
+        if (scene.renderToggles[2]) {
+			context.resetCommandList(sandMeshPipeline->getCommandListID());
+		}
+		if (scene.renderToggles[3]) {
+			context.resetCommandList(viscoMeshPipeline->getCommandListID());
+		}
+		/*if (scene.renderToggles[4]) {
+			context.resetCommandList(snowMeshPipeline->getCommandListID());
+		}*/
         context.resetCommandList(objectWirePipeline->getCommandListID());
         context.resetCommandList(objectSolidPipeline->getCommandListID());
     }

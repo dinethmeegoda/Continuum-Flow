@@ -33,8 +33,23 @@ StructuredBuffer<int> g_grid : register(t0);
 // Structured Buffer for positions (read-write UAV)
 RWStructuredBuffer<float4> g_positions : register(u3);
 
-// Structured Buffer for materials (read-write UAV)
-RWStructuredBuffer<int> g_materials : register(u4);
+// Structured Buffer for materials (read-write UAV), color in first three components, material enum stored in fourth
+RWStructuredBuffer<float4> g_materials : register(u4);
+
+// Structured Buffer for displacement (read-write UAV)
+RWStructuredBuffer<float4> g_displacement : register(u5);
+
+// Structured Buffer for mass and volume (read-write UAV)
+RWStructuredBuffer<float4> g_massVolume : register(u6);
+
+static const float3 colorTable[] = {
+    float3(0.0, 0.573, 0.878), // Water
+    float3(0.0, 0.75, 0.0), // Elastic
+    float3(0.8, 0.8, 0.0), // Sand
+    float3(0.7, 0.0, 0.8), // Visco
+    float3(0.8, 0.8, 0.8), // Snow
+    float3(0.0, 0.0, 0.0)  // Default
+};
 
 uint hash(uint input)
 {
@@ -43,10 +58,18 @@ uint hash(uint input)
     return (word >> 22) ^ word;
 }
 
-float randomFloat(uint input)
+float3 generateJitter(float3 seed)
 {
-    return float(hash(input) % 10000) / 9999.0;
+    // Scale factor to map the range [0, 1] to [-0.25, 0.25]
+    const float scale = 0.25;
+
+    // Use a simple hash-like function to generate values from the seed
+    float3 hashed = frac(sin(dot(seed, float3(12.9898, 78.233, 37.719))) * 43758.5453);
+
+    // Map the range [0, 1] to [-0.25, 0.25]
+    return (hashed * 2.0 - 1.0) * scale;
 }
+
 
 bool insideGuardian(uint3 id, uint3 gridSize, uint guardianSize)
 {
@@ -60,16 +83,12 @@ bool insideGuardian(uint3 id, uint3 gridSize, uint guardianSize)
     return true;
 }
 
-Particle createParticle(float mass, float volume)
+Particle createParticle()
 {
     Particle particle;
 
-    particle.displacement = float3(0, 0, 0);
     particle.deformationGradient = Identity;
     particle.deformationDisplacement = ZeroMatrix;
-
-    particle.mass = mass;
-    particle.volume = volume;
 
     particle.lambda = 0.0;
     particle.logJp = 1.0;
@@ -95,19 +114,19 @@ void addParticle(float3 position, int material, float volume, float density, flo
         InterlockedAdd(g_particleCount[0], 1, particleIndex);
     }
 
-    uint jitterX = hash(particleIndex);
+    /*uint jitterX = hash(particleIndex);
     uint jitterY = hash(uint(position.x * position.y * 100));
+    uint jitterZ = hash(uint(position.x * position.z * 200));*/
 
-    float2 jitter = float2(-0.25, -0.25) + 0.5 * float2(float(jitterX % 10) / 10, float(jitterY % 10) / 10);
+	float3 jitter = generateJitter(position);
 
-    Particle newParticle = createParticle(
-        volume * density,
-        volume
-    );
+    Particle newParticle = createParticle();
 
     g_particles[particleIndex] = newParticle;
-	g_materials[particleIndex] = material;
-	g_positions[particleIndex] = float4(position + float3(jitter.x, jitter.y, 0.f) * jitterScale, 1.0);
+    g_materials[particleIndex] = float4(colorTable[material], material);
+	g_positions[particleIndex] = float4(position + jitter * jitterScale, 1.0);
+	g_displacement[particleIndex] = float4(0, 0, 0, 0);
+	g_massVolume[particleIndex] = float4(volume * density, volume, 0, 0);
 }
 
 [numthreads(GridDispatchSize, GridDispatchSize, GridDispatchSize)]
@@ -154,18 +173,22 @@ void main(uint3 id : SV_DispatchThreadID)
             {
                 for (int j = 0; j < particleCountPerCellAxis; j++)
                 {
-                    uint hashCodeX = hash(id.x * particleCountPerCellAxis + i);
-                    uint hashCodeY = hash(id.y * particleCountPerCellAxis + j);
-                    uint hashCode = hash(hashCodeX + hashCodeY);
-
-                    bool emitDueToMyTurnHappening = isEmitter && 0 == ((hashCode + g_simConstants.simFrame) % emitEvery);
-                    bool emitDueToInitialEmission = isInitialEmitter && g_simConstants.simFrame == 0;
-
-                    float3 emitPos = pos + float3(float(i), float(j), 0) / float(particleCountPerCellAxis);
-
-                    if (emitDueToInitialEmission || emitDueToMyTurnHappening)
+                    for (int k = 0; k < particleCountPerCellAxis; k++)
                     {
-                        addParticle(emitPos, shape.material, volumePerParticle, 1.0, 1.0 / float(particleCountPerCellAxis));
+                        uint hashCodeX = hash(id.x * particleCountPerCellAxis + i);
+                        uint hashCodeY = hash(id.y * particleCountPerCellAxis + j);
+						uint hashCodeZ = hash(id.z * particleCountPerCellAxis + k);
+						uint hashCode = hash(hashCodeX + hashCodeY + hashCodeZ);
+
+                        bool emitDueToMyTurnHappening = isEmitter && 0 == ((hashCode + g_simConstants.simFrame) % emitEvery);
+                        bool emitDueToInitialEmission = isInitialEmitter && g_simConstants.simFrame == 0;
+
+                        float3 emitPos = pos + float3(float(i), float(j), float(k)) / float(particleCountPerCellAxis);
+
+                        if (emitDueToInitialEmission || emitDueToMyTurnHappening)
+                        {
+                            addParticle(emitPos, shape.material, volumePerParticle, 1.0, 1.0 / float(particleCountPerCellAxis));
+                        }
                     }
                 }
             }

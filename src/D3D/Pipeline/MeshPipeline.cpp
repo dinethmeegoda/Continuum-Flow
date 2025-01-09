@@ -15,16 +15,25 @@ void MeshPipeline::createPSOD() {
     psod.MS.pShaderBytecode = meshShader.getBuffer();
     psod.PS.BytecodeLength = fragShader.getSize();
     psod.PS.pShaderBytecode = fragShader.getBuffer();
+
+    // Primitive topology type for mesh pipelines
+    psod.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+
+    // Render target formats
     psod.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
     psod.NumRenderTargets = 1;
+
+    // Depth-stencil format
     psod.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+
+    // Other states
     psod.SampleDesc.Count = 1;
     psod.SampleMask = UINT_MAX;
     psod.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
     psod.RasterizerState.FrontCounterClockwise = TRUE;
     psod.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
-    
-    // Alpha blending on
+
+    // Alpha blending
     psod.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
     psod.BlendState.RenderTarget[0].BlendEnable = TRUE;
     psod.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
@@ -35,6 +44,7 @@ void MeshPipeline::createPSOD() {
     psod.BlendState.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
     psod.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
+    // Depth stencil
     psod.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 }
 

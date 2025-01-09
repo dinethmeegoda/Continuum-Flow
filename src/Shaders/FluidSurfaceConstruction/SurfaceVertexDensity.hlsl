@@ -5,14 +5,16 @@
 // Inputs
 // SRV for positions buffer (input buffer)
 StructuredBuffer<float4> positionsBuffer : register(t0);
+// SRV for the materials buffer (input buffer)
+StructuredBuffer<float4> materialsBuffer : register(t1);
 // SRV for the surface cell particle counts
-StructuredBuffer<int> cellParticleCounts : register(t1);
+StructuredBuffer<int> cellParticleCounts : register(t2);
 // SRV for the surface cell particle indices
-StructuredBuffer<int> cellParticleIndices : register(t2);
+StructuredBuffer<int> cellParticleIndices : register(t3);
 // SRV for the surface vertex indices
-StructuredBuffer<int> surfaceVertexIndices : register(t3);
+StructuredBuffer<int> surfaceVertexIndices : register(t4);
 // Root SRV for dispatch params for this pass
-StructuredBuffer<int3> surfaceVertDensityDispatch : register(t4);
+StructuredBuffer<int3> surfaceVertDensityDispatch : register(t5);
 
 // Root constants
 ConstantBuffer<BilevelUniformGridConstants> cb : register(b0);
@@ -22,6 +24,8 @@ ConstantBuffer<BilevelUniformGridConstants> cb : register(b0);
 RWStructuredBuffer<int3> surfaceBlockDispatch : register(u0);
 // UAV for the surface vertex densities
 RWStructuredBuffer<float> surfaceVertexDensities : register(u1);
+// UAV for the surface vertex colors
+RWStructuredBuffer<float4> surfaceVertexColors : register(u2);
 
 float P(float d, float h)
 {
@@ -61,10 +65,13 @@ void main( uint3 globalThreadId : SV_DispatchThreadID ) {
 
     float3 vertPos = cb.minBounds + float3(globalSurfaceVertIndex3d) * cb.resolution;
     float totalDensity = 0.0f;
+    float4 averageColor = float4(0.0f, 0.0f, 0.0f, 0.0f);
 
     int kernelOffset = int(0.999 * cb.kernelRadius / cb.resolution);
     int3 minLoopBounds = max(globalSurfaceVertIndex3d - kernelOffset - int3(1, 1, 1), int3(0, 0, 0));
     int3 maxLoopBounds = min(globalSurfaceVertIndex3d + kernelOffset, cb.dimensions - int3(1, 1, 1)); // Note, this is NOT a mistake. Not supposed to add 1 here. Each vertex has at most 8 abutting cells.
+
+	int colorCount = 0;
 
     // And now we're iterating over the (maximum) 8 cells that abut the vertex.
     for (int z = minLoopBounds.z; z <= maxLoopBounds.z; z++) {
@@ -79,11 +86,17 @@ void main( uint3 globalThreadId : SV_DispatchThreadID ) {
                     float3 particlePos = positionsBuffer[particleIdx].xyz;
                     float3 r = vertPos - particlePos;
                     totalDensity += isotropicKernel(r, cb.kernelRadius);
+                    averageColor += materialsBuffer[particleIdx];
+					colorCount++;
                 }
             }
         }
     }
 
+	averageColor /= float(colorCount);
+
     // Densities aren't compresed but the only populated entries correspond to verts of surface blocks (of which not all are surface verts).
     surfaceVertexDensities[globalSurfaceVertIndex1d] = totalDensity;
+	// Store average color for the vertex, fourth component unused
+	surfaceVertexColors[globalSurfaceVertIndex1d] = float4(averageColor.xyz, 0.0);
 }

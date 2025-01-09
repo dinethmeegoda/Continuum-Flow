@@ -85,10 +85,7 @@ struct SimShape {
 };
 
 struct PBMPMParticle {
-	XMFLOAT3 displacement; //2->3
-	float mass;
 	XMFLOAT3X3 deformationGradient;
-	float volume;
 	float lambda;
 	XMFLOAT3X3 deformationDisplacement;
 	float logJp;
@@ -120,13 +117,13 @@ struct BukkitThreadData {
 
 class PBMPMScene : public Drawable {
 public:
-	PBMPMScene(DXContext* context, RenderPipeline* renderPipeline);
+	PBMPMScene(DXContext* context, RenderPipeline* renderPipeline, bool* renderToggles);
 
 	void constructScene();
 
 	void compute();
 
-	void draw(Camera* camera, unsigned int renderMode);
+	void draw(Camera* camera);
 
 	void releaseResources();
 
@@ -176,6 +173,8 @@ private:
 	// Particle Buffers
 	StructuredBuffer positionBuffer;
 	StructuredBuffer materialBuffer;
+	StructuredBuffer displacementBuffer;
+	StructuredBuffer massVolumeBuffer;
 
 	// Scene Buffers
 	StructuredBuffer particleBuffer;
@@ -200,10 +199,14 @@ private:
 
 	void doEmission(StructuredBuffer* gridBuffer, MouseConstants& mc);
 
+	void createShapes();
+
 	unsigned int frameCount{ 0 };
 	unsigned int startTime{ 0 };
 	unsigned int endTime{ 0 };
 
-	unsigned int substepCount{ 5 };
+	unsigned int substepCount{ 3 };
 	unsigned int numParticles{ 0 };
+
+	bool* renderToggles;
 };

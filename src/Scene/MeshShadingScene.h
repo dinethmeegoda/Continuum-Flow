@@ -13,6 +13,7 @@ struct GridConstants {
     float resolution;
     float kernelScale;
     float kernelRadius;
+    int material;
 };
 
 // TODO: can just combine this with grid constants
@@ -23,6 +24,8 @@ struct MeshShadingConstants {
     XMFLOAT3 minBounds;
     unsigned int renderMeshlets;
     XMFLOAT3 cameraPos;
+    unsigned int renderOptions;
+    XMFLOAT3 cameraLook;
     float isovalue;
 };
 
@@ -35,10 +38,10 @@ struct Block {
     int nonEmptyCellCount;
 };
 
-class FluidScene : public Drawable {
+class MeshShadingScene : public Drawable {
 public:
-    FluidScene() = delete;
-    FluidScene(DXContext* context, 
+    MeshShadingScene() = delete;
+    MeshShadingScene(DXContext* context, 
                RenderPipeline *pipeline, 
                ComputePipeline* bilevelUniformGridCP, 
                ComputePipeline* surfaceBlockDetectionCP,
@@ -47,13 +50,14 @@ public:
                ComputePipeline* surfaceVertexDensityCP,
                ComputePipeline* surfaceVertexNormalCP,
                ComputePipeline* bufferClearCP,
-               MeshPipeline* fluidMeshPipeline);
+               MeshPipeline* fluidMeshPipeline,
+		int material, float isovalue, float kernelScale, float kernelRadius);
 
     void compute(
         StructuredBuffer* positionsBuffer,
         int numParticles
     );
-    void draw(Camera* camera, unsigned int renderMeshlets);
+    void draw(Camera* camera, unsigned int renderMeshlets, unsigned int renderOptions);
     void constructScene();
     void computeBilevelUniformGrid();
     void computeSurfaceBlockDetection();
@@ -101,8 +105,10 @@ private:
     StructuredBuffer surfaceVertDensityDispatch;
     StructuredBuffer surfaceVertDensityBuffer;
     StructuredBuffer surfaceVertexNormalBuffer;
+    StructuredBuffer surfaceVertexColorBuffer;
 
-    float isovalue{ 0.03f };
-    float kernelScale{ 4.0f };
-    float kernelRadius{ 1.01f };
+    int material;
+    float isovalue;
+    float kernelScale;
+    float kernelRadius;
 };

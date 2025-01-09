@@ -22,13 +22,16 @@
 static ImGUIDescriptorHeapAllocator imguiHeapAllocator;
 static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
 
-static bool meshletRenderType = false;
+static int meshletRenderType = 0;
 static unsigned int renderModeType = 0; // 0 = both particles and mesh shading, 1 = just mesh shading, 2 = just particles
+static int toonShadingLevels = 2;
 static int fixedPointExponent = 7;
 static bool useGridVolume = true;
 static bool renderGrid = true;
+static bool renderSpawn = false;
 
 const char* modes[] = { "Mesh Shaded Fluid, Non-Fluid Particles", "Mesh Shaded Fluid, All Particles", "No Mesh Shaded Fluid, All Particles" };
+const char* meshModes[] = { "Realistic", "Meshlets", "Toon Shaded" };
 
 ImGuiIO& initImGUI(DXContext& context) {
     IMGUI_CHECKVERSION();
@@ -67,7 +70,12 @@ ImGuiIO& initImGUI(DXContext& context) {
     return io;
 }
 
-void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* renderMeshlets, unsigned int* renderMode, float* isovalue, float* kernelScale, float* kernelRadius, unsigned int* substepCount, int numParticles) {
+void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io,
+    float* fluidIsovalue, float* fluidKernelScale, float* fluidKernelRadius, 
+    float* elasticIsovalue, float* elasticKernelScale, float* elasticKernelRadius,
+	float* sandIsovalue, float* sandKernelScale, float* sandKernelRadius,
+	float* viscoIsovalue, float* viscoKernelScale, float* viscoKernelRadius,
+    unsigned int* substepCount, int numParticles) {
     ImGui::Begin("Scene Options");
 
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
@@ -102,21 +110,48 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io, unsigned int* 
     }
 
     if (ImGui::CollapsingHeader("Mesh Shading Parameters")) {
-        ImGui::SliderFloat("Isovalue", isovalue, 0.01f, 1.0f);
-        ImGui::SliderFloat("Kernel Scale", kernelScale, 2.5f, 12.0f);
-        ImGui::SliderFloat("Kernel Radius", kernelRadius, 0.3f, 3.0f);
+        if (ImGui::CollapsingHeader("Fluid Shading Parameters")) {
+            ImGui::SliderFloat("Fluid Isovalue", fluidIsovalue, 0.01f, 3.0f);
+            ImGui::SliderFloat("Fluid Kernel Scale", fluidKernelScale, 0.0f, 12.0f);
+            ImGui::SliderFloat("Fluid Kernel Radius", fluidKernelRadius, 0.0f, 5.0f);
+        }
+        if (ImGui::CollapsingHeader("Elastic Shading Parameters")) {
+            ImGui::SliderFloat("Elastic Isovalue", elasticIsovalue, 0.01f, 3.0f);
+            ImGui::SliderFloat("Elastic Kernel Scale", elasticKernelScale, 0.0f, 12.0f);
+            ImGui::SliderFloat("Elastic Kernel Radius", elasticKernelRadius, 0.0f, 5.0f);
+        }
+        if (ImGui::CollapsingHeader("Sand Shading Parameters")) {
+			ImGui::SliderFloat("Sand Isovalue", sandIsovalue, 0.01f, 3.0f);
+			ImGui::SliderFloat("Sand Kernel Scale", sandKernelScale, 0.0f, 12.0f);
+			ImGui::SliderFloat("Sand Kernel Radius", sandKernelRadius, 0.0f, 5.0f);
+		}
+        if (ImGui::CollapsingHeader("Viscoelastic Shading Parameters")) {
+            ImGui::SliderFloat("Visco Isovalue", viscoIsovalue, 0.01f, 3.0f);
+            ImGui::SliderFloat("Visco Kernel Scale", viscoKernelScale, 0.0f, 12.0f);
+            ImGui::SliderFloat("Visco Kernel Radius", viscoKernelRadius, 0.0f, 5.0f);
+        }
+		//if (ImGui::CollapsingHeader("Snow Shading Parameters")) {
+		//	ImGui::SliderFloat("Snow Isovalue", snowIsovalue, 0.01f, 3.0f);
+		//	ImGui::SliderFloat("Snow Kernel Scale", snowKernelScale, 0.0f, 12.0f);
+		//	ImGui::SliderFloat("Snow Kernel Radius", snowKernelRadius, 0.0f, 5.0f);
+		//}
     }
 
     if (ImGui::CollapsingHeader("Render Parameters")) {
-        if (ImGui::Combo("Select Render Mode", (int*)&renderModeType, modes, IM_ARRAYSIZE(modes)))
-        {
-            *renderMode = renderModeType;
+
+        ImGui::Combo("Select Render Mode", (int*)&renderModeType, modes, IM_ARRAYSIZE(modes));
+
+        if (renderModeType != 2) {
+            ImGui::Combo("Select Mesh Mode", (int*)&meshletRenderType, meshModes, IM_ARRAYSIZE(meshModes));
+        }
+
+        if (meshletRenderType == 2) {
+			ImGui::SliderInt("Toon Shading Levels", (int*)&toonShadingLevels, 1, 10);
         }
 
         ImGui::Checkbox("Render Grid", &renderGrid);
 
-        ImGui::Checkbox("Render Meshlets", &meshletRenderType);
-        *renderMeshlets = meshletRenderType;
+        ImGui::Checkbox("Render Spawners", &renderSpawn);
     }
 
     ImGui::End();

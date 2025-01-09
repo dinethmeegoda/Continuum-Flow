@@ -4,7 +4,7 @@
 #define GridDispatchSize 8
 #define BukkitSize 2
 #define BukkitHaloSize 1
-#define GuardianSize 3
+#define GuardianSize 1
 #define MaxSimShapes 8
 
 #define MaterialLiquid 0
@@ -69,10 +69,7 @@ static const float3x3 Identity = float3x3(1, 0, 0, 0, 1, 0, 0, 0, 1);
 static const float3x3 ZeroMatrix = float3x3(0, 0, 0, 0, 0, 0, 0, 0, 0);
 
 struct Particle {
-	float3 displacement; //2->3
-	float mass;
     float3x3 deformationGradient;
-	float volume;
 	float lambda;
     float3x3 deformationDisplacement;
 	float logJp;
@@ -138,13 +135,13 @@ float3 pow2(float3 x) {
 QuadraticWeightInfo quadraticWeightInit(float3 position)
 {
     float3 roundDownPosition = floor(position);
-    float3 offset = (position - roundDownPosition) - 0.5;
+    float3 offset = (position - roundDownPosition) -0.5;
 
     QuadraticWeightInfo result;
     result.weights[0] = 0.5 * pow2(0.5 - offset);
     result.weights[1] = 0.75 - pow2(offset);
     result.weights[2] = 0.5 * pow2(0.5 + offset);
-    result.cellIndex = roundDownPosition - float3(1, 1, 1);
+    result.cellIndex = roundDownPosition -float3(1, 1, 1);
 
     return result;
 }
