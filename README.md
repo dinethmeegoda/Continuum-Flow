@@ -389,7 +389,7 @@ There are three render modes to toggle between, and some debug view options.
 
 ![](app/image/griddebugview.png)
 
-Toggling on the grid view will color the different simulation shapes(colliders, drains, emitters, the grid). There are also render modes for particles with mesh shading, and just mesh shading, pictured here respectively: 
+Toggling on the grid view will color the grid. Toggling on the spawners will color the different simulation shapes(colliders, drains, emitters). There are also render modes for particles with mesh shading, and just mesh shading, pictured here respectively: 
 
 ![](app/image/rendermode2.png)
 
@@ -406,14 +406,23 @@ There are a number of parameters that affect how PBMPM performs, due to the comp
 The primary 2 are the iteration count and substep count. The substep count runs bukkiting and emission as well as g2p2g for each update within a frame. The iteration count is a subroutine of substep count that determines how many times g2p2g is run within each substep. The two of these have major impacts on performance.
 
 <p align="center">
-  <img src="app/image/itercount.png" alt="itercount" />
+  <img src="app/image/substepcount.png" alt="itercount" height=250/>
+  <img src="app/image/itercount.png" alt="itercount" height=250/>
 </p>
 
-For this test, we used a scene of 50,000 fluid particles. These parameters, along with many others that are tied to the simulation, are at the user's discretion to choose between performance, stability, and accuracy. Having a higher iteration and substep count will increase the stability and accuracy at the cost of performance. A nice sweet spot is what we used for our basic testing setup.
+For this test, we used a scene of 50,000 fluid particles in a 32x32x32 grid. These parameters, along with many others that are tied to the simulation, are at the user's discretion to choose between performance, stability, and accuracy. Having a higher iteration and substep count will increase the stability and accuracy at the cost of performance. 
+
+A substep and iteration count of 1 does not result in a moving simulation, so we omitted testing that value. Noticably, as the accuracy of the simulation increased (for both substep and iteration count), the apparent volume of the fluid increased, with diminishing returns around 7 iterations. This is likely a result of being able to more accurately calculate the density of the fluid and thus update the grid.
+
+As we can see from the data, substep count more greatly impacts performance than the iteration count due to the grid constantly being reset between substeps. Luckily, the increase to the substeps seemed to affect accuracy less than the increase to the accounts, so we picked values that balanced performance and accuracy.
+
+A nice sweet spot with a substep count of 3 and an iteration count of 5 is what we used for our basic testing setup.
 
 <p align="center">
   <img src="app/image/particlecount.png" alt="particlecount" />
 </p>
+
+For this test, a varying number of fluid particles were used in a 64x64x64 grid with the previously mentioned 'sweet spot' substep/iteration counts. Due to the increased grid size taking up more memory and resulting in more memory bandwidth, the FPS here is lower than the previous tests which use a 32x32x32 grid. In addition, the large particle amounts (250,000+) required an increase in size of the 'temp tile data buffer' which is used in the simulation as global memory but acts as shared memory for the algorithm. This was a workaround to DX12's 32KB Shared memory limit. In the future, this could be further optimized to lessen the impact of larger particle amounts and grid sizes.
 
 The simulation has an expected albeit high falloff in performance as particle count increases. The large memory overhead creates a big disparity in performance between high and low particle counts. This is the biggest determining factor in performance, because the number of dispatches is based in thef number of bukkits containing particles.
 
@@ -421,7 +430,7 @@ The simulation has an expected albeit high falloff in performance as particle co
   <img src="app/image/gridsize.png" alt="gridsize" />
 </p>
 
-The grid size performance is connected to the number of bukkits within the grid. Generally as the grid grows, performance decreases, but due to the limit of memory in the 3d implementation, the grid could not be stably tested past 256x256x256. 32x32x32 is likely slower than 64x64x64 because it is more likely particles were reaching edge conditions and causing branching behavior due to border friction.
+The grid size performance is connected to the number of bukkits within the grid. Generally as the grid grows, performance decreases, but due to the limit of memory in the 3d implementation, the grid could not be stably tested past 256x256x256. 256x256x256 is likely greatly slower than than the others because it is more likely that the increased global memory size and buffers being passed exceeded a limit on the GPU which caused a severe hit to performance.
 
 <p align="center">
   <img src="app/image/griddispatch.png" alt="griddispatch" />
