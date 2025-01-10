@@ -6,26 +6,31 @@ To the best of our knowledge, this is the first released (and open sourced!) 3D 
 
 # Breakpoint
 
-<p align="center">
-  <img src="/app/image/jellyWaterDone.gif" alt="Demo" />
-  <img src="/app/image/particleWater.gif" alt="Particle Demo" />
-  <img src="/app/image/viscoDemo.gif" alt="Visco Demo" />
-  <br>
-</p>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+  <img src="app/image/jellyWaterDone.gif" alt="Jelly Water Demo" height="250"/>
+  <img src="app/image/particleWater.gif" alt="Particle Water Demo" height="250"/>
+  <img src="app/image/viscoDemo.gif" alt="Visco Demo" height="250"/>
+</div>
 
 ## Contents
 
 - [Build the Project and Controls](#build-the-project-and-controls)
 - [DirectX Core](#directx-core)
 - [Position Based Material Point Method](#position-based-material-point-method)
-- [Fluid mesh shading](#fluid-mesh-shading)
+- [Mesh shading](#mesh-shading)
 - [Simulation Analysis and Performance Review](#simulation-analysis-performance-review)
 - [Citations and attributions](#citations--attributions)
 - [Bloopers](#bloopers-and-cool-shots)
 
-## Build the Project and Controls
+## Using the Project and Controls
 
 Cloning the repository and ensuring that DirectX is correctly installed should be the only steps necessary to build and run *Breakpoint* locally. The camera uses WASD for standard cardinal movement, and Space and Control for up/down movement. Press shift and rotate the mouse to rotate the camera. All mouse control of the fluid happens when right click is pressed, with extra keyboard combinations to change the functionality. Shift is for pull, alt is for grab, and no button is for push.
+
+In order to create scenes, currently you must edit the `PBMPMScene.cpp` file and change the `createShapes()` function. When adding shapes, make sure to adhere to the order of arguments in the Shape struct defined in `PBMPMScene.h`. Whichever particles you want to render must also be set in the `renderToggles` array defined at the top of the function. 
+
+By default, Fluid and Elastic are set to render with a fluid waterfall and two jelly cubes spawning.
+
+In order to change rendering modes, simulation parameters, or mesh shading parameters, use the imgui window in the application.
 
 #### Building in VS Code
 - Clone the repository
@@ -61,7 +66,7 @@ Most of the materials we have are based on the original public PBMPM paper 2D ma
 The liquid material implementation in our MPM system combines volume preservation with viscosity control to simulate fluid behavior. The implementation is primarily based on the Position Based Fluids (PBF) approach, adapted for the MPM grid-based framework.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/0955bb5e-0b57-44a3-99a4-0507d0363bd0" alt="watergif" />
+  <img src="app/image/fluidParticles.gif" alt="watergif"/>
 </p>
 
 
@@ -83,7 +88,7 @@ if (particle.material == MaterialLiquid)
 The sand implementation is based on the [Drucker-Prager plasticity model](https://dl.acm.org/doi/10.1145/2897824.2925906). 
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/398053a0-9ff3-46f8-8599-1fca57875b9a" alt="sandgif" />
+  <img src="app/image/sandParticles.gif" alt="sandgif" />
 </p>
 
 The main update loop handles the elastic-plastic decomposition of deformation and volume preservation.
@@ -115,7 +120,7 @@ The main update loop handles the elastic-plastic decomposition of deformation an
 The Visco material model in this project represents a highly viscous, non-Newtonian fluid-like material that bridges the gap between purely elastic solids and fully fluid materials. It is intended for scenarios where you want to simulate materials that flow under prolonged stress but still maintain some structural integrity under short loading times—such as pitch, wax, or thick mud. By carefully tuning the parameters, you can achieve a range of behaviors from a slow-creeping putty to a thick slurry.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/ec075d50-fb89-4a0b-87cb-33b81c5707e6" alt="indexmath" />
+  <img src="app/image/viscoParticles.gif" alt="visco gif" />
 </p>
 
 ```
@@ -146,7 +151,7 @@ The Visco material model in this project represents a highly viscous, non-Newton
 The Elastic material in this project simulates a solid-like material that deforms under load but returns to its original shape once forces are removed, analogous to rubber or soft metals (in their elastic range). It is the simplest and most fundamental of the material implemented, serving as a baseline for understanding more complex behaviors like plasticity or viscosity.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/2a5f9f94-91db-4c92-ac6a-1ac438c9783e" alt="indexmath" />
+  <img src="app/image/elasticParticles.gif" alt="elastic" />
 </p>
 
 Unlike plastic or granular materials, the Elastic material does not accumulate permanent changes. Once the external force or displacement is removed, the elastic material returns to its initial state. If you stretch it and let go, it rebounds. So there is no need to update and accumulate the deform shape, the main update loop is in the particles update section.
@@ -205,7 +210,7 @@ Unlike purely elastic materials, snow undergoes permanent changes when overstres
     float3x3 FeInverse = mul(mul(svdResult.U, diag(1.0 / elasticSigma)), svdResult.Vt);
     float3x3 Fp = mul(particle.deformationGradient, FeInverse);
 ```
-## Fluid Mesh Shading
+## Mesh Shading
 
 <p align="center">
   <img src="app/image/alembic.gif" alt="Meshlets" />
@@ -390,13 +395,13 @@ Toggling on the grid view will color the different simulation shapes(colliders, 
 
 ![](app/image/rendermode3.png)
 
-Lastly, there is a toggle to see the meshlets in the mesh shader:
+Lastly, there is a toggle to see the meshlets in the mesh shader, or toon shading:
 
 ![](app/image/meshletrendertoggle.png)
 
 ## Position Based Material Point Method Performance
 
-There are a number of parameters that affect how PBMPM performs, due to the complexity of the simulation algorithm. The following is a list of performance tests for PBMPM, analyzing the various parameters and attributes of the particle simulation. For the setup, unless otherwise stated the simulation and mesh shading parameters are as shown above in the demonstration of the ImGUI toggles. These tests were performed in release mode on a personal laptop with Windows 23H2, an AMD Ryzen 9 7940HS @ 4GHz 32GB, and a RTX 4070 8 GB.
+There are a number of parameters that affect how PBMPM performs, due to the complexity of the simulation algorithm. The following is a list of performance tests for PBMPM, analyzing the various parameters and attributes of the particle simulation. For the setup, unless otherwise stated the simulation and mesh shading parameters are as shown above in the demonstration of the ImGUI toggles. These tests were performed in release mode on a personal laptop with Windows 23H2, an AMD Ryzen 9 7940HS @ 4GHz 32GB, and a RTX 3070 8 GB.
 
 The primary 2 are the iteration count and substep count. The substep count runs bukkiting and emission as well as g2p2g for each update within a frame. The iteration count is a subroutine of substep count that determines how many times g2p2g is run within each substep. The two of these have major impacts on performance.
 

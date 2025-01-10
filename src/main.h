@@ -22,12 +22,12 @@
 static ImGUIDescriptorHeapAllocator imguiHeapAllocator;
 static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
 
-static int meshletRenderType = 2;
+static int meshletRenderType = 2; // 0 = realistic, 1 = meshlets, 2 = toon shading
 static unsigned int renderModeType = 0; // 0 = just mesh shading, 1 = both particles and mesh shading, 2 = just particles
-static int toonShadingLevels = 2;
+static int toonShadingLevels = 3;
 static int fixedPointExponent = 7;
 static bool useGridVolume = true;
-static bool renderGrid = true;
+static bool renderGrid = false;
 static bool renderSpawn = false;
 
 const char* modes[] = { "Mesh Shaded Fluid, Non-Fluid Particles", "Mesh Shaded Fluid, All Particles", "No Mesh Shaded Fluid, All Particles" };
