@@ -2,26 +2,35 @@
 
 Our project combines a novel particle simulation technique - the Position Based Material Point Method(PBMPM), developed by EA - with a state-of-the-art fluid surface construction method, using mesh shading and a bilevel-grid, all running in real time. 
 
+To the best of our knowledge, this is the first released (and open sourced!) 3D GPU Implementation of PBMPM.
+
 # Breakpoint
 
-<p align="center">
-  <img src="/app/image/mouseDemo.gif" alt="mousedemo" />
-  <br>
-</p>
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+  <img src="app/image/jellyWaterDone.gif" alt="Jelly Water Demo" height="250"/>
+  <img src="app/image/particleWater.gif" alt="Particle Water Demo" height="250"/>
+  <img src="app/image/viscoDemo.gif" alt="Visco Demo" height="250"/>
+</div>
 
 ## Contents
 
 - [Build the Project and Controls](#build-the-project-and-controls)
 - [DirectX Core](#directx-core)
 - [Position Based Material Point Method](#position-based-material-point-method)
-- [Fluid mesh shading](#fluid-mesh-shading)
+- [Mesh shading](#mesh-shading)
 - [Simulation Analysis and Performance Review](#simulation-analysis-performance-review)
 - [Citations and attributions](#citations--attributions)
 - [Bloopers](#bloopers-and-cool-shots)
 
-## Build the Project and Controls
+## Using the Project and Controls
 
 Cloning the repository and ensuring that DirectX is correctly installed should be the only steps necessary to build and run *Breakpoint* locally. The camera uses WASD for standard cardinal movement, and Space and Control for up/down movement. Press shift and rotate the mouse to rotate the camera. All mouse control of the fluid happens when right click is pressed, with extra keyboard combinations to change the functionality. Shift is for pull, alt is for grab, and no button is for push.
+
+In order to create scenes, currently you must edit the `PBMPMScene.cpp` file and change the `createShapes()` function. When adding shapes, make sure to adhere to the order of arguments in the Shape struct defined in `PBMPMScene.h`. Whichever particles you want to render must also be set in the `renderToggles` array defined at the top of the function. 
+
+By default, Fluid and Elastic are set to render with a fluid waterfall and two jelly cubes spawning.
+
+In order to change rendering modes, simulation parameters, or mesh shading parameters, use the imgui window in the application.
 
 #### Building in VS Code
 - Clone the repository
@@ -57,7 +66,7 @@ Most of the materials we have are based on the original public PBMPM paper 2D ma
 The liquid material implementation in our MPM system combines volume preservation with viscosity control to simulate fluid behavior. The implementation is primarily based on the Position Based Fluids (PBF) approach, adapted for the MPM grid-based framework.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/0955bb5e-0b57-44a3-99a4-0507d0363bd0" alt="watergif" />
+  <img src="app/image/fluidParticles.gif" alt="watergif"/>
 </p>
 
 
@@ -79,7 +88,7 @@ if (particle.material == MaterialLiquid)
 The sand implementation is based on the [Drucker-Prager plasticity model](https://dl.acm.org/doi/10.1145/2897824.2925906). 
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/398053a0-9ff3-46f8-8599-1fca57875b9a" alt="sandgif" />
+  <img src="app/image/sandParticles.gif" alt="sandgif" />
 </p>
 
 The main update loop handles the elastic-plastic decomposition of deformation and volume preservation.
@@ -111,7 +120,7 @@ The main update loop handles the elastic-plastic decomposition of deformation an
 The Visco material model in this project represents a highly viscous, non-Newtonian fluid-like material that bridges the gap between purely elastic solids and fully fluid materials. It is intended for scenarios where you want to simulate materials that flow under prolonged stress but still maintain some structural integrity under short loading times—such as pitch, wax, or thick mud. By carefully tuning the parameters, you can achieve a range of behaviors from a slow-creeping putty to a thick slurry.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/ec075d50-fb89-4a0b-87cb-33b81c5707e6" alt="indexmath" />
+  <img src="app/image/viscoParticles.gif" alt="visco gif" />
 </p>
 
 ```
@@ -142,7 +151,7 @@ The Visco material model in this project represents a highly viscous, non-Newton
 The Elastic material in this project simulates a solid-like material that deforms under load but returns to its original shape once forces are removed, analogous to rubber or soft metals (in their elastic range). It is the simplest and most fundamental of the material implemented, serving as a baseline for understanding more complex behaviors like plasticity or viscosity.
 
 <p align="center">
-  <img src="https://github.com/user-attachments/assets/2a5f9f94-91db-4c92-ac6a-1ac438c9783e" alt="indexmath" />
+  <img src="app/image/elasticParticles.gif" alt="elastic" />
 </p>
 
 Unlike plastic or granular materials, the Elastic material does not accumulate permanent changes. Once the external force or displacement is removed, the elastic material returns to its initial state. If you stretch it and let go, it rebounds. So there is no need to update and accumulate the deform shape, the main update loop is in the particles update section.
@@ -201,7 +210,7 @@ Unlike purely elastic materials, snow undergoes permanent changes when overstres
     float3x3 FeInverse = mul(mul(svdResult.U, diag(1.0 / elasticSigma)), svdResult.Vt);
     float3x3 Fp = mul(particle.deformationGradient, FeInverse);
 ```
-## Fluid Mesh Shading
+## Mesh Shading
 
 <p align="center">
   <img src="app/image/alembic.gif" alt="Meshlets" />
@@ -380,31 +389,40 @@ There are three render modes to toggle between, and some debug view options.
 
 ![](app/image/griddebugview.png)
 
-Toggling on the grid view will color the different simulation shapes(colliders, drains, emitters, the grid). There are also render modes for particles with mesh shading, and just mesh shading, pictured here respectively: 
+Toggling on the grid view will color the grid. Toggling on the spawners will color the different simulation shapes(colliders, drains, emitters). There are also render modes for particles with mesh shading, and just mesh shading, pictured here respectively: 
 
 ![](app/image/rendermode2.png)
 
 ![](app/image/rendermode3.png)
 
-Lastly, there is a toggle to see the meshlets in the mesh shader:
+Lastly, there is a toggle to see the meshlets in the mesh shader, or toon shading:
 
 ![](app/image/meshletrendertoggle.png)
 
 ## Position Based Material Point Method Performance
 
-There are a number of parameters that affect how PBMPM performs, due to the complexity of the simulation algorithm. The following is a list of performance tests for PBMPM, analyzing the various parameters and attributes of the particle simulation. For the setup, unless otherwise stated the simulation and mesh shading parameters are as shown above in the demonstration of the ImGUI toggles. These tests were performed in release mode on a personal laptop with Windows 23H2, an AMD Ryzen 9 7940HS @ 4GHz 32GB, and a RTX 4070 8 GB.
+There are a number of parameters that affect how PBMPM performs, due to the complexity of the simulation algorithm. The following is a list of performance tests for PBMPM, analyzing the various parameters and attributes of the particle simulation. For the setup, unless otherwise stated the simulation parameters are as shown above in the demonstration of the ImGUI toggles. To isolate the performance of PBMPM as much as possible, mesh shading was not on for these tests and particles were rendered as unlit low resolution spheres. These tests were performed in release mode on a personal laptop with Windows 23H2, an AMD Ryzen 9 7940HS @ 4GHz 32GB, and a RTX 3070 8 GB.
 
 The primary 2 are the iteration count and substep count. The substep count runs bukkiting and emission as well as g2p2g for each update within a frame. The iteration count is a subroutine of substep count that determines how many times g2p2g is run within each substep. The two of these have major impacts on performance.
 
 <p align="center">
-  <img src="app/image/itercount.png" alt="itercount" />
+  <img src="app/image/substepcount.png" alt="itercount" height=250/>
+  <img src="app/image/itercount.png" alt="itercount" height=250/>
 </p>
 
-These parameters, along with many others that are tied to the simulation, are at the user's discretion to choose between performance, stability, and accuracy. Having a higher iteration and substep count will increase the stability and accuracy at the cost of performance. A nice sweet spot is what we used for our basic testing setup.
+For this test, we used a scene of 50,000 fluid particles in a 32x32x32 grid. These parameters, along with many others that are tied to the simulation, are at the user's discretion to choose between performance, stability, and accuracy. Having a higher iteration and substep count will increase the stability and accuracy at the cost of performance. 
+
+A substep and iteration count of 1 does not result in a moving simulation, so we omitted testing that value. Noticably, as the accuracy of the simulation increased (for both substep and iteration count), the apparent volume of the fluid increased, with diminishing returns around 7 iterations. This is likely a result of being able to more accurately calculate the density of the fluid and thus update the grid.
+
+As we can see from the data, substep count more greatly impacts performance than the iteration count due to the grid constantly being reset between substeps. Luckily, the increase to the substeps seemed to affect accuracy less than the increase to the accounts, so we picked values that balanced performance and accuracy.
+
+A nice sweet spot with a substep count of 3 and an iteration count of 5 is what we used for our basic testing setup.
 
 <p align="center">
   <img src="app/image/particlecount.png" alt="particlecount" />
 </p>
+
+For this test, a varying number of fluid particles were used in a 64x64x64 grid with the previously mentioned 'sweet spot' substep/iteration counts. Due to the increased grid size taking up more memory and resulting in more memory bandwidth, the FPS here is lower than the previous tests which use a 32x32x32 grid. In addition, the large particle amounts (250,000+) required an increase in size of the 'temp tile data buffer' which is used in the simulation as global memory but acts as shared memory for the algorithm. This was a workaround to DX12's 32KB Shared memory limit. In the future, this could be further optimized to lessen the impact of larger particle amounts and grid sizes.
 
 The simulation has an expected albeit high falloff in performance as particle count increases. The large memory overhead creates a big disparity in performance between high and low particle counts. This is the biggest determining factor in performance, because the number of dispatches is based in thef number of bukkits containing particles.
 
@@ -412,7 +430,7 @@ The simulation has an expected albeit high falloff in performance as particle co
   <img src="app/image/gridsize.png" alt="gridsize" />
 </p>
 
-The grid size performance is connected to the number of bukkits within the grid. Generally as the grid grows, performance decreases, but due to the limit of memory in the 3d implementation, the grid could not be stably tested past 256x256x256. 32x32x32 is likely slower than 64x64x64 because it is more likely particles were reaching edge conditions and causing branching behavior due to border friction.
+The grid size performance is connected to the number of bukkits within the grid. Generally as the grid grows, performance decreases, but due to the limit of memory in the 3d implementation, the grid could not be stably tested past 256x256x256. 256x256x256 is likely greatly slower than than the others because it is more likely that the increased global memory size and buffers being passed exceeded a limit on the GPU which caused a severe hit to performance.
 
 <p align="center">
   <img src="app/image/griddispatch.png" alt="griddispatch" />
@@ -425,12 +443,6 @@ Grid dispatch size is the dispatch size for any compute shader that runs per gri
 </p>
 
 Particle dispatch size, similarly to grid dispatch, is the disaptch size for any compute shader that runs per particle. Performance decreased when particle dispatch size increased. This was a marginal decrease. It is likely caused by larger workgroups increasing the number of threads within a single workgroup that need to access memory.
-
-<p align="center">
-  <img src="app/image/cellaxis.png" alt="cellaxis" />
-</p>
-
-Particles per cell axis is for 2 things. The first is the volume calculation, capping out how much volume can be allotted within a cell to the particles. The second use is emission - the amount of particles per cell axis is tied to the amount of cells emitted per axis. This did not affect performance past the margin of error, as the computations involved in the two use cases are both equally performant regardless of the value of particles per cell axis.
 
 <p align="center">
   <img src="app/image/bukkithalosize.png" alt="cellaxis" />
@@ -476,7 +488,7 @@ Helpful resources:
 
 # Citations / Attributions
 
-Thank you to Chris Lewin, Ishaan Singh, and Yuki Nishidate for corresponding with us and offering implementation advice throughout the course of this project
+Thank you to Chris Lewin, Ishaan Singh, and Yuki Nishidate for corresponding with us and offering implementation advice throughout the course of this project.
 
 ```
 @article{10.1145/3651285,
@@ -526,6 +538,18 @@ Chris Lewin. [A Position Based Material Point Method](https://www.ea.com/seed). 
 ```
 Stomakhin, A., Schroeder, C., Chai, L., Teran, J., Selle, A. 2013. A Material Point Method for Snow Simulation. ACM Trans. Graph. 32, 4, Article 102 (July 2013), 12 pages. DOI = 10.1145/2461912.2461948
 http://doi.acm.org/10.1145/2461912.2461948.
+```
+
+## PBMPM BSD-3-Clause License:
+```
+Copyright (c) 2024 Electronic Arts Inc. All rights reserved.
+
+Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+
+Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+Neither the name of Electronic Arts, Inc. ("EA") nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ```
 
 # Bloopers and Cool Shots

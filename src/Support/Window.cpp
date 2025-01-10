@@ -147,6 +147,12 @@ void Window::update() {
 }
 
 void Window::present() {
+
+	// Transition swap chain from render target to present
+	D3D12_RESOURCE_BARRIER barrier;
+	barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+	barrier.Flags = D3D12_RESOURCE_BARRIER_FLAG_NONE;
+
     swapChain->Present(1, 0);
 }
 

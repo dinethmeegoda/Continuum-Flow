@@ -546,6 +546,11 @@ void MeshShadingScene::releaseResources() {
     bilevelUniformGridCP->releaseResources();
     surfaceBlockDetectionCP->releaseResources();
     surfaceCellDetectionCP->releaseResources();
+	surfaceVertexCompactionCP->releaseResources();
+	surfaceVertexDensityCP->releaseResources();
+	surfaceVertexNormalCP->releaseResources();
+	bufferClearCP->releaseResources();
+	fluidMeshPipeline->releaseResources();
     cellParticleCountBuffer.releaseResources();
     cellParticleIndicesBuffer.releaseResources();
     blocksBuffer.releaseResources();
@@ -557,6 +562,11 @@ void MeshShadingScene::releaseResources() {
     surfaceVertDensityDispatch.releaseResources();
     surfaceVertDensityBuffer.releaseResources();
     surfaceVertexNormalBuffer.releaseResources();
+	surfaceVertexColorBuffer.releaseResources();
+
+    /*fence.Release();
+    commandSignature->Release();
+    meshCommandSignature->Release();*/
 }
 
 void MeshShadingScene::transitionBuffers(ID3D12GraphicsCommandList6* cmdList, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState) {

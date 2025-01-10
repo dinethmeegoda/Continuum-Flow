@@ -157,8 +157,9 @@ void ObjectScene::draw(Camera* camera) {
         
         // == ROOT ==
         ID3D12DescriptorHeap* descriptorHeaps[] = { renderPipeline->getDescriptorHeap()->GetAddress() };
-        cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
-        cmdList->SetGraphicsRootDescriptorTable(1, renderPipeline->getDescriptorHeap()->GetGPUHandleAt(0)); // Descriptor table slot 1 for CBV
+        if (instanced) {
+            cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+        }
 
         auto viewMat = camera->getViewMat();
         auto projMat = camera->getProjMat();
@@ -166,7 +167,6 @@ void ObjectScene::draw(Camera* camera) {
         cmdList->SetGraphicsRoot32BitConstants(0, 16, &projMat, 16);
         cmdList->SetGraphicsRoot32BitConstants(0, 16, m.getModelMatrix(), 32);
         cmdList->SetGraphicsRoot32BitConstants(0, 3, m.getColor(), 48);
-
         cmdList->DrawIndexedInstanced(m.getNumTriangles() * 3, 1, 0, 0, 0);
     }
 }

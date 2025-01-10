@@ -208,8 +208,12 @@ int main() {
 
         context.executeCommandList(renderPipeline->getCommandListID());
 
+        // reset the first pipeline so it can end the frame
+        context.resetCommandList(firstPipeline->getCommandListID());
         //end frame
         Window::get().endFrame(firstPipeline->getCommandList());
+        // Execute command list
+		context.executeCommandList(firstPipeline->getCommandListID());
 
         Window::get().present();
 		context.resetCommandList(renderPipeline->getCommandListID());

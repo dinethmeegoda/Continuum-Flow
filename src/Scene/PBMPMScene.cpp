@@ -414,7 +414,7 @@ void PBMPMScene::createShapes() {
 		0, 0, 0, 0.6, 100));
 
 	// Water Cube
-	/*shapes.push_back(SimShape(0, { 16, 19, 16 }, 0, { 8, 8, 10 },
+	/*shapes.push_back(SimShape(0, { 16, 16, 16 }, 0, { 8, 9, 8 },
 		0, 3, 0, 0.6, 100));*/
 
 	// Drain
@@ -436,7 +436,7 @@ void PBMPMScene::createShapes() {
 		0, 3, 1, 0.2, 100));*/
 
 	// Sand Emitter
-	/*shapes.push_back(SimShape(0, { 16, 20, 16 }, 0, { 3, 3, 3 },
+	/*shapes.push_back(SimShape(0, {16, 20, 16}, 0, {2, 2, 2},
 		0, 0, 2, 0.1, 100));*/
 
 	// Visco Emitter
@@ -794,10 +794,10 @@ void PBMPMScene::releaseResources() {
 	indexBuffer.releaseResources();
 
 	g2p2gPipeline.releaseResources();
-	renderPipeline->releaseResources();
 	bukkitAllocatePipeline.releaseResources();
 	bukkitCountPipeline.releaseResources();
 	bukkitInsertPipeline.releaseResources();
+	bufferClearPipeline.releaseResources();
 	emissionPipeline.releaseResources();
 	setIndirectArgsPipeline.releaseResources();
 
@@ -815,6 +815,7 @@ void PBMPMScene::releaseResources() {
 	for (int i = 0; i < 3; i++) {
 		gridBuffers[i].releaseResources();
 	}
+	tempTileDataBuffer.releaseResources();
 
 	bukkitSystem.countBuffer.releaseResources();
 	bukkitSystem.countBuffer2.releaseResources();
@@ -825,7 +826,9 @@ void PBMPMScene::releaseResources() {
 	bukkitSystem.particleAllocator.releaseResources();
 	bukkitSystem.indexStart.releaseResources();
 
-	commandSignature->Release();
+	/*commandSignature->Release();
+	renderCommandSignature->Release();
+	fence.Release();*/
 }
 
 void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {

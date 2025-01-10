@@ -21,6 +21,8 @@ public:
 
 	void releaseResources();
 
+	bool instanced{ false };
+
 private:
 	std::vector<Mesh> meshes;
 	std::vector<XMFLOAT4X4> modelMatrices;
