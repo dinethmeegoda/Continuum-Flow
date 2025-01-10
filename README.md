@@ -2,10 +2,14 @@
 
 Our project combines a novel particle simulation technique - the Position Based Material Point Method(PBMPM), developed by EA - with a state-of-the-art fluid surface construction method, using mesh shading and a bilevel-grid, all running in real time. 
 
+To the best of our knowledge, this is the first released (and open sourced!) 3D GPU Implementation of PBMPM.
+
 # Breakpoint
 
 <p align="center">
-  <img src="/app/image/mouseDemo.gif" alt="mousedemo" />
+  <img src="/app/image/jellyWaterDone.gif" alt="Demo" />
+  <img src="/app/image/particleWater.gif" alt="Particle Demo" />
+  <img src="/app/image/viscoDemo.gif" alt="Visco Demo" />
   <br>
 </p>
 
