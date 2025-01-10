@@ -401,7 +401,7 @@ Lastly, there is a toggle to see the meshlets in the mesh shader, or toon shadin
 
 ## Position Based Material Point Method Performance
 
-There are a number of parameters that affect how PBMPM performs, due to the complexity of the simulation algorithm. The following is a list of performance tests for PBMPM, analyzing the various parameters and attributes of the particle simulation. For the setup, unless otherwise stated the simulation and mesh shading parameters are as shown above in the demonstration of the ImGUI toggles. These tests were performed in release mode on a personal laptop with Windows 23H2, an AMD Ryzen 9 7940HS @ 4GHz 32GB, and a RTX 3070 8 GB.
+There are a number of parameters that affect how PBMPM performs, due to the complexity of the simulation algorithm. The following is a list of performance tests for PBMPM, analyzing the various parameters and attributes of the particle simulation. For the setup, unless otherwise stated the simulation parameters are as shown above in the demonstration of the ImGUI toggles. To isolate the performance of PBMPM as much as possible, mesh shading was not on for these tests and particles were rendered as unlit low resolution spheres. These tests were performed in release mode on a personal laptop with Windows 23H2, an AMD Ryzen 9 7940HS @ 4GHz 32GB, and a RTX 3070 8 GB.
 
 The primary 2 are the iteration count and substep count. The substep count runs bukkiting and emission as well as g2p2g for each update within a frame. The iteration count is a subroutine of substep count that determines how many times g2p2g is run within each substep. The two of these have major impacts on performance.
 
@@ -409,7 +409,7 @@ The primary 2 are the iteration count and substep count. The substep count runs 
   <img src="app/image/itercount.png" alt="itercount" />
 </p>
 
-These parameters, along with many others that are tied to the simulation, are at the user's discretion to choose between performance, stability, and accuracy. Having a higher iteration and substep count will increase the stability and accuracy at the cost of performance. A nice sweet spot is what we used for our basic testing setup.
+For this test, we used a scene of 50,000 fluid particles. These parameters, along with many others that are tied to the simulation, are at the user's discretion to choose between performance, stability, and accuracy. Having a higher iteration and substep count will increase the stability and accuracy at the cost of performance. A nice sweet spot is what we used for our basic testing setup.
 
 <p align="center">
   <img src="app/image/particlecount.png" alt="particlecount" />
@@ -434,12 +434,6 @@ Grid dispatch size is the dispatch size for any compute shader that runs per gri
 </p>
 
 Particle dispatch size, similarly to grid dispatch, is the disaptch size for any compute shader that runs per particle. Performance decreased when particle dispatch size increased. This was a marginal decrease. It is likely caused by larger workgroups increasing the number of threads within a single workgroup that need to access memory.
-
-<p align="center">
-  <img src="app/image/cellaxis.png" alt="cellaxis" />
-</p>
-
-Particles per cell axis is for 2 things. The first is the volume calculation, capping out how much volume can be allotted within a cell to the particles. The second use is emission - the amount of particles per cell axis is tied to the amount of cells emitted per axis. This did not affect performance past the margin of error, as the computations involved in the two use cases are both equally performant regardless of the value of particles per cell axis.
 
 <p align="center">
   <img src="app/image/bukkithalosize.png" alt="cellaxis" />

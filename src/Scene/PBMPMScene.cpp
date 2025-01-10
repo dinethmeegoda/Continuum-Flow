@@ -402,7 +402,7 @@ void PBMPMScene::createShapes() {
 	// 2 - Sand
 	renderToggles[2] = false;
 	// 3 - Viscous Paste
-	renderToggles[3] = true;
+	renderToggles[3] = false;
 	// 4 - Snow
 	renderToggles[4] = false;
 
@@ -794,10 +794,10 @@ void PBMPMScene::releaseResources() {
 	indexBuffer.releaseResources();
 
 	g2p2gPipeline.releaseResources();
-	renderPipeline->releaseResources();
 	bukkitAllocatePipeline.releaseResources();
 	bukkitCountPipeline.releaseResources();
 	bukkitInsertPipeline.releaseResources();
+	bufferClearPipeline.releaseResources();
 	emissionPipeline.releaseResources();
 	setIndirectArgsPipeline.releaseResources();
 
@@ -815,6 +815,7 @@ void PBMPMScene::releaseResources() {
 	for (int i = 0; i < 3; i++) {
 		gridBuffers[i].releaseResources();
 	}
+	tempTileDataBuffer.releaseResources();
 
 	bukkitSystem.countBuffer.releaseResources();
 	bukkitSystem.countBuffer2.releaseResources();
@@ -825,7 +826,9 @@ void PBMPMScene::releaseResources() {
 	bukkitSystem.particleAllocator.releaseResources();
 	bukkitSystem.indexStart.releaseResources();
 
-	commandSignature->Release();
+	/*commandSignature->Release();
+	renderCommandSignature->Release();
+	fence.Release();*/
 }
 
 void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {

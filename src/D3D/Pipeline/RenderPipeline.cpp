@@ -52,7 +52,7 @@ void RenderPipeline::createPSOD() {
 
     gfxPsod.NumRenderTargets = 1;
     gfxPsod.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-    gfxPsod.DSVFormat = DXGI_FORMAT_UNKNOWN;
+    gfxPsod.DSVFormat = DXGI_FORMAT_D32_FLOAT;
     gfxPsod.BlendState.AlphaToCoverageEnable = FALSE;
     gfxPsod.BlendState.IndependentBlendEnable = FALSE;
     gfxPsod.BlendState.RenderTarget[0].LogicOpEnable = FALSE;
