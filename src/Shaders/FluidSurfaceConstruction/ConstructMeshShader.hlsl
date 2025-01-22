@@ -244,6 +244,8 @@ void main(
             int blockEdgeIdx = cellEdgeToBlockEdge(localCellIdx1d, cellEdgeIdx, halfBlockIndex); // edge within a block (0-169)
             int outputVertexIndex = outputVertexIndices[blockEdgeIdx];
 
+            // Note: nothing ensures the winding order is correct. We could manually check against the normal (after this loop) and flip if necessary.
+            // The current solution is just to have back face culling off.
             triIndices[v] = outputVertexIndex;
 
             // Write the vertex attributes to the output buffer
