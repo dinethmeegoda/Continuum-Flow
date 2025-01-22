@@ -84,6 +84,7 @@ private:
 	ComputePipeline fluidSurfaceVertexDensityCP;
 	ComputePipeline fluidSurfaceVertexNormalCP;
 	ComputePipeline fluidBufferClearCP;
+	ComputePipeline fluidDispatchArgDivideCP;
 	MeshPipeline fluidMeshPipeline;
 	MeshShadingScene fluidScene;
 
@@ -96,6 +97,7 @@ private:
 	ComputePipeline elasticSurfaceVertexDensityCP;
 	ComputePipeline elasticSurfaceVertexNormalCP;
 	ComputePipeline elasticBufferClearCP;
+	ComputePipeline elasticDispatchArgDivideCP;
 	MeshPipeline elasticMeshPipeline;
 	MeshShadingScene elasticScene;
 
@@ -108,6 +110,7 @@ private:
 	ComputePipeline sandSurfaceVertexDensityCP;
 	ComputePipeline sandSurfaceVertexNormalCP;
 	ComputePipeline sandBufferClearCP;
+	ComputePipeline sandDispatchArgDivideCP;
 	MeshPipeline sandMeshPipeline;
 	MeshShadingScene sandScene;
 
@@ -120,6 +123,7 @@ private:
 	ComputePipeline viscoSurfaceVertexDensityCP;
 	ComputePipeline viscoSurfaceVertexNormalCP;
 	ComputePipeline viscoBufferClearCP;
+	ComputePipeline viscoDispatchArgDivideCP;
 	MeshPipeline viscoMeshPipeline;
 	MeshShadingScene viscoScene;
 

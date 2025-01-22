@@ -6,7 +6,9 @@ struct PSInput {
     float4 ndcPos: SV_Position;
     float3 normal: NORMAL0;
     float3 worldPos: POSITION1;
+#ifdef OUTPUT_MESHLETS
     int meshletIndex: COLOR0;
+#endif
     float4 color : COLOR1;
 };
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#define OUTPUT_MESHLETS 1 // Worse performance but good for debugging / visualization
+
 static const float PI = 3.1415926f;
 
 /* ================== Constants for the mesh shading pipeline ================== */ 
@@ -23,7 +25,7 @@ static const int SURFACE_VERTEX_COMPACTION_THREADS_X = 64;
 // It's actually not so important for the workgroup size for this pass to match the number of vertices per block. By this point
 // we no longer have block-level coherency of vertices anyway. But use this as a starting point - can adjust it later.
 static const int SURFACE_VERTEX_DENSITY_THREADS_X = 32;
-static const int SURFACE_VERTEX_NORMAL_THREADS_X = 16;
+static const int SURFACE_VERTEX_NORMAL_THREADS_X = SURFACE_VERTEX_DENSITY_THREADS_X;
 // Given the method of mesh shading half-blocks, we can place these upper limits on the outputs of each mesh shader workgroup:
 static const float EPSILON = 0.00001f;
 static const int MAX_PRIMITIVES = 128;

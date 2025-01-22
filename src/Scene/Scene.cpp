@@ -31,8 +31,10 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	fluidBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::FLUID_BUFFER_CLEAR_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	fluidDispatchArgDivideCP("DispatchArgDivideRootSig.cso", "DispatchArgDivide.cso", *context, CommandListID::FLUID_DISPATCH_ARG_DIVIDE_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	fluidScene(context, &fluidRP, &fluidBilevelUniformGridCP, &fluidSurfaceBlockDetectionCP, &fluidSurfaceCellDetectionCP, &fluidSurfaceVertexCompactionCP, 
-		&fluidSurfaceVertexDensityCP, &fluidSurfaceVertexNormalCP, &fluidBufferClearCP, &fluidMeshPipeline, 0, 0.010, 5.9, 1.010),
+		&fluidSurfaceVertexDensityCP, &fluidSurfaceVertexNormalCP, &fluidBufferClearCP, &fluidDispatchArgDivideCP, &fluidMeshPipeline, 0, 0.010, 5.9, 1.010),
 
 	// Elastic Mesh Shader Pipeline Construction
 	elasticRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::ELASTIC_RENDER_ID,
@@ -53,8 +55,10 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	elasticBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::ELASTIC_BUFFER_CLEAR_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	elasticDispatchArgDivideCP("DispatchArgDivideRootSig.cso", "DispatchArgDivide.cso", *context, CommandListID::ELASTIC_DISPATCH_ARG_DIVIDE_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	elasticScene(context, &elasticRP, &elasticBilevelUniformGridCP, &elasticSurfaceBlockDetectionCP, &elasticSurfaceCellDetectionCP, &elasticSurfaceVertexCompactionCP, 
-		&elasticSurfaceVertexDensityCP, &elasticSurfaceVertexNormalCP, &elasticBufferClearCP, &elasticMeshPipeline, 1, 0.010, 7.6, 1.010),
+		&elasticSurfaceVertexDensityCP, &elasticSurfaceVertexNormalCP, &elasticBufferClearCP, &elasticDispatchArgDivideCP, &elasticMeshPipeline, 1, 0.010, 7.6, 1.010),
 
 	// Sand Mesh Shader Pipeline Construction
 	sandRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::SAND_RENDER_ID,
@@ -75,8 +79,10 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	sandBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::SAND_BUFFER_CLEAR_COMPUTE_ID, 
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	sandDispatchArgDivideCP("DispatchArgDivideRootSig.cso", "DispatchArgDivide.cso", *context, CommandListID::SAND_DISPATCH_ARG_DIVIDE_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	sandScene(context, &sandRP, &sandBilevelUniformGridCP, &sandSurfaceBlockDetectionCP, &sandSurfaceCellDetectionCP, &sandSurfaceVertexCompactionCP,
-		&sandSurfaceVertexDensityCP, &sandSurfaceVertexNormalCP, &sandBufferClearCP, &sandMeshPipeline, 2, 0.010, 5.84, 1.180),
+		&sandSurfaceVertexDensityCP, &sandSurfaceVertexNormalCP, &sandBufferClearCP, &sandDispatchArgDivideCP, &sandMeshPipeline, 2, 0.010, 5.84, 1.180),
 
 	// Visco Mesh Shader Pipeline Construction
 	viscoRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::ELASTIC_RENDER_ID,
@@ -97,8 +103,10 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	viscoBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::VISCO_BUFFER_CLEAR_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	viscoDispatchArgDivideCP("DispatchArgDivideRootSig.cso", "DispatchArgDivide.cso", *context, CommandListID::VISCO_DISPATCH_ARG_DIVIDE_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	viscoScene(context, &viscoRP, &viscoBilevelUniformGridCP, &viscoSurfaceBlockDetectionCP, &viscoSurfaceCellDetectionCP, &viscoSurfaceVertexCompactionCP,
-		&viscoSurfaceVertexDensityCP, &viscoSurfaceVertexNormalCP, &viscoBufferClearCP, &viscoMeshPipeline, 3, 0.010, 4.604, 1.010),
+		&viscoSurfaceVertexDensityCP, &viscoSurfaceVertexNormalCP, &viscoBufferClearCP, &viscoDispatchArgDivideCP, &viscoMeshPipeline, 3, 0.010, 4.604, 1.010),
 
 	// Snow Mesh Shader Pipeline Construction
 	/*snowRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::ELASTIC_RENDER_ID,
@@ -119,8 +127,10 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	snowBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::SNOW_BUFFER_CLEAR_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
+	snowDispatchArgDivideCP("DispatchArgDivideRootSig.cso", "DispatchArgDivide.cso", *context, CommandListID::SNOW_DISPATCH_ARG_DIVIDE_COMPUTE_ID,
+		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	snowScene(context, &snowRP, &snowBilevelUniformGridCP, &snowSurfaceBlockDetectionCP, &snowSurfaceCellDetectionCP, &snowSurfaceVertexCompactionCP,
-		&snowSurfaceVertexDensityCP, &snowSurfaceVertexNormalCP, &snowBufferClearCP, &snowMeshPipeline, 4, 0.010, 7.6, 1.010),*/
+		&snowSurfaceVertexDensityCP, &snowSurfaceVertexNormalCP, &snowBufferClearCP, &snowDispatchArgDivideCP, &snowMeshPipeline, 4, 0.010, 7.6, 1.010),*/
 	
 	currentRP(),
 	currentCP()
