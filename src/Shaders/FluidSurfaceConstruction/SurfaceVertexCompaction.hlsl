@@ -28,6 +28,10 @@ void main(uint3 globalThreadId : SV_DispatchThreadID) {
     int localSurfaceVertexIndexInWave = WavePrefixCountBits(isSurfaceVertex);
     int surfaceVertexWaveCount = WaveActiveCountBits(isSurfaceVertex);
     int surfaceVertexGlobalStartIdx;
+    
+    if (surfaceVertexWaveCount <= 0) {
+        return;
+    }
 
     if (WaveIsFirstLane()) {
         InterlockedAdd(surfaceVertDensityDispatch[0].x, surfaceVertexWaveCount, surfaceVertexGlobalStartIdx);
