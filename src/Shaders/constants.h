@@ -1,5 +1,7 @@
 #pragma once
 
+#define OUTPUT_MESHLETS 1 // Worse performance but good for debugging / visualization
+
 static const float PI = 3.1415926f;
 
 /* ================== Constants for the mesh shading pipeline ================== */ 
