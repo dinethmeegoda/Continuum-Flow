@@ -410,19 +410,31 @@ void PBMPMScene::createShapes() {
 	// ==== DEFINE SHAPES ====
 	
 	// Waterfall
-	shapes.push_back(SimShape(0, {16, 27, 16}, 0, {2, 2, 2},
-		0, 0, 0, 0.6, 100));
+	/*shapes.push_back(SimShape(0, {32, 20, 32}, 0, {2, 2, 2},
+		0, 0, 0, 0.5, 100));*/
 
 	// Water Cube
-	//shapes.push_back(SimShape(0, { 16, 16, 16 }, 0, { 2, 14, 14 },
-	//	0, 3, 0, 0.6, 100));
+	shapes.push_back(SimShape(0, { 32, 22, 32 }, 0, { 3, 3, 3 },
+		0, 3, 0, 0.6, 100));
 
 	// Drain
-	shapes.push_back(SimShape(0, { 8, 5, 8 }, 0, { 2, 2, 2 },
-		0, 2, 0, 1, 100));
+	/*shapes.push_back(SimShape(0, { 8, 5, 8 }, 0, { 2, 2, 2 },
+		0, 2, 0, 1, 100));*/
 
 	// Collider
-	//shapes.push_back(SimShape(0, { 32, 5, 40 }, 0, { 5, 5, 5 },
+	shapes.push_back(SimShape(0, { 32, 2, 38 }, 0, { 10, 2, 1 },
+		0, 1, 0, 1, 100));
+
+	shapes.push_back(SimShape(0, { 32, 2, 26 }, 0, { 10, 2, 1 },
+		0, 1, 0, 1, 100));
+	
+	shapes.push_back(SimShape(0, { 38, 2, 32 }, 0, { 1, 2, 10 },
+		0, 1, 0, 1, 100));
+	
+	shapes.push_back(SimShape(0, { 26, 2, 32 }, 0, { 1, 2, 10 },
+		0, 1, 0, 1, 100));
+	
+	//shapes.push_back(SimShape(0, { 32, 1, 32 }, 0, { 6, 1, 6 },
 	//	0, 1, 0, 1, 100));
 
 	// Jelly Cubes

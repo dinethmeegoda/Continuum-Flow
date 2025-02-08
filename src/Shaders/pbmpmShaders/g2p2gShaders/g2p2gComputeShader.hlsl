@@ -348,14 +348,16 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
                 if (c.collides)
                 {
+                    float gap = min(0, dot(c.normal, c.pointOnCollider - gridPosition));
+
                     // Calculate penetration directly based on the displacement along the normal
-                    float penetration = max(dot(c.normal, gridDisplacement), 0.0f);
+                    float penetration = dot(c.normal, gridDisplacement) - gap;
 
                     // Prevent further penetration in the radial direction
-                    float radialImpulse = penetration;
+                    float radialImpulse = max(penetration, 0);
 
                     // Adjust the displacement based on radial impulse and friction
-                    gridDisplacement -= radialImpulse * c.normal * (1.0 - g_simConstants.borderFriction);
+                    gridDisplacement -= radialImpulse * c.normal;
                 }
             }
         }
@@ -673,7 +675,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 
                         if (c.collides)
                         {
-							displacement -= c.penetration * c.normal * (1.0 - g_simConstants.borderFriction);
+							displacement -= c.penetration * c.normal;
                         }
                     }
 

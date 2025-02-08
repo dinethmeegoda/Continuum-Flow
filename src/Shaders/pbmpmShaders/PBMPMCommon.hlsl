@@ -269,8 +269,9 @@ CollideResult collide(SimShape shape, float3 pos)
         float sy = sign(rotOffset.y);
 		float sz = sign(rotOffset.z);
         float3 penetration = -(abs(rotOffset) - shape.halfSize);
-        float3 normal = mul(transpose(R), 
-            (penetration.y < penetration.x ? float3(sx, 0, 0) : float3(0, sy, 0)));
+        float3 normal = (penetration.y < penetration.x ? float3(0, sy, 0) : float3(sx, 0, 0));
+		normal = penetration.z < max(penetration.x, penetration.y) ? float3(0, 0, sz) : normal;
+        normal = mul(transpose(R), normal);
 
         float minPen = min(min(penetration.x, penetration.y), penetration.z);
 

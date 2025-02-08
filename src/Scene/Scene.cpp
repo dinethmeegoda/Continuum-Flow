@@ -34,7 +34,7 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 	fluidDispatchArgDivideCP("DispatchArgDivideRootSig.cso", "DispatchArgDivide.cso", *context, CommandListID::FLUID_DISPATCH_ARG_DIVIDE_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	fluidScene(context, &fluidRP, &fluidBilevelUniformGridCP, &fluidSurfaceBlockDetectionCP, &fluidSurfaceCellDetectionCP, &fluidSurfaceVertexCompactionCP, 
-		&fluidSurfaceVertexDensityCP, &fluidSurfaceVertexNormalCP, &fluidBufferClearCP, &fluidDispatchArgDivideCP, &fluidMeshPipeline, 0, 0.010, 5.9, 1.010),
+		&fluidSurfaceVertexDensityCP, &fluidSurfaceVertexNormalCP, &fluidBufferClearCP, &fluidDispatchArgDivideCP, &fluidMeshPipeline, 0, 1.744, 0.952, 1.413),
 
 	// Elastic Mesh Shader Pipeline Construction
 	elasticRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::ELASTIC_RENDER_ID,
