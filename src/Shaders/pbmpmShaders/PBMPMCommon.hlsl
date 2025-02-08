@@ -21,6 +21,8 @@
 #define ShapeFunctionDrain  2
 #define ShapeFunctionInitialEmit  3
 
+#define MaxParticles 500000
+
 #define TotalBukkitEdgeLength (BukkitSize + BukkitHaloSize * 2)
 #define TileDataSizePerEdge (TotalBukkitEdgeLength * 5) //4->5
 #define TileDataSize (TileDataSizePerEdge * TileDataSizePerEdge * TileDataSizePerEdge)

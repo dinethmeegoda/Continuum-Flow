@@ -99,6 +99,7 @@ Particle createParticle()
 
 void addParticle(float3 position, int material, float volume, float density, float jitterScale)
 {
+	// If we're over the particle limit, don't add any more
     uint particleIndex = 0;
     // First check the free list to see if we can reuse a particle slot
     int freeIndexSlot;
@@ -132,7 +133,7 @@ void addParticle(float3 position, int material, float volume, float density, flo
 [numthreads(GridDispatchSize, GridDispatchSize, GridDispatchSize)]
 void main(uint3 id : SV_DispatchThreadID)
 {
-    if (!insideGuardian(id.xyz, g_simConstants.gridSize, GuardianSize + 1))
+    if (!insideGuardian(id.xyz, g_simConstants.gridSize, GuardianSize + 1) || g_particleCount[0] >= MaxParticles)
     {
         return;
     }

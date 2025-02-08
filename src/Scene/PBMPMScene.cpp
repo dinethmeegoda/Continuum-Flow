@@ -398,7 +398,7 @@ void PBMPMScene::createShapes() {
 	// 0 - Water
 	renderToggles[0] = true;
 	// 1 - Elastic
-	renderToggles[1] = true;
+	renderToggles[1] = false;
 	// 2 - Sand
 	renderToggles[2] = false;
 	// 3 - Viscous Paste
@@ -414,23 +414,23 @@ void PBMPMScene::createShapes() {
 		0, 0, 0, 0.6, 100));
 
 	// Water Cube
-	/*shapes.push_back(SimShape(0, { 16, 16, 16 }, 0, { 8, 9, 8 },
-		0, 3, 0, 0.6, 100));*/
+	//shapes.push_back(SimShape(0, { 16, 16, 16 }, 0, { 2, 14, 14 },
+	//	0, 3, 0, 0.6, 100));
 
 	// Drain
-	//shapes.push_back(SimShape(0, { 32, 5, 9 }, 0, { 32, 5, 5 },
-	//	0, 2, 0, 1, 100));
+	shapes.push_back(SimShape(0, { 8, 5, 8 }, 0, { 2, 2, 2 },
+		0, 2, 0, 1, 100));
 
 	// Collider
 	//shapes.push_back(SimShape(0, { 32, 5, 40 }, 0, { 5, 5, 5 },
 	//	0, 1, 0, 1, 100));
 
 	// Jelly Cubes
-	shapes.push_back(SimShape(0, { 10, 15, 16 }, 0, { 4, 4, 4 },
+	/*shapes.push_back(SimShape(0, { 10, 15, 16 }, 0, { 4, 4, 4 },
 		0, 3, 1, 0.2, 100));
 
 	shapes.push_back(SimShape(0, { 21, 15, 16 }, 0, { 4, 4, 4 },
-		0, 3, 1, 0.2, 100));
+		0, 3, 1, 0.2, 100));*/
 
 	/*shapes.push_back(SimShape(0, { 15, 25, 16 }, 0, { 4, 4, 4 },
 		0, 3, 1, 0.2, 100));*/
@@ -689,6 +689,7 @@ void PBMPMScene::compute() {
 			cmdList->SetComputeRootDescriptorTable(8, tempTileDataBuffer.getUAVGPUDescriptorHandle());
 			cmdList->SetComputeRootDescriptorTable(9, positionBuffer.getUAVGPUDescriptorHandle());
 			cmdList->SetComputeRootDescriptorTable(10, massVolumeBuffer.getSRVGPUDescriptorHandle());
+			cmdList->SetComputeRootDescriptorTable(11, particleCount.getUAVGPUDescriptorHandle());
 
 			// Transition dispatch buffer to an indirect argument
 			auto dispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(bukkitSystem.dispatch.getBuffer(),

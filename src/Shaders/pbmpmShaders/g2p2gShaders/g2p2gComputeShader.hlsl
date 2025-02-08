@@ -51,6 +51,8 @@ RWStructuredBuffer<float4> g_displacements : register(u7);
 
 StructuredBuffer<float4> g_massVolumeData : register(t3);
 
+RWStructuredBuffer<int> g_particleCount : register(u8);
+
 //groupshared int s_tileData[TileDataSize];
 groupshared int s_tileDataDst[TileDataSize];
 
@@ -687,6 +689,9 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 							// Atomic store the particle index to the free list using InterlockedExchange
 							int originalValue;
 							InterlockedExchange(g_freeIndices[1 + uint(freeIndex)], int(myParticleIndex), originalValue);
+
+                            // Interlocked subtract a particle from the particle count variable
+							InterlockedAdd(g_particleCount[0], -1, originalValue);
                         }
                     }
                 }
