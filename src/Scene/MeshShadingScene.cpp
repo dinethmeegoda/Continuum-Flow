@@ -128,8 +128,8 @@ float getRandomFloatInRange(float min, float max) {
 }
 
 void MeshShadingScene::constructScene() {
-    int blocksPerEdge = 14;
-    float cellWidth = (float)std::max(std::max(GRID_WIDTH, GRID_HEIGHT), GRID_DEPTH) / ((float)blocksPerEdge * (float)CELLS_PER_BLOCK_EDGE);
+    int blocksPerEdge = 4;
+    float cellWidth = (float)std::max(std::max(GRID_WIDTH, GRID_HEIGHT), GRID_DEPTH) / ((float) blocksPerEdge * (float)CELLS_PER_BLOCK_EDGE);
     gridConstants = { 0, 
                      {blocksPerEdge * CELLS_PER_BLOCK_EDGE + 1, blocksPerEdge * CELLS_PER_BLOCK_EDGE + 1, blocksPerEdge * CELLS_PER_BLOCK_EDGE + 1}, 
                      {-1.f, -1.f, -1.f}, 

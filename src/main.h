@@ -23,7 +23,7 @@ static ImGUIDescriptorHeapAllocator imguiHeapAllocator;
 static ID3D12DescriptorHeap* imguiSRVHeap = nullptr;
 
 static int meshletRenderType = 2; // 0 = realistic, 1 = meshlets, 2 = toon shading
-static unsigned int renderModeType = 2; // 0 = just mesh shading, 1 = both particles and mesh shading, 2 = just particles
+static unsigned int renderModeType = 1; // 0 = just mesh shading, 1 = both particles and mesh shading, 2 = just particles
 static int toonShadingLevels = 3;
 static int fixedPointExponent = 7;
 static bool useGridVolume = true;

@@ -43,7 +43,7 @@ private:
 	float rotateX{ 0 };
 	float rotateY{ 0 };
 
-	XMFLOAT3 position{ 15, 20, -50 };
+	XMFLOAT3 position{ 15, 24, 15 };
 	XMFLOAT3 up{ 0, 1, 0 };
 	XMFLOAT3 forward{ 0, 0, 1 };
 	XMFLOAT3 right{ 1, 0, 0 };

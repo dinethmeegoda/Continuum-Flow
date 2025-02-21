@@ -414,7 +414,7 @@ void PBMPMScene::createShapes() {
 		0, 0, 0, 0.5, 100));*/
 
 	// Water Cube
-	shapes.push_back(SimShape(0, { 32, 22, 32 }, 0, { 3, 3, 3 },
+	shapes.push_back(SimShape(0, { 32, 22, 32 }, 0, { 7, 7, 7 },
 		0, 3, 0, 0.6, 100));
 
 	// Drain
@@ -422,16 +422,16 @@ void PBMPMScene::createShapes() {
 		0, 2, 0, 1, 100));*/
 
 	// Collider
-	shapes.push_back(SimShape(0, { 32, 2, 38 }, 0, { 10, 2, 1 },
+	shapes.push_back(SimShape(0, { 32, 4, 44 }, 0, { 14, 4, 1 },
 		0, 1, 0, 1, 100));
 
-	shapes.push_back(SimShape(0, { 32, 2, 26 }, 0, { 10, 2, 1 },
+	shapes.push_back(SimShape(0, { 32, 4, 20 }, 0, { 14, 4, 1 },
 		0, 1, 0, 1, 100));
 	
-	shapes.push_back(SimShape(0, { 38, 2, 32 }, 0, { 1, 2, 10 },
+	shapes.push_back(SimShape(0, { 44, 4, 32 }, 0, { 1, 4, 14 },
 		0, 1, 0, 1, 100));
 	
-	shapes.push_back(SimShape(0, { 26, 2, 32 }, 0, { 1, 2, 10 },
+	shapes.push_back(SimShape(0, { 20, 4, 32 }, 0, { 1, 4, 14 },
 		0, 1, 0, 1, 100));
 	
 	//shapes.push_back(SimShape(0, { 32, 1, 32 }, 0, { 6, 1, 6 },
