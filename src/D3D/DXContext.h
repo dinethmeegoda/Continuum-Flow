@@ -113,7 +113,6 @@ private:
     ComPointer<ID3D12Fence1> fence;
     UINT64 fenceValue = 0;
     HANDLE fenceEvent = nullptr;
-
 };
 
 // Support functions used in main.h and MeshShadingScene.cpp

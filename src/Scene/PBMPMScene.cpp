@@ -414,7 +414,7 @@ void PBMPMScene::createShapes() {
 		0, 0, 0, 0.5, 100));*/
 
 	// Water Cube
-	shapes.push_back(SimShape(0, { 32, 22, 32 }, 0, { 7, 7, 7 },
+	shapes.push_back(SimShape(0, { 32, 22, 32 }, 0, { 6, 6, 6 },
 		0, 3, 0, 0.6, 100));
 
 	// Drain

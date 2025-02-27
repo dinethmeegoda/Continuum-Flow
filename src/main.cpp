@@ -15,6 +15,18 @@ int main() {
         return false;
     }
 
+    // Initialize OpenXR
+    OpenXRContext openXR;
+
+    // Create OpenXR session with DX12 graphics binding
+    XrGraphicsBindingD3D12KHR graphicsBinding{ XR_TYPE_GRAPHICS_BINDING_D3D12_KHR };
+    graphicsBinding.device = context.getDevice();
+    graphicsBinding.queue = context.getCommandQueue();
+
+    openXR.CreateSession(graphicsBinding);
+
+    std::cout << "DX12 Engine with OpenXR Initialized Successfully!\n";
+
     //initialize ImGUI
     ImGuiIO& io = initImGUI(context);
 
