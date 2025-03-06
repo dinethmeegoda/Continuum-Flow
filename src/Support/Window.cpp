@@ -196,6 +196,10 @@ void Window::setRT(ID3D12GraphicsCommandList6* cmdList) {
     cmdList->OMSetRenderTargets(1, &rtvHandles[currentSwapChainBufferIdx], false, &dsvHandle);
 }
 
+void Window::setRT(ID3D12GraphicsCommandList6* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle) {
+    cmdList->OMSetRenderTargets(1, &rtvHandle, false, &dsvHandle);
+}
+
 void Window::endFrame(ID3D12GraphicsCommandList6* cmdList) {
     D3D12_RESOURCE_BARRIER barrier;
     barrier.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;

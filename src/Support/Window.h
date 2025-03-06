@@ -45,6 +45,7 @@ public:
 
 	void beginFrame(ID3D12GraphicsCommandList6* cmdList);
 	void setRT(ID3D12GraphicsCommandList6* cmdList);
+	void setRT(ID3D12GraphicsCommandList6* cmdList, D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle); // New function for OpenXR
 	void endFrame(ID3D12GraphicsCommandList6* cmdList);
 
 	void shutdown();

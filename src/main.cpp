@@ -24,11 +24,12 @@ int main() {
     graphicsBinding.queue = context.getCommandQueue();
 
     openXR.CreateSession(graphicsBinding);
+    openXR.CreateSwapchains(context.getDevice());
 
     std::cout << "DX12 Engine with OpenXR Initialized Successfully!\n";
 
     //initialize ImGUI
-    ImGuiIO& io = initImGUI(context);
+    //ImGuiIO& io = initImGUI(context);
 
     //set mouse to use the window
     mouse->SetWindow(Window::get().getHWND());
@@ -47,7 +48,9 @@ int main() {
 
     unsigned int renderOptions = 0;
 
-    while (!Window::get().getShouldClose()) {
+    bool exitRenderLoop = false, requestRestart = false;
+
+    while (!exitRenderLoop && !Window::get().getShouldClose()) {
         //update window
         Window::get().update();
         if (Window::get().getShouldResize()) {
@@ -104,8 +107,14 @@ int main() {
         }
 
         //compute pbmpm + mesh shader
-        scene.compute(renderModeType != 2);
+        //scene.compute(renderModeType != 2);
 
+        openXR.PollEvents(exitRenderLoop, requestRestart);
+
+        openXR.RenderFrame(&context, scene.getViscoMeshPipeline()->getCommandList(), scene.getViscoMeshPipeline()->getCommandListID(), scene,
+            { scene.getPBMPMRenderPipeline()->getCommandListID(), scene.getObjectSolidPipeline()->getCommandListID(), scene.getObjectWirePipeline()->getCommandListID() });
+
+        /*
         //get pipelines
         auto renderPipeline = scene.getPBMPMRenderPipeline();
         auto fluidMeshPipeline = scene.getFluidMeshPipeline();
@@ -184,7 +193,7 @@ int main() {
 			Window::get().setViewport(vp, snowMeshPipeline->getCommandList());
 			if (renderModeType != 2) scene.drawSnow(meshletRenderType, toonShadingLevels);
 			context.executeCommandList(snowMeshPipeline->getCommandListID());
-		}*/
+		}
 
         //set up ImGUI for frame
         ImGui_ImplDX12_NewFrame();
@@ -243,19 +252,19 @@ int main() {
 		}
 		/*if (scene.renderToggles[4]) {
 			context.resetCommandList(snowMeshPipeline->getCommandListID());
-		}*/
+		}
+
         context.resetCommandList(objectWirePipeline->getCommandListID());
-        context.resetCommandList(objectSolidPipeline->getCommandListID());
+        context.resetCommandList(objectSolidPipeline->getCommandListID());*/
     }
 
     // Scene should release all resources, including their pipelines
     scene.releaseResources();
 
-    ImGui_ImplDX12_Shutdown();
-    ImGui_ImplWin32_Shutdown();
-    ImGui::DestroyContext();
-
-    imguiSRVHeap->Release();
+    //ImGui_ImplDX12_Shutdown();
+    //ImGui_ImplWin32_Shutdown();
+    //ImGui::DestroyContext();
+    //imguiSRVHeap->Release();
 
     //flush pending buffer operations in swapchain
     context.flush(FRAME_COUNT);
