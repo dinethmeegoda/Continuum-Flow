@@ -18,13 +18,20 @@ int main() {
     // Initialize OpenXR
     OpenXRContext openXR;
 
+	// Create OpenXR instance
+    openXR.CreateInstance();
+
+    // Create OpenXR Debug Messager and log Instance Properties & System ID
+	openXR.CreateDebugMessenger();
+    openXR.GetInstanceProperties();
+	openXR.GetSystemID();
+
     // Create OpenXR session with DX12 graphics binding
     XrGraphicsBindingD3D12KHR graphicsBinding{ XR_TYPE_GRAPHICS_BINDING_D3D12_KHR };
     graphicsBinding.device = context.getDevice();
     graphicsBinding.queue = context.getCommandQueue();
 
     openXR.CreateSession(graphicsBinding);
-    openXR.CreateSwapchains(context.getDevice());
 
     std::cout << "DX12 Engine with OpenXR Initialized Successfully!\n";
 
@@ -109,10 +116,15 @@ int main() {
         //compute pbmpm + mesh shader
         //scene.compute(renderModeType != 2);
 
-        openXR.PollEvents(exitRenderLoop, requestRestart);
+		openXR.PollSystemEvents();
+        openXR.PollEvents();
 
-        openXR.RenderFrame(&context, scene.getViscoMeshPipeline()->getCommandList(), scene.getViscoMeshPipeline()->getCommandListID(), scene,
-            { scene.getPBMPMRenderPipeline()->getCommandListID(), scene.getObjectSolidPipeline()->getCommandListID(), scene.getObjectWirePipeline()->getCommandListID() });
+        if (openXR.IsSessionRunning()) {
+            // Render Frame
+        }
+
+        /*openXR.RenderFrame(&context, scene.getViscoMeshPipeline()->getCommandList(), scene.getViscoMeshPipeline()->getCommandListID(), scene,
+            { scene.getPBMPMRenderPipeline()->getCommandListID(), scene.getObjectSolidPipeline()->getCommandListID(), scene.getObjectWirePipeline()->getCommandListID() });*/
 
         /*
         //get pipelines
@@ -269,4 +281,10 @@ int main() {
     //flush pending buffer operations in swapchain
     context.flush(FRAME_COUNT);
     Window::get().shutdown();
+
+	openXR.DestroySession();
+	openXR.DestroyDebugMessenger();
+	openXR.DestroyInstance();
+
+	return 0;
 }

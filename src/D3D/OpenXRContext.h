@@ -10,48 +10,91 @@
 #include <string>
 #include <stdexcept>
 
+#define DEBUG_BREAK __debugbreak()
+
+// XR_DOCS_TAG_BEGIN_Helper_Functions0
+inline void OpenXRDebugBreak() {
+    std::cerr << "Breakpoint here to debug." << std::endl;
+    DEBUG_BREAK;
+}
+
+inline const char* GetXRErrorString(XrInstance xrInstance, XrResult result) {
+    static char string[XR_MAX_RESULT_STRING_SIZE];
+    xrResultToString(xrInstance, result, string);
+    return string;
+}
+
+inline bool IsStringInVector(std::vector<const char*> list, const char* name) {
+    bool found = false;
+    for (auto& item : list) {
+        if (strcmp(name, item) == 0) {
+            found = true;
+            break;
+        }
+    }
+    return found;
+}
+
+template <typename T>
+inline bool BitwiseCheck(const T& value, const T& checkValue) {
+    return ((value & checkValue) == checkValue);
+}
+
+#define OPENXR_CHECK(x, y)                                                                                                                                  \
+    {                                                                                                                                                       \
+        XrResult result = (x);                                                                                                                              \
+        if (!XR_SUCCEEDED(result)) {                                                                                                                        \
+            std::cerr << "ERROR: OPENXR: " << int(result) << "(" << (m_xrInstance ? GetXRErrorString(m_xrInstance, result) : "") << ") " << y << std::endl; \
+            OpenXRDebugBreak();                                                                                                                             \
+        }                                                                                                                                                   \
+    }
+
+#define XR_LOG(...) std::cout << __VA_ARGS__ << "\n"
+
 class OpenXRContext {
 public:
-    struct Swapchain {
-        XrSwapchain handle;
-        int32_t width;
-        int32_t height;
-    };
 
     OpenXRContext();
     ~OpenXRContext();
 
-    XrInstance GetInstance() const { return xrInstance; }
-    XrSystemId GetSystemId() const { return systemId; }
+    void CreateInstance();
+    void CreateDebugMessenger();
+
+    void GetInstanceProperties();
+    void GetSystemID();
 
     void CreateSession(XrGraphicsBindingD3D12KHR& graphicsBinding);
-    XrSession GetSession() const { return xrSession; }
 
-    void CreateSwapchains(ID3D12Device* device);
-    void PollEvents(bool& exitRenderLoop, bool& requestRestart);
-    void RenderFrame(DXContext* context, ID3D12GraphicsCommandList6* commandList, CommandListID id, Scene& scene, std::vector<CommandListID> commandLists);
+    void PollEvents();
+    void PollSystemEvents();
+
+	void DestroyDebugMessenger();
+	void DestroySession();
+    void DestroyInstance();
+
+	bool IsSessionRunning() const { return m_sessionRunning; }
+	bool IsApplicationRunning() const { return m_applicationRunning; }
 
 private:
-    void CreateInstance();
+    XrDebugUtilsMessengerEXT CreateOpenXRDebugUtilsMessenger(XrInstance m_xrInstance);
+    void DestroyOpenXRDebugUtilsMessenger(XrInstance m_xrInstance, XrDebugUtilsMessengerEXT debugUtilsMessenger);
 
-    XrInstance xrInstance = XR_NULL_HANDLE;
-    XrSystemId systemId = XR_NULL_SYSTEM_ID;
-    XrSession xrSession = XR_NULL_HANDLE;
+    XrInstance m_xrInstance = {};
+    std::vector<const char*> m_activeAPILayers = {};
+    std::vector<const char*> m_activeInstanceExtensions = {};
+    std::vector<std::string> m_apiLayers = {};
+    std::vector<std::string> m_instanceExtensions = {};
 
-    uint32_t swapchainWidth = 0;
-    uint32_t swapchainHeight = 0;
+    XrDebugUtilsMessengerEXT m_debugUtilsMessenger = {};
 
-	std::vector<XrViewConfigurationView> viewConfigViews;
-	std::vector<XrView> views;
-    int64_t colorSwapchainFormat{ -1 };
-    std::vector<Swapchain> swapchains;
-    std::map<XrSwapchain, std::vector<XrSwapchainImageBaseHeader*>> swapchainImages;
+    XrFormFactor m_formFactor = XR_FORM_FACTOR_HEAD_MOUNTED_DISPLAY;
+    XrSystemId m_systemID = {};
+    XrSystemProperties m_systemProperties = { XR_TYPE_SYSTEM_PROPERTIES };
 
-    std::vector<XrSpace> m_visualizedSpaces;
+    XrSession m_session = XR_NULL_HANDLE;
 
-    ComPointer<ID3D12DescriptorHeap> rtvHeap;
-    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> rtvHandles;
+    XrSessionState m_sessionState = XR_SESSION_STATE_UNKNOWN;
 
-    ComPointer<ID3D12DescriptorHeap> depthStencilHeap;
-    ComPointer<ID3D12Resource> depthStencilBuffer;
+    bool m_applicationRunning = true;
+    bool m_sessionRunning = false;
 };
