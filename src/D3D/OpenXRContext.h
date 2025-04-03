@@ -75,6 +75,10 @@ public:
 	bool IsSessionRunning() const { return m_sessionRunning; }
 	bool IsApplicationRunning() const { return m_applicationRunning; }
 
+    void GetViewConfigurationViews();
+    void CreateSwapchains();
+    void DestroySwapchains();
+
 private:
     XrDebugUtilsMessengerEXT CreateOpenXRDebugUtilsMessenger(XrInstance m_xrInstance);
     void DestroyOpenXRDebugUtilsMessenger(XrInstance m_xrInstance, XrDebugUtilsMessengerEXT debugUtilsMessenger);
@@ -97,4 +101,17 @@ private:
 
     bool m_applicationRunning = true;
     bool m_sessionRunning = false;
+
+    std::vector<XrViewConfigurationType> m_applicationViewConfigurations = { XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO, XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO };
+    std::vector<XrViewConfigurationType> m_viewConfigurations;
+    XrViewConfigurationType m_viewConfiguration = XR_VIEW_CONFIGURATION_TYPE_MAX_ENUM;
+    std::vector<XrViewConfigurationView> m_viewConfigurationViews;
+
+    struct SwapchainInfo {
+        XrSwapchain swapchain = XR_NULL_HANDLE;
+        int64_t swapchainFormat = 0;
+        std::vector<void*> imageViews;
+    };
+    std::vector<SwapchainInfo> m_colorSwapchainInfos = {};
+    std::vector<SwapchainInfo> m_depthSwapchainInfos = {};
 };

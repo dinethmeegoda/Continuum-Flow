@@ -79,6 +79,41 @@ XrBool32 OpenXRMessageCallbackFunction(XrDebugUtilsMessageSeverityFlagsEXT messa
     return XrBool32();
 }
 
+// Swapchain Helper Functions
+int64_t SelectColorSwapchainFormat(const std::vector<int64_t>& formats) {
+    const std::vector<int64_t>& supportSwapchainFormats = {
+        DXGI_FORMAT_R8G8B8A8_UNORM,
+        DXGI_FORMAT_B8G8R8A8_UNORM,
+        DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
+        DXGI_FORMAT_B8G8R8A8_UNORM_SRGB };
+
+    const std::vector<int64_t>::const_iterator& swapchainFormatIt = std::find_first_of(formats.begin(), formats.end(),
+        std::begin(supportSwapchainFormats), std::end(supportSwapchainFormats));
+    if (swapchainFormatIt == formats.end()) {
+        std::cout << "ERROR: Unable to find supported Color Swapchain Format" << std::endl;
+        DEBUG_BREAK;
+        return 0;
+    }
+
+    return *swapchainFormatIt;
+}
+
+int64_t SelectDepthSwapchainFormat(const std::vector<int64_t>& formats) {
+    const std::vector<int64_t>& supportSwapchainFormats = {
+        DXGI_FORMAT_D32_FLOAT,
+        DXGI_FORMAT_D16_UNORM };
+
+    const std::vector<int64_t>::const_iterator& swapchainFormatIt = std::find_first_of(formats.begin(), formats.end(),
+        std::begin(supportSwapchainFormats), std::end(supportSwapchainFormats));
+    if (swapchainFormatIt == formats.end()) {
+        std::cout << "ERROR: Unable to find supported Depth Swapchain Format" << std::endl;
+        DEBUG_BREAK;
+        return 0;
+    }
+
+    return *swapchainFormatIt;
+}
+
 XrDebugUtilsMessengerEXT OpenXRContext::CreateOpenXRDebugUtilsMessenger(XrInstance m_xrInstance) {
     // Fill out a XrDebugUtilsMessengerCreateInfoEXT structure specifying all severities and types.
     // Set the userCallback to OpenXRMessageCallbackFunction().
@@ -246,27 +281,86 @@ void OpenXRContext::CreateSession(XrGraphicsBindingD3D12KHR& graphicsBinding) {
     OPENXR_CHECK(xrCreateSession(m_xrInstance, &sessionCI, &m_session), "Failed to create Session.");
 }
 
-void OpenXRContext::DestroySession() {
-    OPENXR_CHECK(xrDestroySession(m_session), "Failed to destroy Session.");
-}
+void OpenXRContext::GetViewConfigurationViews() {
+    // Gets the View Configuration Types. The first call gets the count of the array that will be returned. The next call fills out the array.
+    uint32_t viewConfigurationCount = 0;
+    OPENXR_CHECK(xrEnumerateViewConfigurations(m_xrInstance, m_systemID, 0, &viewConfigurationCount, nullptr), "Failed to enumerate View Configurations.");
+    m_viewConfigurations.resize(viewConfigurationCount);
+    OPENXR_CHECK(xrEnumerateViewConfigurations(m_xrInstance, m_systemID, viewConfigurationCount, &viewConfigurationCount, m_viewConfigurations.data()), "Failed to enumerate View Configurations.");
 
-int64_t SelectColorSwapchainFormat(const std::vector<int64_t>& runtimeFormats) {
-    // List of supported color swapchain formats.
-    constexpr DXGI_FORMAT SupportedColorSwapchainFormats[] = {
-        DXGI_FORMAT_R8G8B8A8_UNORM,
-        DXGI_FORMAT_B8G8R8A8_UNORM,
-        DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,
-        DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
-    };
-
-    auto swapchainFormatIt =
-        std::find_first_of(runtimeFormats.begin(), runtimeFormats.end(), std::begin(SupportedColorSwapchainFormats),
-            std::end(SupportedColorSwapchainFormats));
-    if (swapchainFormatIt == runtimeFormats.end()) {
-        throw std::runtime_error("No runtime swapchain format supported for color swapchain");
+    // Pick the first application supported View Configuration Type con supported by the hardware.
+    for (const XrViewConfigurationType& viewConfiguration : m_applicationViewConfigurations) {
+        if (std::find(m_viewConfigurations.begin(), m_viewConfigurations.end(), viewConfiguration) != m_viewConfigurations.end()) {
+            m_viewConfiguration = viewConfiguration;
+            break;
+        }
+    }
+    if (m_viewConfiguration == XR_VIEW_CONFIGURATION_TYPE_MAX_ENUM) {
+        std::cerr << "Failed to find a view configuration type. Defaulting to XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO." << std::endl;
+        m_viewConfiguration = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
     }
 
-    return *swapchainFormatIt;
+    // Gets the View Configuration Views. The first call gets the count of the array that will be returned. The next call fills out the array.
+    uint32_t viewConfigurationViewCount = 0;
+    OPENXR_CHECK(xrEnumerateViewConfigurationViews(m_xrInstance, m_systemID, m_viewConfiguration, 0, &viewConfigurationViewCount, nullptr), "Failed to enumerate ViewConfiguration Views.");
+    m_viewConfigurationViews.resize(viewConfigurationViewCount, { XR_TYPE_VIEW_CONFIGURATION_VIEW });
+    OPENXR_CHECK(xrEnumerateViewConfigurationViews(m_xrInstance, m_systemID, m_viewConfiguration, viewConfigurationViewCount, &viewConfigurationViewCount, m_viewConfigurationViews.data()), "Failed to enumerate ViewConfiguration Views.");
+}
+
+void OpenXRContext::CreateSwapchains() {
+    // Get the supported swapchain formats as an array of int64_t and ordered by runtime preference.
+    uint32_t formatCount = 0;
+    OPENXR_CHECK(xrEnumerateSwapchainFormats(m_session, 0, &formatCount, nullptr), "Failed to enumerate Swapchain Formats");
+    std::vector<int64_t> formats(formatCount);
+    OPENXR_CHECK(xrEnumerateSwapchainFormats(m_session, formatCount, &formatCount, formats.data()), "Failed to enumerate Swapchain Formats");
+    if (SelectDepthSwapchainFormat(formats) == 0) {
+        std::cerr << "Failed to find depth format for Swapchain." << std::endl;
+        DEBUG_BREAK;
+    }
+
+    //Resize the SwapchainInfo to match the number of view in the View Configuration.
+    m_colorSwapchainInfos.resize(m_viewConfigurationViews.size());
+    m_depthSwapchainInfos.resize(m_viewConfigurationViews.size());
+
+	// Loop through the View Configuration Views and create a swapchain for each view.
+    for (size_t i = 0; i < m_viewConfigurationViews.size(); i++) {
+        SwapchainInfo& colorSwapchainInfo = m_colorSwapchainInfos[i];
+        SwapchainInfo& depthSwapchainInfo = m_depthSwapchainInfos[i];
+
+        // Fill out an XrSwapchainCreateInfo structure and create an XrSwapchain.
+        // Color.
+        XrSwapchainCreateInfo swapchainCI{ XR_TYPE_SWAPCHAIN_CREATE_INFO };
+        swapchainCI.createFlags = 0;
+        swapchainCI.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT;
+        swapchainCI.format = SelectColorSwapchainFormat(formats);                // Use GraphicsAPI to select the first compatible format.
+        swapchainCI.sampleCount = m_viewConfigurationViews[i].recommendedSwapchainSampleCount;  // Use the recommended values from the XrViewConfigurationView.
+        swapchainCI.width = m_viewConfigurationViews[i].recommendedImageRectWidth;
+        swapchainCI.height = m_viewConfigurationViews[i].recommendedImageRectHeight;
+        swapchainCI.faceCount = 1;
+        swapchainCI.arraySize = 1;
+        swapchainCI.mipCount = 1;
+        OPENXR_CHECK(xrCreateSwapchain(m_session, &swapchainCI, &colorSwapchainInfo.swapchain), "Failed to create Color Swapchain");
+        colorSwapchainInfo.swapchainFormat = swapchainCI.format;  // Save the swapchain format for later use.
+
+        // Depth.
+        swapchainCI.createFlags = 0;
+        swapchainCI.usageFlags = XR_SWAPCHAIN_USAGE_SAMPLED_BIT | XR_SWAPCHAIN_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+        swapchainCI.format = SelectDepthSwapchainFormat(formats);                // Use GraphicsAPI to select the first compatible format.
+        swapchainCI.sampleCount = m_viewConfigurationViews[i].recommendedSwapchainSampleCount;  // Use the recommended values from the XrViewConfigurationView.
+        swapchainCI.width = m_viewConfigurationViews[i].recommendedImageRectWidth;
+        swapchainCI.height = m_viewConfigurationViews[i].recommendedImageRectHeight;
+        swapchainCI.faceCount = 1;
+        swapchainCI.arraySize = 1;
+        swapchainCI.mipCount = 1;
+        OPENXR_CHECK(xrCreateSwapchain(m_session, &swapchainCI, &depthSwapchainInfo.swapchain), "Failed to create Depth Swapchain");
+        depthSwapchainInfo.swapchainFormat = swapchainCI.format;  // Save the swapchain format for later use.
+    }
+}
+
+void OpenXRContext::DestroySwapchains() {}
+
+void OpenXRContext::DestroySession() {
+    OPENXR_CHECK(xrDestroySession(m_session), "Failed to destroy Session.");
 }
 
 void OpenXRContext::PollEvents() {
@@ -317,7 +411,7 @@ void OpenXRContext::PollEvents() {
             if (sessionStateChanged->state == XR_SESSION_STATE_READY) {
                 // SessionState is ready. Begin the XrSession using the XrViewConfigurationType.
                 XrSessionBeginInfo sessionBeginInfo{ XR_TYPE_SESSION_BEGIN_INFO };
-                sessionBeginInfo.primaryViewConfigurationType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
+                sessionBeginInfo.primaryViewConfigurationType = m_viewConfiguration;
                 OPENXR_CHECK(xrBeginSession(m_session, &sessionBeginInfo), "Failed to begin Session.");
                 m_sessionRunning = true;
             }

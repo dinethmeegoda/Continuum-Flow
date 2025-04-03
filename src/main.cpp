@@ -35,6 +35,9 @@ int main() {
 
     std::cout << "DX12 Engine with OpenXR Initialized Successfully!\n";
 
+	// Create Swapchains for OpenXR
+    openXR.CreateSwapchains();
+
     //initialize ImGUI
     //ImGuiIO& io = initImGUI(context);
 
@@ -282,6 +285,7 @@ int main() {
     context.flush(FRAME_COUNT);
     Window::get().shutdown();
 
+	openXR.DestroySwapchains();
 	openXR.DestroySession();
 	openXR.DestroyDebugMessenger();
 	openXR.DestroyInstance();
