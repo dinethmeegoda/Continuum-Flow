@@ -1050,6 +1050,8 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
 		UpdateCameraProjectionMatrix(views[i]);
 
         scene.drawSolidObjects();
+        //scene.drawSpawners();
+        scene.drawPBMPM();
 
         EndRendering();
 

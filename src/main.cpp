@@ -22,14 +22,14 @@ int main() {
     OpenXRContext openXR(scene.getObjectSolidPipeline()->getCommandList(),
         &context, OPENXR_CMDLIST_ID, camera.get());
 	context.resetCommandList(OPENXR_CMDLIST_ID);
-
-	// Create OpenXR instance
+    
+    // Create OpenXR instance
     openXR.CreateInstance();
 
     // Create OpenXR Debug Messager and log Instance Properties & System ID
 	openXR.CreateDebugMessenger();
     openXR.GetInstanceProperties();
-	openXR.GetSystemID();
+    openXR.GetSystemID();
 
 	openXR.GetViewConfigurationViews();
 	openXR.GetEnvironmentBlendModes();
@@ -125,13 +125,15 @@ int main() {
    //     }
 
         //compute pbmpm + mesh shader
-        //scene.compute(renderModeType != 2);
+        context.startTimingQuery(context.getCommandList(PBMPM_G2P2G_COMPUTE_ID));
+        scene.compute(false);
 
 		openXR.PollSystemEvents();
         openXR.PollEvents();
 
         if (openXR.IsSessionRunning()) {
             // Render Frame
+			//context.startTimingQuery(context.getCommandList(PBMPM_G2P2G_COMPUTE_ID));
             openXR.RenderFrame(scene);
         }
 

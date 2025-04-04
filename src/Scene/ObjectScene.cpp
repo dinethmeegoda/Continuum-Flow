@@ -93,12 +93,11 @@ void ObjectScene::constructSceneSolid() {
     //cube for ground
     std::vector<std::string> inputStrings;
     inputStrings.push_back("objs\\cube.obj");
-    float playerHeight = 16.f;
 
     XMFLOAT4X4 groundModelMatrix;
     XMStoreFloat4x4(&groundModelMatrix, XMMatrixMultiply(
-        XMMatrixScaling(1.1f * GRID_WIDTH, 1.f, 1.1f * GRID_DEPTH),
-        XMMatrixTranslation(-0.05f * GRID_WIDTH, 0.2f - playerHeight, -0.05f * GRID_DEPTH)
+        XMMatrixScaling(1.1f * GRID_WIDTH * scaleFactor, 1.f * scaleFactor, 1.1f * GRID_DEPTH * scaleFactor),
+        XMMatrixTranslation(-0.05f * GRID_WIDTH * scaleFactor, 0.2f * scaleFactor - playerHeight, -0.05f * GRID_DEPTH * scaleFactor)
     ));
     modelMatrices.push_back(groundModelMatrix);
 
@@ -114,8 +113,8 @@ void ObjectScene::constructSceneSolid() {
 
             XMFLOAT4X4 simShapeMatrix;
             XMStoreFloat4x4(&simShapeMatrix, XMMatrixMultiply(
-                XMMatrixScaling(shape.halfSize.x * 2, shape.halfSize.y * 2, shape.halfSize.z * 2),
-                XMMatrixTranslation(shape.position.x - shape.halfSize.x, shape.position.y - shape.halfSize.y - playerHeight, shape.position.z - shape.halfSize.z)
+                XMMatrixScaling(shape.halfSize.x * 2 * scaleFactor, shape.halfSize.y * 2 * scaleFactor, shape.halfSize.z * 2 * scaleFactor),
+                XMMatrixTranslation((shape.position.x - shape.halfSize.x) * scaleFactor, (shape.position.y - shape.halfSize.y) * scaleFactor - playerHeight, (shape.position.z - shape.halfSize.z) * scaleFactor)
             ));
             modelMatrices.push_back(simShapeMatrix);
         }

@@ -2,10 +2,10 @@
 
 Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID)
 	:  camera(p_camera),
-	pbmpmRP("PBMPMVertexShader.cso", "PBMPMPixelShader.cso", "PBMPMRootSignature.cso", *context, CommandListID::PBMPM_RENDER_ID,
+	pbmpmRP("PBMPMVertexShader.cso", "PBMPMPixelShader.cso", "PBMPMRootSignature.cso", *context, renderID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	pbmpmScene(context, &pbmpmRP, renderToggles),
-	objectRPWire("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::OBJECT_RENDER_WIRE_ID,
+	objectRPWire("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	objectSceneGrid(context, &objectRPWire, pbmpmScene.getSimShapes(), 1), 
 	objectSceneSpawners(context, &objectRPWire, pbmpmScene.getSimShapes(), 2), 
@@ -13,7 +13,7 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID)
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	objectSceneSolid(context, &objectRPSolid, pbmpmScene.getSimShapes(), 0),
 	// Fluid Mesh Shader Pipeline Construction
-	fluidRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::FLUID_RENDER_ID,
+	fluidRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	fluidBilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::FLUID_BILEVEL_UNIFORM_GRID_COMPUTE_ID, 
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 45, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
@@ -37,7 +37,7 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID)
 		&fluidSurfaceVertexDensityCP, &fluidSurfaceVertexNormalCP, &fluidBufferClearCP, &fluidDispatchArgDivideCP, &fluidMeshPipeline, 0, 1.744, 0.952, 1.413),
 
 	// Elastic Mesh Shader Pipeline Construction
-	elasticRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::ELASTIC_RENDER_ID,
+	elasticRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	elasticBilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::ELASTIC_BILEVEL_UNIFORM_GRID_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 45, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
@@ -61,7 +61,7 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID)
 		&elasticSurfaceVertexDensityCP, &elasticSurfaceVertexNormalCP, &elasticBufferClearCP, &elasticDispatchArgDivideCP, &elasticMeshPipeline, 1, 0.010, 7.6, 1.010),
 
 	// Sand Mesh Shader Pipeline Construction
-	sandRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::SAND_RENDER_ID,
+	sandRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	sandBilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::SAND_BILEVEL_UNIFORM_GRID_COMPUTE_ID, 
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 45, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
@@ -85,7 +85,7 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID)
 		&sandSurfaceVertexDensityCP, &sandSurfaceVertexNormalCP, &sandBufferClearCP, &sandDispatchArgDivideCP, &sandMeshPipeline, 2, 0.010, 5.84, 1.180),
 
 	// Visco Mesh Shader Pipeline Construction
-	viscoRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::ELASTIC_RENDER_ID,
+	viscoRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	viscoBilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::VISCO_BILEVEL_UNIFORM_GRID_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 45, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),

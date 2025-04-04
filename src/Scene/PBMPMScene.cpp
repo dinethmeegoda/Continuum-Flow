@@ -729,11 +729,15 @@ void PBMPMScene::compute() {
 			cmdList->ResourceBarrier(_countof(endBarriers), endBarriers);
 
 			// Execute command list
+			//context->endTimingQuery(g2p2gPipeline.getCommandList());
 			context->executeCommandList(g2p2gPipeline.getCommandListID());
-			context->signalAndWaitForFence(fence, fenceValue);
 
 			// Reinitialize command list
 			context->resetCommandList(g2p2gPipeline.getCommandListID());
+			/*double ms = context->readTimingQueryData();
+			double fps = 1000.0 / ms;
+
+			std::cout << "Compute Time: " << ms << " ms (" << fps << " FPS)" << std::endl;*/
 		}
 		doEmission(currentGrid, mouseConstants);
 		bukkitizeParticles();
