@@ -24,7 +24,7 @@ struct VSOutput
     uint InstanceID : INSTANCE_ID; // Pass the instance ID to the pixel shader
 };
 
-static float playerHeight = 1.6f; // Height of the player in meters, keep consistent with Drawable.h
+static float playerHeight = 1.2f; // Height of the player in meters, keep consistent with Drawable.h
 static float playerScale = 0.1f; // Scale factor for the player height
 
 [RootSignature(ROOTSIG)]

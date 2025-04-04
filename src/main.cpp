@@ -18,9 +18,12 @@ int main() {
         //initialize scene
     Scene scene{ camera.get(), &context, OPENXR_CMDLIST_ID };
 
+    // Create Left Controller Data Struct
+    OpenXRContext::LeftController leftController;
+
     // Initialize OpenXR
     OpenXRContext openXR(scene.getObjectSolidPipeline()->getCommandList(),
-        &context, OPENXR_CMDLIST_ID, camera.get());
+        &context, OPENXR_CMDLIST_ID, camera.get(), leftController);
 	context.resetCommandList(OPENXR_CMDLIST_ID);
     
     // Create OpenXR instance
@@ -125,6 +128,28 @@ int main() {
    //         pbmpmIterConstants.mouseActivation = 0;
    //     }
 
+        if (leftController.triggerValue > 0.8 || leftController.gripValue > 0.8) {
+			// enable mouse force
+			pbmpmIterConstants.mouseActivation = 1;
+
+            // Pulling Fluid
+			if (leftController.triggerValue > 0.8) {
+                pbmpmIterConstants.mouseFunction = 0;
+			}
+			if (leftController.gripValue > 0.8) {
+				pbmpmIterConstants.mouseFunction = 1;
+            }
+
+            pbmpmIterConstants.mousePosition = XMFLOAT4(leftController.position.x,
+                leftController.position.y, leftController.position.z, 1.0);
+			pbmpmIterConstants.mouseRayDirection = XMFLOAT4(leftController.forward.x,
+                leftController.forward.y, leftController.forward.z, 1.0);
+
+			}
+        else {
+            pbmpmIterConstants.mouseActivation = 0;
+        }
+
         //compute pbmpm + mesh shader
         context.startTimingQuery(context.getCommandList(PBMPM_G2P2G_COMPUTE_ID));
         scene.compute(false);
@@ -136,6 +161,10 @@ int main() {
             // Render Frame
 			//context.startTimingQuery(context.getCommandList(PBMPM_G2P2G_COMPUTE_ID));
             openXR.RenderFrame(scene);
+            if (pbmpmIterConstants.mouseActivation == 1 || !PBMPMScene::constantsEqual(pbmpmIterConstants, pbmpmCurrConstants)) {
+                scene.updatePBMPMConstants(pbmpmIterConstants);
+                pbmpmCurrConstants = pbmpmIterConstants;
+            }
         }
 
         /*openXR.RenderFrame(&context, scene.getViscoMeshPipeline()->getCommandList(), scene.getViscoMeshPipeline()->getCommandListID(), scene,
@@ -246,10 +275,6 @@ int main() {
 
         //render ImGUI
         ImGui::Render();
-        if (pbmpmIterConstants.mouseActivation == 1 || !PBMPMScene::constantsEqual(pbmpmIterConstants, pbmpmCurrConstants)) {
-            scene.updatePBMPMConstants(pbmpmIterConstants);
-            pbmpmCurrConstants = pbmpmIterConstants;
-        }
 
         renderPipeline->getCommandList()->SetDescriptorHeaps(1, &imguiSRVHeap);
         ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), renderPipeline->getCommandList());

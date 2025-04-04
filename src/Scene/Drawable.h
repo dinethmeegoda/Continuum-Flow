@@ -16,8 +16,6 @@ public:
 	void draw(Camera* camera);
 
 	void releaseResources();
-	const float playerHeight = 1.6f;
-	const float scaleFactor = 0.1f;
 
 protected:
 	DXContext* context;

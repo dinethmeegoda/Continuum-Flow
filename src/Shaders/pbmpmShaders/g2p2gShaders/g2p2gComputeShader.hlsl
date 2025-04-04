@@ -646,13 +646,26 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                         }
                         else if (g_mouseConstants.mouseFunction == 1) // Grab
                         {
-                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * 60;
-                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 0.5;
+                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz;
+                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 2.0;
                         }
                         else if (g_mouseConstants.mouseFunction == 2) // Pull
 						{
-                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * t;
-                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 0.5;
+                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * t * 2.0;
+
+                            float distance = length(p - isect_pos);
+
+                            // Define the range where fading happens
+                            float fadeStart = 2.0;  // closer than this starts reducing
+                            float fadeEnd = 20.0; // farther than this = full strength (2.0)
+
+                            // Compute a weight from 0 (close) to 1 (far)
+                            float t = saturate((distance - fadeStart) / (fadeEnd - fadeStart));
+
+                            // Fade from 0.5 (close) to 2.0 (far)
+                            float multiplier = lerp(0.5, 2.0, t);
+
+                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * multiplier;
 						}
                     }
                 }

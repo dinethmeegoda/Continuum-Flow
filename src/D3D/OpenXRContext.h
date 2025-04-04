@@ -1,6 +1,7 @@
 #pragma once
 #include "../D3D/DXContext.h"
 #include "../Scene/Scene.h"
+#include "Scene/SceneConstants.h"
 
 #define XR_USE_GRAPHICS_API_D3D12
 #include <openxr/openxr.h>
@@ -164,8 +165,14 @@ private:
     void SetScissors(Rect2D* scissors, size_t count);
 
 public:
-
-    OpenXRContext(ID3D12GraphicsCommandList6* cmdList, DXContext* context, CommandListID id, Camera* c);
+    struct LeftController {
+        float triggerValue = 0.0f;
+		float gripValue = 0.0f;
+        XMFLOAT3 position = { 0.0f, 0.0f, 0.0f };
+        XMFLOAT3 forward = { 0.0f, 0.0f, 1.0f };
+    };
+    OpenXRContext(ID3D12GraphicsCommandList6* cmdList, DXContext* context, 
+        CommandListID id, Camera* c, LeftController &lc);
     ~OpenXRContext();
 
     void CreateInstance();
@@ -267,9 +274,16 @@ private:
 
     XrActionSet m_actionSet{};
     XrAction m_moveAction{};
+    XrAction m_triggerAction{};
+    XrAction m_gripTriggerAction{}; // NEW for middle (grip) trigger
     XrPath m_leftHandPath{};
+
+    XrAction m_leftHandPoseAction{};
+    XrSpace m_leftHandSpace{};
 
     void ApplyCameraMovement(float moveX, float moveZ, float velocity);
     XMFLOAT3 cameraWorldPosition = { 0.0f, 0.7f, 0.0f }; // default player eye height
+
+    LeftController &m_lc;
 
 };
