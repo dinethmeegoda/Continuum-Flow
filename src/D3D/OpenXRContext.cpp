@@ -100,8 +100,7 @@ int64_t SelectColorSwapchainFormat(const std::vector<int64_t>& formats) {
 
 int64_t SelectDepthSwapchainFormat(const std::vector<int64_t>& formats) {
     const std::vector<int64_t>& supportSwapchainFormats = {
-        DXGI_FORMAT_D32_FLOAT,
-        DXGI_FORMAT_D16_UNORM };
+        DXGI_FORMAT_D32_FLOAT };
 
     const std::vector<int64_t>::const_iterator& swapchainFormatIt = std::find_first_of(formats.begin(), formats.end(),
         std::begin(supportSwapchainFormats), std::end(supportSwapchainFormats));
@@ -456,9 +455,89 @@ void OpenXRContext::EndRendering() {
     m_dxContext->resetCommandList(cmdListID);
 }
 
+void OpenXRContext::SetRenderAttachments(void** colorViews, size_t colorViewCount,
+    void* depthStencilView, uint32_t width, uint32_t height)
+{
+    std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> d3d12RTVs;
+    d3d12RTVs.reserve(colorViewCount);
+    for (size_t i = 0; i < colorViewCount; i++) {
+        d3d12RTVs.push_back({ (SIZE_T)colorViews[i] });
+    }
+    D3D12_CPU_DESCRIPTOR_HANDLE d3d12DSV = { (SIZE_T)depthStencilView };
+
+    m_cmdList->OMSetRenderTargets((UINT)colorViewCount, d3d12RTVs.data(), false, &d3d12DSV);
+    assert(d3d12DSV.ptr != 0);
+}
+void OpenXRContext::SetViewports(Viewport* viewports, size_t count) 
+{
+    std::vector<D3D12_VIEWPORT> d3d12Viewports;
+    d3d12Viewports.reserve(count);
+    for (size_t i = 0; i < count; i++) {
+        const Viewport& viewport = viewports[i];
+        d3d12Viewports.push_back({ viewport.x, viewport.y, viewport.width, viewport.height, viewport.minDepth, viewport.maxDepth });
+    }
+
+    m_cmdList->RSSetViewports(static_cast<UINT>(d3d12Viewports.size()), d3d12Viewports.data());
+}
+void OpenXRContext::SetScissors(Rect2D* scissors, size_t count)
+{
+    std::vector<D3D12_RECT> d3d12Scissors;
+    d3d12Scissors.reserve(count);
+    for (size_t i = 0; i < count; i++) {
+        const Rect2D& scissor = scissors[i];
+        d3d12Scissors.push_back({ static_cast<LONG>(scissor.offset.x), static_cast<LONG>(scissor.offset.y), static_cast<LONG>(scissor.extent.width), static_cast<LONG>(scissor.extent.height) });
+    }
+
+    m_cmdList->RSSetScissorRects(static_cast<UINT>(d3d12Scissors.size()), d3d12Scissors.data());
+}
+
+void OpenXRContext::UpdateCameraProjectionMatrix(XrView headsetView) {
+    if (!m_camera) return;
+
+    constexpr float nearZ = 0.05f;
+    constexpr float farZ = 100.0f;
+
+    // === PROJECTION MATRIX ===
+    XMMATRIX proj;
+    {
+        const float tanLeft = tanf(headsetView.fov.angleLeft);
+        const float tanRight = tanf(headsetView.fov.angleRight);
+        const float tanDown = tanf(headsetView.fov.angleDown);
+        const float tanUp = tanf(headsetView.fov.angleUp);
+
+        const float left = tanLeft * nearZ;
+        const float right = tanRight * nearZ;
+        const float bottom = tanDown * nearZ;
+        const float top = tanUp * nearZ;
+
+        proj = XMMatrixPerspectiveOffCenterRH(left, right, bottom, top, nearZ, farZ);
+    }
+
+    // === VIEW MATRIX ===
+    XMMATRIX view;
+    {
+        const XrVector3f& pos = headsetView.pose.position;
+        const XrQuaternionf& rot = headsetView.pose.orientation;
+
+        // Note: OpenXR uses right-handed system, and DirectXMath expects right-handed if we use RH variants
+        XMVECTOR position = XMVectorSet(pos.x, pos.y, pos.z, 1.0f);
+        XMVECTOR orientation = XMVectorSet(rot.x, rot.y, rot.z, rot.w);
+
+        // Transform from local (camera) space to world
+        XMMATRIX cameraWorld = XMMatrixRotationQuaternion(orientation) * XMMatrixTranslationFromVector(position);
+
+        // Invert to get view matrix (world -> camera space)
+        view = XMMatrixInverse(nullptr, cameraWorld);
+    }
+
+    // Store results in camera
+    XMStoreFloat4x4(&m_camera->viewMat, view);
+    XMStoreFloat4x4(&m_camera->projMat, proj);
+}
+
 OpenXRContext::OpenXRContext(ID3D12GraphicsCommandList6* cmdList, 
-    DXContext* context, CommandListID commandListID): 
-    m_cmdList(cmdList), m_dxContext(context), cmdListID(commandListID) {
+    DXContext* context, CommandListID commandListID, Camera* camera): 
+    m_cmdList(cmdList), m_dxContext(context), cmdListID(commandListID), m_camera(camera) {
 }
 
 OpenXRContext::~OpenXRContext() {
@@ -857,7 +936,7 @@ void OpenXRContext::DestroyReferenceSpace()
     // Destroy the reference XrSpace.
     OPENXR_CHECK(xrDestroySpace(m_localSpace), "Failed to destroy Space.")
 }
-void OpenXRContext::RenderFrame()
+void OpenXRContext::RenderFrame(Scene &scene)
 {
     // Get the XrFrameState for timing and rendering info.
     XrFrameState frameState{ XR_TYPE_FRAME_STATE };
@@ -877,7 +956,7 @@ void OpenXRContext::RenderFrame()
     bool sessionActive = (m_sessionState == XR_SESSION_STATE_SYNCHRONIZED || m_sessionState == XR_SESSION_STATE_VISIBLE || m_sessionState == XR_SESSION_STATE_FOCUSED);
     if (sessionActive && frameState.shouldRender) {
         // Render the stereo image and associate one of swapchain images with the XrCompositionLayerProjection structure.
-        rendered = RenderLayer(renderLayerInfo);
+        rendered = RenderLayer(renderLayerInfo, scene);
         if (rendered) {
             renderLayerInfo.layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&renderLayerInfo.layerProjection));
         }
@@ -891,7 +970,7 @@ void OpenXRContext::RenderFrame()
     frameEndInfo.layers = renderLayerInfo.layers.data();
     OPENXR_CHECK(xrEndFrame(m_session, &frameEndInfo), "Failed to end the XR Frame.");
 }
-bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo)
+bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
 {
     // Locate the views from the view configuration within the (reference) space at the display time.
     std::vector<XrView> views(m_viewConfigurationViews.size(), { XR_TYPE_VIEW });
@@ -935,8 +1014,6 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo)
         const uint32_t& height = m_viewConfigurationViews[i].recommendedImageRectHeight;
         Viewport viewport = { 0.0f, 0.0f, (float)width, (float)height, 0.0f, 1.0f };
         Rect2D scissor = { {(int32_t)0, (int32_t)0}, {width, height} };
-        float nearZ = 0.05f;
-        float farZ = 100.0f;
 
         // Fill out the XrCompositionLayerProjectionView structure specifying the pose and fov from the view.
         // This also associates the swapchain image with this layer projection view.
@@ -962,6 +1039,17 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo)
             ClearColor(colorSwapchainInfo.imageViews[colorImageIndex], 0.00f, 0.00f, 0.00f, 1.00f);
         }
         ClearDepth(depthSwapchainInfo.imageViews[depthImageIndex], 1.0f);
+
+        // Rendering Stuff
+        SetRenderAttachments(&colorSwapchainInfo.imageViews[colorImageIndex], 1, depthSwapchainInfo.imageViews[depthImageIndex], width, height);
+        SetViewports(&viewport, 1);
+        SetScissors(&scissor, 1);
+
+        // Compute the view-projection transform.
+        // All matrices (including OpenXR's) are column-major, right-handed.
+		UpdateCameraProjectionMatrix(views[i]);
+
+        scene.drawSolidObjects();
 
         EndRendering();
 

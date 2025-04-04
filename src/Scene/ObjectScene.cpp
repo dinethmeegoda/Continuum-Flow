@@ -93,11 +93,12 @@ void ObjectScene::constructSceneSolid() {
     //cube for ground
     std::vector<std::string> inputStrings;
     inputStrings.push_back("objs\\cube.obj");
+    float playerHeight = 16.f;
 
     XMFLOAT4X4 groundModelMatrix;
     XMStoreFloat4x4(&groundModelMatrix, XMMatrixMultiply(
         XMMatrixScaling(1.1f * GRID_WIDTH, 1.f, 1.1f * GRID_DEPTH),
-        XMMatrixTranslation(-0.05f * GRID_WIDTH, 0.2f, -0.05f * GRID_DEPTH)
+        XMMatrixTranslation(-0.05f * GRID_WIDTH, 0.2f - playerHeight, -0.05f * GRID_DEPTH)
     ));
     modelMatrices.push_back(groundModelMatrix);
 
@@ -114,7 +115,7 @@ void ObjectScene::constructSceneSolid() {
             XMFLOAT4X4 simShapeMatrix;
             XMStoreFloat4x4(&simShapeMatrix, XMMatrixMultiply(
                 XMMatrixScaling(shape.halfSize.x * 2, shape.halfSize.y * 2, shape.halfSize.z * 2),
-                XMMatrixTranslation(shape.position.x - shape.halfSize.x, shape.position.y - shape.halfSize.y, shape.position.z - shape.halfSize.z)
+                XMMatrixTranslation(shape.position.x - shape.halfSize.x, shape.position.y - shape.halfSize.y - playerHeight, shape.position.z - shape.halfSize.z)
             ));
             modelMatrices.push_back(simShapeMatrix);
         }

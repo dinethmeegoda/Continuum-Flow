@@ -11,6 +11,7 @@ using namespace DirectX;
 
 class Camera {
 public:
+	friend class OpenXRContext;
 	Camera();
 
 	void setFOV(float FOVY, float aspect, float nearPlane, float farPlane);

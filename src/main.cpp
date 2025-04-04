@@ -4,7 +4,7 @@ int main() {
     //set up DX, window, keyboard mouse
     DebugLayer debugLayer = DebugLayer();
     DXContext context = DXContext();
-    //std::unique_ptr<Camera> camera = std::make_unique<Camera>();
+    std::unique_ptr<Camera> camera = std::make_unique<Camera>();
     //std::unique_ptr<Keyboard> keyboard = std::make_unique<Keyboard>();
     //std::unique_ptr<Mouse> mouse = std::make_unique<Mouse>();
 
@@ -15,10 +15,13 @@ int main() {
     //    return false;
     //}
 
+        //initialize scene
+    Scene scene{ camera.get(), &context };
+
     // Initialize OpenXR
-    OpenXRContext openXR(context.createCommandList(OPENXR_CMDLIST_ID),
-        &context, OPENXR_CMDLIST_ID);
-	context.resetCommandList(OPENXR_CMDLIST_ID);
+    OpenXRContext openXR(scene.getObjectSolidPipeline()->getCommandList(),
+        &context, OBJECT_RENDER_SOLID_ID, camera.get());
+	context.resetCommandList(OBJECT_RENDER_SOLID_ID);
 
 	// Create OpenXR instance
     openXR.CreateInstance();
@@ -58,13 +61,10 @@ int main() {
     float clientWidth = static_cast<float>(rect.right - rect.left);
     float clientHeight = static_cast<float>(rect.bottom - rect.top);*/
 
-    //initialize scene
-    //Scene scene{camera.get(), &context};
+    PBMPMConstants pbmpmCurrConstants = scene.getPBMPMConstants();
+    PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
 
-    //PBMPMConstants pbmpmCurrConstants = scene.getPBMPMConstants();
-    //PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
-
-    //unsigned int renderOptions = 0;
+    unsigned int renderOptions = 0;
 
     //bool exitRenderLoop = false, requestRestart = false;
 
@@ -132,7 +132,7 @@ int main() {
 
         if (openXR.IsSessionRunning()) {
             // Render Frame
-            openXR.RenderFrame();
+            openXR.RenderFrame(scene);
         }
 
         /*openXR.RenderFrame(&context, scene.getViscoMeshPipeline()->getCommandList(), scene.getViscoMeshPipeline()->getCommandListID(), scene,
@@ -283,7 +283,7 @@ int main() {
     }
 
     // Scene should release all resources, including their pipelines
-    //scene.releaseResources();
+    scene.releaseResources();
 
     //ImGui_ImplDX12_Shutdown();
     //ImGui_ImplWin32_Shutdown();

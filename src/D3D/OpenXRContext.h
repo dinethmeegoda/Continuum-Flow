@@ -71,6 +71,15 @@ inline bool BitwiseCheck(const T& value, const T& checkValue) {
 
 class OpenXRContext {
 private:
+    enum GraphicsAPI_Type : uint8_t {
+        UNKNOWN,
+        D3D11,
+        D3D12,
+        OPENGL,
+        OPENGL_ES,
+        VULKAN
+    };
+
     struct ImageViewCreateInfo {
         void* image;
         enum class Type : uint8_t {
@@ -150,9 +159,13 @@ private:
         Extent2D extent;
     };
 
+    void SetRenderAttachments(void** colorViews, size_t colorViewCount, void* depthStencilView, uint32_t width, uint32_t height);
+    void SetViewports(Viewport* viewports, size_t count);
+    void SetScissors(Rect2D* scissors, size_t count);
+
 public:
 
-    OpenXRContext(ID3D12GraphicsCommandList6* cmdList, DXContext* context, CommandListID id);
+    OpenXRContext(ID3D12GraphicsCommandList6* cmdList, DXContext* context, CommandListID id, Camera* c);
     ~OpenXRContext();
 
     void CreateInstance();
@@ -180,8 +193,8 @@ public:
     void GetEnvironmentBlendModes();
     void CreateReferenceSpace();
     void DestroyReferenceSpace();
-    void RenderFrame();
-    bool RenderLayer(RenderLayerInfo& renderLayerInfo);
+    void RenderFrame(Scene &scene);
+    bool RenderLayer(RenderLayerInfo& renderLayerInfo, Scene &scene);
 
     void BeginRendering();
 	void ClearColor(void* imageView, float r, float g, float b, float a);
@@ -225,7 +238,7 @@ private:
 
     ID3D12Device* m_device = nullptr;
 
-    std::unordered_map<SIZE_T, std::pair<ID3D12DescriptorHeap*, ID3D12Resource*>> imageViewResources;
+    std::unordered_map<SIZE_T, std::pair<ComPointer<ID3D12DescriptorHeap>, ID3D12Resource*>> imageViewResources;
 
     virtual void* GetSwapchainImage(XrSwapchain swapchain, uint32_t index) {
         ID3D12Resource* image = swapchainImagesMap[swapchain].second[index].texture;
@@ -245,4 +258,9 @@ private:
     CommandListID cmdListID;
 	DXContext* m_dxContext = nullptr;
     ID3D12GraphicsCommandList6* m_cmdList = nullptr;
+
+    float m_viewHeightM = 24;
+	Camera* m_camera = nullptr;
+
+	void UpdateCameraProjectionMatrix(XrView view);
 };
