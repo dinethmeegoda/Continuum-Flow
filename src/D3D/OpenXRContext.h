@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <stdexcept>
+#include <unordered_map>
 
 #define DEBUG_BREAK __debugbreak()
 
@@ -51,10 +52,107 @@ inline bool BitwiseCheck(const T& value, const T& checkValue) {
 
 #define XR_LOG(...) std::cout << __VA_ARGS__ << "\n"
 
+#define D3D12_CHECK(x, y)                                                                         \
+    {                                                                                             \
+        HRESULT result = (x);                                                                     \
+        if (FAILED(result)) {                                                                     \
+            std::cout << "ERROR: D3D12: " << std::hex << "0x" << result << std::dec << std::endl; \
+            std::cout << "ERROR: D3D12: " << y << std::endl;                                      \
+        }                                                                                         \
+    }
+
+#define D3D12_SAFE_RELEASE(p) \
+    {                         \
+        if (p) {              \
+            (p)->Release();   \
+            (p) = nullptr;    \
+        }                     \
+    }
+
 class OpenXRContext {
+private:
+    struct ImageViewCreateInfo {
+        void* image;
+        enum class Type : uint8_t {
+            RTV,
+            DSV,
+            SRV,
+            UAV
+        } type;
+        enum class View : uint8_t {
+            TYPE_1D,
+            TYPE_2D,
+            TYPE_3D,
+            TYPE_CUBE,
+            TYPE_1D_ARRAY,
+            TYPE_2D_ARRAY,
+            TYPE_CUBE_ARRAY,
+        } view;
+        int64_t format;
+        enum class Aspect : uint8_t {
+            COLOR_BIT = 0x01,
+            DEPTH_BIT = 0x02,
+            STENCIL_BIT = 0x04
+        } aspect;
+        uint32_t baseMipLevel;
+        uint32_t levelCount;
+        uint32_t baseArrayLayer;
+        uint32_t layerCount;
+    };
+
+    struct SwapchainInfo {
+        XrSwapchain swapchain = XR_NULL_HANDLE;
+        int64_t swapchainFormat = 0;
+        std::vector<void*> imageViews;
+    };
+
+    enum class SwapchainType : uint8_t {
+        COLOR,
+        DEPTH
+    };
+
+    XrSwapchainImageBaseHeader* AllocateSwapchainImageData(XrSwapchain swapchain, SwapchainType type, uint32_t count);
+
+    void* CreateImageView(const ImageViewCreateInfo& imageViewCI);
+
+    void DestroyImageView(void*& imageView);
+
+    virtual void FreeSwapchainImageData(XrSwapchain swapchain) {
+        swapchainImagesMap[swapchain].second.clear();
+        swapchainImagesMap.erase(swapchain);
+    }
+
+    struct RenderLayerInfo {
+        XrTime predictedDisplayTime;
+        std::vector<XrCompositionLayerBaseHeader*> layers;
+        XrCompositionLayerProjection layerProjection = { XR_TYPE_COMPOSITION_LAYER_PROJECTION };
+        std::vector<XrCompositionLayerProjectionView> layerProjectionViews;
+    };
+
+    struct Viewport {
+        float x;
+        float y;
+        float width;
+        float height;
+        float minDepth;
+        float maxDepth;
+    };
+    struct Offset2D {
+        int32_t x;
+        int32_t y;
+    };
+    struct Extent2D {
+        uint32_t width;
+        uint32_t height;
+    };
+    struct Rect2D {
+        Offset2D offset;
+        Extent2D extent;
+    };
+
 public:
 
-    OpenXRContext();
+    OpenXRContext(ID3D12GraphicsCommandList6* cmdList, DXContext* context, CommandListID id);
     ~OpenXRContext();
 
     void CreateInstance();
@@ -78,6 +176,17 @@ public:
     void GetViewConfigurationViews();
     void CreateSwapchains();
     void DestroySwapchains();
+
+    void GetEnvironmentBlendModes();
+    void CreateReferenceSpace();
+    void DestroyReferenceSpace();
+    void RenderFrame();
+    bool RenderLayer(RenderLayerInfo& renderLayerInfo);
+
+    void BeginRendering();
+	void ClearColor(void* imageView, float r, float g, float b, float a);
+	void ClearDepth(void* imageView, float d);
+    void EndRendering();
 
 private:
     XrDebugUtilsMessengerEXT CreateOpenXRDebugUtilsMessenger(XrInstance m_xrInstance);
@@ -107,11 +216,33 @@ private:
     XrViewConfigurationType m_viewConfiguration = XR_VIEW_CONFIGURATION_TYPE_MAX_ENUM;
     std::vector<XrViewConfigurationView> m_viewConfigurationViews;
 
-    struct SwapchainInfo {
-        XrSwapchain swapchain = XR_NULL_HANDLE;
-        int64_t swapchainFormat = 0;
-        std::vector<void*> imageViews;
-    };
     std::vector<SwapchainInfo> m_colorSwapchainInfos = {};
     std::vector<SwapchainInfo> m_depthSwapchainInfos = {};
+
+    std::unordered_map<XrSwapchain, std::pair<SwapchainType, std::vector<XrSwapchainImageD3D12KHR>>> swapchainImagesMap{};
+
+    std::unordered_map<ID3D12Resource*, D3D12_RESOURCE_STATES> imageStates;
+
+    ID3D12Device* m_device = nullptr;
+
+    std::unordered_map<SIZE_T, std::pair<ID3D12DescriptorHeap*, ID3D12Resource*>> imageViewResources;
+
+    virtual void* GetSwapchainImage(XrSwapchain swapchain, uint32_t index) {
+        ID3D12Resource* image = swapchainImagesMap[swapchain].second[index].texture;
+        D3D12_RESOURCE_STATES state = swapchainImagesMap[swapchain].first == SwapchainType::COLOR ? D3D12_RESOURCE_STATE_RENDER_TARGET : D3D12_RESOURCE_STATE_DEPTH_WRITE;
+        imageStates[image] = state;
+        return image;
+    }
+
+    std::vector<XrEnvironmentBlendMode> m_applicationEnvironmentBlendModes = { XR_ENVIRONMENT_BLEND_MODE_OPAQUE, XR_ENVIRONMENT_BLEND_MODE_ADDITIVE };
+    std::vector<XrEnvironmentBlendMode> m_environmentBlendModes = {};
+    XrEnvironmentBlendMode m_environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_MAX_ENUM;
+
+    XrSpace m_localSpace = XR_NULL_HANDLE;
+
+    ID3D12Resource* currentDesktopSwapchainImage = nullptr;
+
+    CommandListID cmdListID;
+	DXContext* m_dxContext = nullptr;
+    ID3D12GraphicsCommandList6* m_cmdList = nullptr;
 };

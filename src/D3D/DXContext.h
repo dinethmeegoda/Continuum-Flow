@@ -4,8 +4,10 @@
 #include <stdexcept>
 #include <array>
 
-#define NUM_CMDLISTS 60
+#define NUM_CMDLISTS 61
 enum CommandListID {
+	OPENXR_CMDLIST_ID,
+
     OBJECT_RENDER_WIRE_ID,
     OBJECT_RENDER_SOLID_ID,
 

@@ -4,19 +4,21 @@ int main() {
     //set up DX, window, keyboard mouse
     DebugLayer debugLayer = DebugLayer();
     DXContext context = DXContext();
-    std::unique_ptr<Camera> camera = std::make_unique<Camera>();
-    std::unique_ptr<Keyboard> keyboard = std::make_unique<Keyboard>();
-    std::unique_ptr<Mouse> mouse = std::make_unique<Mouse>();
+    //std::unique_ptr<Camera> camera = std::make_unique<Camera>();
+    //std::unique_ptr<Keyboard> keyboard = std::make_unique<Keyboard>();
+    //std::unique_ptr<Mouse> mouse = std::make_unique<Mouse>();
 
-    if (!Window::get().init(&context, SCREEN_WIDTH, SCREEN_HEIGHT)) {
-        //handle could not initialize window
-        std::cout << "could not initialize window\n";
-        Window::get().shutdown();
-        return false;
-    }
+    //if (!Window::get().init(&context, SCREEN_WIDTH, SCREEN_HEIGHT)) {
+    //    //handle could not initialize window
+    //    std::cout << "could not initialize window\n";
+    //    Window::get().shutdown();
+    //    return false;
+    //}
 
     // Initialize OpenXR
-    OpenXRContext openXR;
+    OpenXRContext openXR(context.createCommandList(OPENXR_CMDLIST_ID),
+        &context, OPENXR_CMDLIST_ID);
+	context.resetCommandList(OPENXR_CMDLIST_ID);
 
 	// Create OpenXR instance
     openXR.CreateInstance();
@@ -25,6 +27,9 @@ int main() {
 	openXR.CreateDebugMessenger();
     openXR.GetInstanceProperties();
 	openXR.GetSystemID();
+
+	openXR.GetViewConfigurationViews();
+	openXR.GetEnvironmentBlendModes();
 
     // Create OpenXR session with DX12 graphics binding
     XrGraphicsBindingD3D12KHR graphicsBinding{ XR_TYPE_GRAPHICS_BINDING_D3D12_KHR };
@@ -35,6 +40,9 @@ int main() {
 
     std::cout << "DX12 Engine with OpenXR Initialized Successfully!\n";
 
+	// Create OpenXR reference space
+    openXR.CreateReferenceSpace();
+
 	// Create Swapchains for OpenXR
     openXR.CreateSwapchains();
 
@@ -42,79 +50,79 @@ int main() {
     //ImGuiIO& io = initImGUI(context);
 
     //set mouse to use the window
-    mouse->SetWindow(Window::get().getHWND());
+    //mouse->SetWindow(Window::get().getHWND());
 
     // Get the client area of the window
-    RECT rect;
+    /*RECT rect;
     GetClientRect(Window::get().getHWND(), &rect);
     float clientWidth = static_cast<float>(rect.right - rect.left);
-    float clientHeight = static_cast<float>(rect.bottom - rect.top);
+    float clientHeight = static_cast<float>(rect.bottom - rect.top);*/
 
     //initialize scene
-    Scene scene{camera.get(), &context};
+    //Scene scene{camera.get(), &context};
 
-    PBMPMConstants pbmpmCurrConstants = scene.getPBMPMConstants();
-    PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
+    //PBMPMConstants pbmpmCurrConstants = scene.getPBMPMConstants();
+    //PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
 
-    unsigned int renderOptions = 0;
+    //unsigned int renderOptions = 0;
 
-    bool exitRenderLoop = false, requestRestart = false;
+    //bool exitRenderLoop = false, requestRestart = false;
 
-    while (!exitRenderLoop && !Window::get().getShouldClose()) {
+    while (openXR.IsApplicationRunning()) {
         //update window
-        Window::get().update();
-        if (Window::get().getShouldResize()) {
-            //flush pending buffer operations in swapchain
-            context.flush(FRAME_COUNT);
-            Window::get().resize();
-            camera->updateAspect((float)Window::get().getWidth() / (float)Window::get().getHeight());
-        }
+        //Window::get().update();
+        //if (Window::get().getShouldResize()) {
+        //    //flush pending buffer operations in swapchain
+        //    context.flush(FRAME_COUNT);
+        //    Window::get().resize();
+        //    camera->updateAspect((float)Window::get().getWidth() / (float)Window::get().getHeight());
+        //}
 
-        auto kState = keyboard->GetState();
-        auto mState = mouse->GetState();
-        mouse->SetMode(mState.leftButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
-        camera->kmStateCheck(kState, mState);
+        //auto kState = keyboard->GetState();
+        //auto mState = mouse->GetState();
+        //mouse->SetMode(mState.leftButton ? Mouse::MODE_RELATIVE : Mouse::MODE_ABSOLUTE);
+        //camera->kmStateCheck(kState, mState);
 
-        if (mState.rightButton) {
+   //     if (mState.rightButton) {
 
-			// If right mouse button is pressed, we should update constants
+			//// If right mouse button is pressed, we should update constants
 
-            if (kState.LeftShift) {
-                // Pulling Fluid
-                pbmpmIterConstants.mouseFunction = 2;
-            }
-            else if (kState.LeftAlt) {
-                // Grab Fluid Ball
-                pbmpmIterConstants.mouseFunction = 1;
-            }
-            else {
-                // Pushing Fluid
-                pbmpmIterConstants.mouseFunction = 0;
-            }
+   //         if (kState.LeftShift) {
+   //             // Pulling Fluid
+   //             pbmpmIterConstants.mouseFunction = 2;
+   //         }
+   //         else if (kState.LeftAlt) {
+   //             // Grab Fluid Ball
+   //             pbmpmIterConstants.mouseFunction = 1;
+   //         }
+   //         else {
+   //             // Pushing Fluid
+   //             pbmpmIterConstants.mouseFunction = 0;
+   //         }
 
-            // enable mouse force
-            pbmpmIterConstants.mouseActivation = 1;
+   //         // enable mouse force
+   //         pbmpmIterConstants.mouseActivation = 1;
 
-            POINT mousePos;
-            GetCursorPos(&mousePos);
-            ScreenToClient(Window::get().getHWND(), &mousePos);
-            float ndcX = (2.0f * mousePos.x / clientWidth) - 1.0f;
-            float ndcY = 1.0f - (2.0f * mousePos.y / clientHeight);
+   //         POINT mousePos;
+   //         GetCursorPos(&mousePos);
+   //         ScreenToClient(Window::get().getHWND(), &mousePos);
+   //         float ndcX = (2.0f * mousePos.x / clientWidth) - 1.0f;
+   //         float ndcY = 1.0f - (2.0f * mousePos.y / clientHeight);
 
-            XMFLOAT4 prevMousePos = pbmpmIterConstants.mousePosition;
-            ComputeMouseRay(
-                Window::get().getHWND(),
-                ndcX,
-                ndcY,
-                camera->getProjMat(),
-                camera->getViewMat(),
-                pbmpmIterConstants.mousePosition,
-                pbmpmIterConstants.mouseRayDirection
-            );
-        }
-        else {
-            pbmpmIterConstants.mouseActivation = 0;
-        }
+   //         XMFLOAT4 prevMousePos = pbmpmIterConstants.mousePosition;
+   //         ComputeMouseRay(
+   //             Window::get().getHWND(),
+   //             ndcX,
+   //             ndcY,
+   //             camera->getProjMat(),
+   //             camera->getViewMat(),
+   //             pbmpmIterConstants.mousePosition,
+   //             pbmpmIterConstants.mouseRayDirection
+   //         );
+   //     }
+   //     else {
+   //         pbmpmIterConstants.mouseActivation = 0;
+   //     }
 
         //compute pbmpm + mesh shader
         //scene.compute(renderModeType != 2);
@@ -124,6 +132,7 @@ int main() {
 
         if (openXR.IsSessionRunning()) {
             // Render Frame
+            openXR.RenderFrame();
         }
 
         /*openXR.RenderFrame(&context, scene.getViscoMeshPipeline()->getCommandList(), scene.getViscoMeshPipeline()->getCommandListID(), scene,
@@ -274,7 +283,7 @@ int main() {
     }
 
     // Scene should release all resources, including their pipelines
-    scene.releaseResources();
+    //scene.releaseResources();
 
     //ImGui_ImplDX12_Shutdown();
     //ImGui_ImplWin32_Shutdown();
@@ -283,9 +292,10 @@ int main() {
 
     //flush pending buffer operations in swapchain
     context.flush(FRAME_COUNT);
-    Window::get().shutdown();
+    //Window::get().shutdown();
 
 	openXR.DestroySwapchains();
+	openXR.DestroyReferenceSpace();
 	openXR.DestroySession();
 	openXR.DestroyDebugMessenger();
 	openXR.DestroyInstance();
