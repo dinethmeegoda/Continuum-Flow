@@ -1,6 +1,6 @@
 #include "Scene.h"
 
-Scene::Scene(Camera* p_camera, DXContext* context)
+Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID)
 	:  camera(p_camera),
 	pbmpmRP("PBMPMVertexShader.cso", "PBMPMPixelShader.cso", "PBMPMRootSignature.cso", *context, CommandListID::PBMPM_RENDER_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
@@ -9,7 +9,7 @@ Scene::Scene(Camera* p_camera, DXContext* context)
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	objectSceneGrid(context, &objectRPWire, pbmpmScene.getSimShapes(), 1), 
 	objectSceneSpawners(context, &objectRPWire, pbmpmScene.getSimShapes(), 2), 
-	objectRPSolid("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::OBJECT_RENDER_SOLID_ID,
+	objectRPSolid("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	objectSceneSolid(context, &objectRPSolid, pbmpmScene.getSimShapes(), 0),
 	// Fluid Mesh Shader Pipeline Construction

@@ -40,6 +40,8 @@ DXContext::DXContext() {
 			throw std::runtime_error("Could not create command allocator");
 		}
 		cmdAllocators[i] = cmdAllocator;
+        createCommandList(CommandListID(i));
+		resetCommandList(CommandListID(i));
 	}
 
     initTimingResources();

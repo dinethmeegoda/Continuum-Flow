@@ -10,7 +10,7 @@
 class Scene {
 public:
 	Scene() = delete;
-	Scene(Camera* camera, DXContext* context);
+	Scene(Camera* camera, DXContext* context, CommandListID renderID);
 
 	RenderPipeline* getObjectWirePipeline();
 	RenderPipeline* getObjectSolidPipeline();

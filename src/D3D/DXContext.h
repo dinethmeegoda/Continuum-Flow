@@ -97,6 +97,7 @@ public:
     double readTimingQueryData();
     void startTimingQuery(ID3D12GraphicsCommandList6* cmdList);
     void endTimingQuery(ID3D12GraphicsCommandList6* cmdList);
+	ID3D12GraphicsCommandList6* getCommandList(CommandListID id) { return cmdLists[id]; };
 
 private:
     void initTimingResources();

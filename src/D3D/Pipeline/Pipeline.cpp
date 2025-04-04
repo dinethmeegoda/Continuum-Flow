@@ -3,9 +3,9 @@
 Pipeline::Pipeline(std::string rootSignatureShaderName, DXContext& context, CommandListID cmdID,
 	D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int numberOfDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
 	: rootSignatureShader(rootSignatureShaderName), descriptorHeap(context, type, numberOfDescriptors, flags), cmdID(cmdID),
-	cmdList(context.createCommandList(cmdID))
+	cmdList(context.getCommandList(cmdID))
 {
-	context.resetCommandList(cmdID);
+	//context.resetCommandList(cmdID);
 	context.getDevice()->CreateRootSignature(0, rootSignatureShader.getBuffer(), rootSignatureShader.getSize(), IID_PPV_ARGS(&rootSignature));
 }
 

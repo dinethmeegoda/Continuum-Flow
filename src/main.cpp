@@ -16,12 +16,12 @@ int main() {
     //}
 
         //initialize scene
-    Scene scene{ camera.get(), &context };
+    Scene scene{ camera.get(), &context, OPENXR_CMDLIST_ID };
 
     // Initialize OpenXR
     OpenXRContext openXR(scene.getObjectSolidPipeline()->getCommandList(),
-        &context, OBJECT_RENDER_SOLID_ID, camera.get());
-	context.resetCommandList(OBJECT_RENDER_SOLID_ID);
+        &context, OPENXR_CMDLIST_ID, camera.get());
+	context.resetCommandList(OPENXR_CMDLIST_ID);
 
 	// Create OpenXR instance
     openXR.CreateInstance();
