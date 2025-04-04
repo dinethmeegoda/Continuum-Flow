@@ -40,6 +40,7 @@ int main() {
     graphicsBinding.queue = context.getCommandQueue();
 
     openXR.CreateSession(graphicsBinding);
+    openXR.CreateActions();
 
     std::cout << "DX12 Engine with OpenXR Initialized Successfully!\n";
 

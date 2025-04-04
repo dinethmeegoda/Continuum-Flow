@@ -201,6 +201,8 @@ public:
 	void ClearDepth(void* imageView, float d);
     void EndRendering();
 
+    void CreateActions();
+
 private:
     XrDebugUtilsMessengerEXT CreateOpenXRDebugUtilsMessenger(XrInstance m_xrInstance);
     void DestroyOpenXRDebugUtilsMessenger(XrInstance m_xrInstance, XrDebugUtilsMessengerEXT debugUtilsMessenger);
@@ -259,8 +261,15 @@ private:
 	DXContext* m_dxContext = nullptr;
     ID3D12GraphicsCommandList6* m_cmdList = nullptr;
 
-    float m_viewHeightM = 24;
 	Camera* m_camera = nullptr;
 
 	void UpdateCameraProjectionMatrix(XrView view);
+
+    XrActionSet m_actionSet{};
+    XrAction m_moveAction{};
+    XrPath m_leftHandPath{};
+
+    void ApplyCameraMovement(float moveX, float moveZ, float velocity);
+    XMFLOAT3 cameraWorldPosition = { 0.0f, 0.7f, 0.0f }; // default player eye height
+
 };

@@ -520,11 +520,13 @@ void OpenXRContext::UpdateCameraProjectionMatrix(XrView headsetView) {
         const XrQuaternionf& rot = headsetView.pose.orientation;
 
         // Note: OpenXR uses right-handed system, and DirectXMath expects right-handed if we use RH variants
-        XMVECTOR position = XMVectorSet(pos.x, pos.y, pos.z, 1.0f);
+        XMVECTOR headOffset = XMVectorSet(pos.x, pos.y, pos.z, 0.0f);
+        XMVECTOR position = XMLoadFloat3(&cameraWorldPosition);
+        XMVECTOR worldPos = XMVectorAdd(position, headOffset);
         XMVECTOR orientation = XMVectorSet(rot.x, rot.y, rot.z, rot.w);
 
         // Transform from local (camera) space to world
-        XMMATRIX cameraWorld = XMMatrixRotationQuaternion(orientation) * XMMatrixTranslationFromVector(position);
+        XMMATRIX cameraWorld = XMMatrixRotationQuaternion(orientation) * XMMatrixTranslationFromVector(worldPos);
 
         // Invert to get view matrix (world -> camera space)
         view = XMMatrixInverse(nullptr, cameraWorld);
@@ -936,6 +938,33 @@ void OpenXRContext::DestroyReferenceSpace()
     // Destroy the reference XrSpace.
     OPENXR_CHECK(xrDestroySpace(m_localSpace), "Failed to destroy Space.")
 }
+
+void OpenXRContext::ApplyCameraMovement(float moveX, float moveZ, float velocity) {
+    if (!m_camera) return;
+
+    // Use headset's current rotation to get forward/right directions
+    XMMATRIX view = XMLoadFloat4x4(&m_camera->viewMat);
+    XMMATRIX world = XMMatrixInverse(nullptr, view);
+
+    XMVECTOR forward = XMVector3Normalize(world.r[2]);  // -Z in world
+    XMVECTOR right = XMVector3Normalize(world.r[0]);    // +X in world
+
+    // Remove Y from forward vector so we don't move vertically
+    forward = XMVectorSetY(forward, 0.0f);
+    forward = XMVector3Normalize(forward);
+
+    right = XMVectorSetY(right, 0.0f);
+    right = XMVector3Normalize(right);
+
+    XMVECTOR movement = (-moveZ * forward + moveX * right) * velocity;
+
+    // Update stored camera position
+    XMVECTOR currentPos = XMLoadFloat3(&cameraWorldPosition);
+    currentPos = XMVectorAdd(currentPos, movement);
+    XMStoreFloat3(&cameraWorldPosition, currentPos);
+}
+
+
 void OpenXRContext::RenderFrame(Scene &scene)
 {
     // Get the XrFrameState for timing and rendering info.
@@ -1049,6 +1078,34 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
         // All matrices (including OpenXR's) are column-major, right-handed.
 		UpdateCameraProjectionMatrix(views[i]);
 
+        // Move
+        XrActiveActionSet activeActionSet{};
+        activeActionSet.actionSet = m_actionSet;
+
+        XrActionsSyncInfo syncInfo{ XR_TYPE_ACTIONS_SYNC_INFO };
+        syncInfo.countActiveActionSets = 1;
+        syncInfo.activeActionSets = &activeActionSet;
+        OPENXR_CHECK(xrSyncActions(m_session, &syncInfo), "Failed to sync actions");
+
+        // Get the move vector from joystick
+        XrActionStateVector2f moveState{ XR_TYPE_ACTION_STATE_VECTOR2F };
+        XrActionStateGetInfo getInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+        getInfo.action = m_moveAction;
+        OPENXR_CHECK(xrGetActionStateVector2f(m_session, &getInfo, &moveState), "Failed to get move state");
+
+        if (moveState.isActive) {
+            float moveX = moveState.currentState.x;
+            float moveZ = moveState.currentState.y;
+
+            float deltaTime = 0.01;
+            float speedScale = 5;
+            // Use moveX and moveZ to update camera/player movement on X and Z axes
+            float velocity = std::sqrt(moveState.currentState.x * moveState.currentState.x +
+                moveState.currentState.y * moveState.currentState.y) * deltaTime * speedScale;
+            ApplyCameraMovement(moveX, moveZ, velocity); // Adjust velocity as needed
+
+        }
+
         scene.drawSolidObjects();
         //scene.drawSpawners();
         scene.drawPBMPM();
@@ -1068,4 +1125,42 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
     renderLayerInfo.layerProjection.views = renderLayerInfo.layerProjectionViews.data();
 
     return true;
+}
+
+void OpenXRContext::CreateActions() {
+    XrActionSetCreateInfo actionSetInfo{ XR_TYPE_ACTION_SET_CREATE_INFO };
+    strcpy_s(actionSetInfo.actionSetName, "main_action_set");
+    strcpy_s(actionSetInfo.localizedActionSetName, "Main Action Set");
+    actionSetInfo.priority = 0;
+    OPENXR_CHECK(xrCreateActionSet(m_xrInstance, &actionSetInfo, &m_actionSet), "Failed to create action set");
+
+    // Create move action (Vector2f)
+    XrActionCreateInfo actionInfo{ XR_TYPE_ACTION_CREATE_INFO };
+    actionInfo.actionType = XR_ACTION_TYPE_VECTOR2F_INPUT;
+    strcpy_s(actionInfo.actionName, "move");
+    strcpy_s(actionInfo.localizedActionName, "Move");
+    actionInfo.countSubactionPaths = 0;
+    OPENXR_CHECK(xrCreateAction(m_actionSet, &actionInfo, &m_moveAction), "Failed to create move action");
+
+    // Suggest bindings for left hand joystick
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left", &m_leftHandPath), "Failed to get left hand path");
+
+    XrPath moveInputPath;
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/thumbstick", &moveInputPath), "Failed to get thumbstick path");
+
+    XrActionSuggestedBinding bindings[] = {
+        { m_moveAction, moveInputPath }
+    };
+
+    XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
+    xrStringToPath(m_xrInstance, "/interaction_profiles/oculus/touch_controller", &suggestedBindings.interactionProfile);
+    suggestedBindings.suggestedBindings = bindings;
+    suggestedBindings.countSuggestedBindings = (uint32_t)std::size(bindings);
+    OPENXR_CHECK(xrSuggestInteractionProfileBindings(m_xrInstance, &suggestedBindings), "Failed to suggest bindings");
+
+    // Attach action set to session
+    XrSessionActionSetsAttachInfo attachInfo{ XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO };
+    attachInfo.countActionSets = 1;
+    attachInfo.actionSets = &m_actionSet;
+    OPENXR_CHECK(xrAttachSessionActionSets(m_session, &attachInfo), "Failed to attach action set");
 }
