@@ -67,6 +67,7 @@ int main() {
 
     PBMPMConstants pbmpmCurrConstants = scene.getPBMPMConstants();
     PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
+	float maxForceStrength = 10.0f;
 
     unsigned int renderOptions = 0;
 
@@ -128,16 +129,20 @@ int main() {
    //         pbmpmIterConstants.mouseActivation = 0;
    //     }
 
-        if (leftController.triggerValue > 0.8 || leftController.gripValue > 0.8) {
+        if (leftController.triggerValue > 0.05 || leftController.gripValue > 0.05) {
 			// enable mouse force
 			pbmpmIterConstants.mouseActivation = 1;
 
             // Pulling Fluid
-			if (leftController.triggerValue > 0.8) {
+			if (leftController.triggerValue > 0.05) {
                 pbmpmIterConstants.mouseFunction = 0;
+				pbmpmIterConstants.mouseStrength = maxForceStrength * leftController.triggerValue;
+				std::cout << "Trigger Value: " << pbmpmIterConstants.mouseStrength << std::endl;
 			}
-			if (leftController.gripValue > 0.8) {
+			if (leftController.gripValue > 0.05) {
 				pbmpmIterConstants.mouseFunction = 1;
+                pbmpmIterConstants.mouseStrength = maxForceStrength * leftController.gripValue;
+                std::cout << "Trigger Value: " << pbmpmIterConstants.mouseStrength << std::endl;
             }
 
             pbmpmIterConstants.mousePosition = XMFLOAT4(leftController.position.x,
@@ -152,7 +157,7 @@ int main() {
 
         //compute pbmpm + mesh shader
         context.startTimingQuery(context.getCommandList(PBMPM_G2P2G_COMPUTE_ID));
-        scene.compute(false);
+        scene.compute(true);
 
 		openXR.PollSystemEvents();
         openXR.PollEvents();

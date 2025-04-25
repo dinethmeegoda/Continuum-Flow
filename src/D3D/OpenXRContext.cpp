@@ -1153,6 +1153,7 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
         scene.drawSolidObjects();
         //scene.drawSpawners();
         scene.drawPBMPM();
+        scene.drawFluid(0, 0);
 
         EndRendering();
 

@@ -414,7 +414,7 @@ void PBMPMScene::createShapes() {
 		0, 0, 0, 0.5, 100));*/
 
 	// Water Cube
-	shapes.push_back(SimShape(0, { 32, 22, 32 }, 0, { 6, 6, 6 },
+	shapes.push_back(SimShape(0, { 32, 22, 32 }, 0, { 8, 8, 8 },
 		0, 3, 0, 0.6, 100));
 
 	// Drain
@@ -452,7 +452,7 @@ void PBMPMScene::createShapes() {
 		0, 0, 2, 0.1, 100));*/
 
 	// Visco Emitter
-	/*shapes.push_back(SimShape(0, { 16, 25, 16 }, 0, { 2, 2, 2 },
+	/*shapes.push_back(SimShape(0, { 32, 25, 32 }, 0, { 3, 3, 3 },
 		0, 0, 3, 0.7, 100));*/
 
 	// Snow Emitter (only particles, mesh doesn't work)
