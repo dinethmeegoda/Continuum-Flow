@@ -7,4 +7,4 @@
 "UAV(u0, space=0), " \
 "DescriptorTable(UAV(u1, numDescriptors=1)), " \
 "DescriptorTable(UAV(u2, numDescriptors=1)), " \
-"RootConstants(num32BitConstants=10, b0), " \
+"RootConstants(num32BitConstants=11, b0), " \

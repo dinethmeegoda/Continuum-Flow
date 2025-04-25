@@ -949,7 +949,7 @@ void OpenXRContext::DestroyReferenceSpace()
     OPENXR_CHECK(xrDestroySpace(m_localSpace), "Failed to destroy Space.")
 }
 
-void OpenXRContext::ApplyCameraMovement(float moveX, float moveZ, float velocity) {
+void OpenXRContext::ApplyCameraMovement(float moveX, float moveZ, float velocity, XrView* headsetView) {
     if (!m_camera) return;
 
     // Use headset's current rotation to get forward/right directions
@@ -968,11 +968,21 @@ void OpenXRContext::ApplyCameraMovement(float moveX, float moveZ, float velocity
 
     XMVECTOR movement = (-moveZ * forward + moveX * right) * velocity;
 
+    const XrVector3f& pos = headsetView->pose.position;
+
+    // Note: OpenXR uses right-handed system, and DirectXMath expects right-handed if we use RH variants
+    XMVECTOR headOffset = XMVectorSet(pos.x, pos.y, pos.z, 0.0f);
+
+	std::cout << "headset pos: " << pos.x << ", " << pos.y << ", " << pos.z << std::endl;
+
     // Update stored camera position
     XMVECTOR currentPos = XMLoadFloat3(&cameraWorldPosition);
+	//currentPos = XMVectorAdd(currentPos, headOffset);
     currentPos = XMVectorAdd(currentPos, movement);
     XMStoreFloat3(&cameraWorldPosition, currentPos);
-	m_camera->position = cameraWorldPosition;
+	m_camera->position = XMFLOAT3(scaleFactorInv * cameraWorldPosition.x, 
+                                scaleFactorInv * (cameraWorldPosition.y + pos.y + playerHeight),
+                                scaleFactorInv * cameraWorldPosition.z);
 }
 
 
@@ -1114,7 +1124,7 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
             // Use moveX and moveZ to update camera/player movement on X and Z axes
             float velocity = std::sqrt(moveState.currentState.x * moveState.currentState.x +
                 moveState.currentState.y * moveState.currentState.y) * deltaTime * speedScale;
-            ApplyCameraMovement(moveX, moveZ, velocity); // Adjust velocity as needed
+            ApplyCameraMovement(moveX, moveZ, velocity, &views[i]); // Adjust velocity as needed
         }
 
         // Check Left Trigger

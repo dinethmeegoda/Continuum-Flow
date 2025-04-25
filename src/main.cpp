@@ -15,8 +15,11 @@ int main() {
     //    return false;
     //}
 
+    // Create global descriptor heap
+	DescriptorHeap globalPBMPMHeap = DescriptorHeap(context, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 150, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+
         //initialize scene
-    Scene scene{ camera.get(), &context, OPENXR_CMDLIST_ID };
+    Scene scene{ camera.get(), &context, OPENXR_CMDLIST_ID, &globalPBMPMHeap };
 
     // Create Left Controller Data Struct
     OpenXRContext::LeftController leftController;
@@ -317,6 +320,7 @@ int main() {
 
     // Scene should release all resources, including their pipelines
     scene.releaseResources();
+    globalPBMPMHeap.releaseResources();
 
     //ImGui_ImplDX12_Shutdown();
     //ImGui_ImplWin32_Shutdown();

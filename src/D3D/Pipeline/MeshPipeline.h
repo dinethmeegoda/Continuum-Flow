@@ -5,7 +5,7 @@ class MeshPipeline : public Pipeline {
 public:
 	MeshPipeline() = delete;
 	MeshPipeline(std::string meshShaderName, std::string fragShaderName, std::string rootSignatureShaderName, DXContext& context,
-		CommandListID cmdID, D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int numberOfDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags);
+		CommandListID cmdID, DescriptorHeap* dHeap);
 
 	Shader& getMeshShader() { return meshShader; }
 

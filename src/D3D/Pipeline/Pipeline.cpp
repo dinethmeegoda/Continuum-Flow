@@ -1,8 +1,8 @@
 #include "Pipeline.h"
 
 Pipeline::Pipeline(std::string rootSignatureShaderName, DXContext& context, CommandListID cmdID,
-	D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int numberOfDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
-	: rootSignatureShader(rootSignatureShaderName), descriptorHeap(context, type, numberOfDescriptors, flags), cmdID(cmdID),
+	DescriptorHeap* dHeap)
+	: rootSignatureShader(rootSignatureShaderName), descriptorHeap(dHeap), cmdID(cmdID),
 	cmdList(context.getCommandList(cmdID))
 {
 	//context.resetCommandList(cmdID);
@@ -16,11 +16,10 @@ ComPointer<ID3D12RootSignature>& Pipeline::getRootSignature()
 
 DescriptorHeap* Pipeline::getDescriptorHeap()
 {
-	return &descriptorHeap;
+	return descriptorHeap;
 }
 
 void Pipeline::releaseResources()
 {
 	rootSignature.Release();
-	descriptorHeap.releaseResources();
 }

@@ -281,8 +281,8 @@ private:
     XrAction m_leftHandPoseAction{};
     XrSpace m_leftHandSpace{};
 
-    void ApplyCameraMovement(float moveX, float moveZ, float velocity);
-    XMFLOAT3 cameraWorldPosition = { 0.0f, 0.7f, 0.0f }; // default player eye height
+    void ApplyCameraMovement(float moveX, float moveZ, float velocity, XrView* view);
+    XMFLOAT3 cameraWorldPosition = { 0.0f, playerHeight, 0.0f }; // default player eye height
 
     LeftController &m_lc;
 

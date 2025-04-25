@@ -1,8 +1,8 @@
 #include "MeshPipeline.h"
 
 MeshPipeline::MeshPipeline(std::string meshShaderName, std::string fragShaderName, std::string rootSignatureShaderName, DXContext& context,
-    CommandListID cmdID, D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int numberOfDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
-	: Pipeline(rootSignatureShaderName, context, cmdID, type, numberOfDescriptors, flags), meshShader(meshShaderName), fragShader(fragShaderName)
+    CommandListID cmdID, DescriptorHeap* dHeap)
+	: Pipeline(rootSignatureShaderName, context, cmdID, dHeap), meshShader(meshShaderName), fragShader(fragShaderName)
 {
     // TODO: this should be in the base pipeline class (same for compute pipeline)
     createPSOD();
@@ -24,7 +24,9 @@ void MeshPipeline::createPSOD() {
     psod.NumRenderTargets = 1;
 
     // Depth-stencil format
-    psod.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+    //psod.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+    psod.DepthStencilState.DepthEnable = FALSE;
+    psod.DSVFormat = DXGI_FORMAT_UNKNOWN;
 
     // Other states
     psod.SampleDesc.Count = 1;

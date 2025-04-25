@@ -4,20 +4,13 @@
 PBMPMScene::PBMPMScene(DXContext* context, RenderPipeline* pipeline, bool* renderTogglesRef)
 	: Drawable(context, pipeline), context(context), renderPipeline(pipeline), renderToggles(renderTogglesRef),
 	modelMat(XMMatrixIdentity()),
-	g2p2gPipeline("g2p2gRootSignature.cso", "g2p2gComputeShader.cso", *context, CommandListID::PBMPM_G2P2G_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 40, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	bukkitCountPipeline("bukkitCountRootSignature.cso", "bukkitCountComputeShader.cso", *context, CommandListID::PBMPM_BUKKITCOUNT_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	bukkitAllocatePipeline("bukkitAllocateRootSignature.cso", "bukkitAllocateComputeShader.cso", *context, CommandListID::PBMPM_BUKKITALLOCATE_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	bukkitInsertPipeline("bukkitInsertRootSignature.cso", "bukkitInsertComputeShader.cso", *context, CommandListID::PBMPM_BUKKITINSERT_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	bufferClearPipeline("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::PBMPM_BUFFERCLEAR_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	emissionPipeline("particleEmitRootSignature.cso", "particleEmitComputeShader.cso", *context, CommandListID::PBMPM_EMISSION_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	setIndirectArgsPipeline("setIndirectArgsRootSignature.cso", "setIndirectArgsComputeShader.cso", *context, CommandListID::PBMPM_SET_INDIRECT_ARGS_COMPUTE_ID,
-		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE)
+	g2p2gPipeline("g2p2gRootSignature.cso", "g2p2gComputeShader.cso", *context, CommandListID::PBMPM_G2P2G_COMPUTE_ID, pipeline->getDescriptorHeap()),
+	bukkitCountPipeline("bukkitCountRootSignature.cso", "bukkitCountComputeShader.cso", *context, CommandListID::PBMPM_BUKKITCOUNT_COMPUTE_ID, pipeline->getDescriptorHeap()),
+	bukkitAllocatePipeline("bukkitAllocateRootSignature.cso", "bukkitAllocateComputeShader.cso", *context, CommandListID::PBMPM_BUKKITALLOCATE_COMPUTE_ID, pipeline->getDescriptorHeap()),
+	bukkitInsertPipeline("bukkitInsertRootSignature.cso", "bukkitInsertComputeShader.cso", *context, CommandListID::PBMPM_BUKKITINSERT_COMPUTE_ID, pipeline->getDescriptorHeap()),
+	bufferClearPipeline("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::PBMPM_BUFFERCLEAR_COMPUTE_ID, pipeline->getDescriptorHeap()),
+	emissionPipeline("particleEmitRootSignature.cso", "particleEmitComputeShader.cso", *context, CommandListID::PBMPM_EMISSION_COMPUTE_ID, pipeline->getDescriptorHeap()),
+	setIndirectArgsPipeline("setIndirectArgsRootSignature.cso", "setIndirectArgsComputeShader.cso", *context, CommandListID::PBMPM_SET_INDIRECT_ARGS_COMPUTE_ID, pipeline->getDescriptorHeap())
 {
 	g2p2gPipeline.getCommandList()->Close();
 	context->resetCommandList(CommandListID::PBMPM_G2P2G_COMPUTE_ID);
@@ -414,7 +407,7 @@ void PBMPMScene::createShapes() {
 		0, 0, 0, 0.5, 100));*/
 
 	// Water Cube
-	shapes.push_back(SimShape(0, { 32, 22, 32 }, 0, { 8, 8, 8 },
+	shapes.push_back(SimShape(0, { 8, 8, 8 }, 0, { 3, 3, 3 },
 		0, 3, 0, 0.6, 100));
 
 	// Drain

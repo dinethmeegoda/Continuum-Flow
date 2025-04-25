@@ -127,7 +127,7 @@ void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigne
     
     // copy vertexNormalBuffer to CPU side array for debugging
     //std::vector<XMFLOAT3> vertexNormals((gridConstants.gridDim.x + 1) * (gridConstants.gridDim.y + 1) * (gridConstants.gridDim.z + 1));
-    //surfaceVertexColorBuffer.copyDataFromGPU(*context, vertexNormals.data(), cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, fluidMeshPipeline->getCommandListID());
+    //surfaceHalfBlockDispatch.copyDataFromGPU(*context, vertexNormals.data(), cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, fluidMeshPipeline->getCommandListID());
 
     resetBuffers();
 }

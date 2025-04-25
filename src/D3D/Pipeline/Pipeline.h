@@ -10,7 +10,7 @@ class Pipeline {
 public:
 	Pipeline() = delete;
 	Pipeline(std::string rootSignatureShaderName, DXContext& context, CommandListID cmdID,
-		D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int numberOfDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags);
+		DescriptorHeap* dHeap);
 	~Pipeline() = default;
 
 	virtual void createPSOD() = 0;
@@ -28,7 +28,7 @@ protected:
 	Shader rootSignatureShader;
 
 	ComPointer<ID3D12RootSignature> rootSignature;
-	DescriptorHeap descriptorHeap;
+	DescriptorHeap* descriptorHeap;
 	ComPointer<ID3D12PipelineState> pso;
 	CommandListID cmdID;
 

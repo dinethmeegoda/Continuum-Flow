@@ -130,9 +130,37 @@ int cellEdgeToBlockEdge(int localCellIdx1d, int localEdgeIdx, int halfBlockIndex
     return edgeOffsets[localEdgeIdx] + dimensionOffset;    
 }
 
+static float playerHeight = 0.5f; // Height of the player in meters, keep consistent with Drawable.h
+static float playerScale = 0.05f; // Scale factor for the player height
+
 [outputtopology("triangle")]
-// Each workgroup represents half a block of cells. (To appease mesh shading limits on output number of prims/verts)
-// Each thread will represent a single cell (not necessarily a surface cell), but process multiple edges.
+//[numthreads(1, 1, 1)]
+//void main(
+//    uint3 dispatchThreadID : SV_DispatchThreadID,
+//    out indices uint3 tris[1],
+//    out vertices VertexOutput verts[3]
+//)
+//{
+//    //if (dispatchThreadID.x >= 1) return; // Emit only 1 triangle
+//
+//	float offset = dispatchThreadID.x * 0.2f;
+//
+//    // Triangle in NDC space
+//    verts[0].clipPos = float4(-0.5f + offset, -0.5f, 0.0f, 1.0f);
+//    verts[1].clipPos = float4(0.5f + offset, -0.5f, 0.0f, 1.0f);
+//    verts[2].clipPos = float4(0.0f + offset, 0.5f, 0.0f, 1.0f);
+//
+//    // Simple solid color
+//    verts[0].color = float4(1, 0, 0, 1);
+//    verts[1].color = float4(0, 1, 0, 1);
+//    verts[2].color = float4(0, 0, 1, 1);
+//
+//    // Define one triangle
+//    tris[0] = uint3(0, 1, 2);
+//    SetMeshOutputCounts(3, 1);
+//}
+ //Each workgroup represents half a block of cells. (To appease mesh shading limits on output number of prims/verts)
+ //Each thread will represent a single cell (not necessarily a surface cell), but process multiple edges.
 [numthreads(HALFBLOCK_CELLS_X, HALFBLOCK_CELLS_Y, HALFBLOCK_CELLS_Z)]
 void main(
     uint3 localThreadId : SV_GroupThreadID, 
@@ -190,7 +218,7 @@ void main(
 		float4 vertexColors[2] = getVertexColors(vertexIndices);
         
         float t = interpolateDensity(density0, density1);
-        float3 vertPosWorld = cb.minBounds + cb.resolution * lerp(float3(vertexIndices[0]), float3(vertexIndices[1]), t);
+        float3 vertPosWorld = (cb.minBounds + cb.resolution * lerp(float3(vertexIndices[0]), float3(vertexIndices[1]), t)) * playerScale - float3(0, playerHeight, 0);
         float4 vertPosClip = mul(cb.viewProj, float4(vertPosWorld, 1.0));
         float3 vertNormal = normalize(lerp(vertexNormals[0], vertexNormals[1], t));
 		float4 vertColor = lerp(vertexColors[0], vertexColors[1], t);
