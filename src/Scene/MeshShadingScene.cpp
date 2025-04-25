@@ -1,5 +1,6 @@
 #include "MeshShadingScene.h"
 #include "SceneConstants.h"
+#include <iostream>
 
 MeshShadingScene::MeshShadingScene(DXContext* context, 
                        RenderPipeline* pipeline, 
@@ -40,6 +41,10 @@ void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigne
 	gridConstants.material = material;
     
     int renderOptions = packBytes(material, toonShadingLevels, 0, 0);
+
+	// Print the camera's position, forward, right, and up vectors
+	std::cout << "Camera Position: " << camera->getPosition().x << ", " << camera->getPosition().y << ", " << camera->getPosition().z << std::endl;
+	std::cout << "Camera Forward: " << camera->getForward().x << ", " << camera->getForward().y << ", " << camera->getForward().z << std::endl;
 
     auto cmdList = fluidMeshPipeline->getCommandList();
     MeshShadingConstants meshShadingConstants = { camera->getViewProjMat(), gridConstants.gridDim, gridConstants.resolution, gridConstants.minBounds,
@@ -120,6 +125,10 @@ void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigne
 
     context->resetCommandList(fluidMeshPipeline->getCommandListID());
     
+    // copy vertexNormalBuffer to CPU side array for debugging
+    //std::vector<XMFLOAT3> vertexNormals((gridConstants.gridDim.x + 1) * (gridConstants.gridDim.y + 1) * (gridConstants.gridDim.z + 1));
+    //surfaceVertexColorBuffer.copyDataFromGPU(*context, vertexNormals.data(), cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, fluidMeshPipeline->getCommandListID());
+
     resetBuffers();
 }
 

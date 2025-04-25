@@ -528,6 +528,16 @@ void OpenXRContext::UpdateCameraProjectionMatrix(XrView headsetView) {
         // Transform from local (camera) space to world
         XMMATRIX cameraWorld = XMMatrixRotationQuaternion(orientation) * XMMatrixTranslationFromVector(worldPos);
 
+        // Transform basis vectors from camera space to world space
+        XMVECTOR forward = XMVector3Normalize(XMVector3TransformNormal(XMVectorSet(0, 0, -1, 0), cameraWorld));
+        XMVECTOR up = XMVector3Normalize(XMVector3TransformNormal(XMVectorSet(0, 1, 0, 0), cameraWorld));
+        XMVECTOR right = XMVector3Normalize(XMVector3TransformNormal(XMVectorSet(1, 0, 0, 0), cameraWorld));
+
+        // Store in camera object
+        XMStoreFloat3(&m_camera->forward, forward);
+        XMStoreFloat3(&m_camera->up, up);
+        XMStoreFloat3(&m_camera->right, right);
+
         // Invert to get view matrix (world -> camera space)
         view = XMMatrixInverse(nullptr, cameraWorld);
     }
@@ -962,6 +972,7 @@ void OpenXRContext::ApplyCameraMovement(float moveX, float moveZ, float velocity
     XMVECTOR currentPos = XMLoadFloat3(&cameraWorldPosition);
     currentPos = XMVectorAdd(currentPos, movement);
     XMStoreFloat3(&cameraWorldPosition, currentPos);
+	m_camera->position = cameraWorldPosition;
 }
 
 

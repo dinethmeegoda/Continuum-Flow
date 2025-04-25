@@ -27,7 +27,7 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID)
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	fluidSurfaceVertexNormalCP("SurfaceVertexNormalsRootSig.cso", "SurfaceVertexNormals.cso", *context, CommandListID::FLUID_SURFACE_VERTEX_NORMAL_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
-	fluidMeshPipeline("ConstructMeshShader.cso", "ConstructSurfaceShader.cso", "ConstructMeshRootSig.cso", *context, CommandListID::FLUID_MESH_ID,
+	fluidMeshPipeline("ConstructMeshShader.cso", "ConstructSurfaceShader.cso", "ConstructMeshRootSig.cso", *context, renderID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	fluidBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::FLUID_BUFFER_CLEAR_COMPUTE_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),

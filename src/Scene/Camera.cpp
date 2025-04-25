@@ -50,14 +50,14 @@ void Camera::updateViewMat() {
 	// Use XMMatrixLookToLH to create a view matrix
 	XMMATRIX V = XMMatrixLookToLH(XMLoadFloat3(&position), XMLoadFloat3(&forward), XMLoadFloat3(&up));
 	XMStoreFloat4x4(&viewMat, V);
-	XMStoreFloat4x4(&viewProjMat, XMLoadFloat4x4(&projMat) * XMLoadFloat4x4(&viewMat));
+	XMStoreFloat4x4(&viewProjMat, XMLoadFloat4x4(&viewMat) * XMLoadFloat4x4(&projMat));
 }
 
 void Camera::updateProjMat() {
 	XMMATRIX P = XMMatrixPerspectiveFovLH(FOVY, aspect, nearPlane, farPlane);
 	XMStoreFloat4x4(&projMat, P);
 
-	XMStoreFloat4x4(&viewProjMat, XMLoadFloat4x4(&projMat) * XMLoadFloat4x4(&viewMat));
+	XMStoreFloat4x4(&viewProjMat, XMLoadFloat4x4(&viewMat) * XMLoadFloat4x4(&projMat));
 }
 
 XMMATRIX Camera::getViewMat() {

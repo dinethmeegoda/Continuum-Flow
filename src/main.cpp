@@ -137,12 +137,12 @@ int main() {
 			if (leftController.triggerValue > 0.05) {
                 pbmpmIterConstants.mouseFunction = 0;
 				pbmpmIterConstants.mouseStrength = maxForceStrength * leftController.triggerValue;
-				std::cout << "Trigger Value: " << pbmpmIterConstants.mouseStrength << std::endl;
+				//std::cout << "Trigger Value: " << pbmpmIterConstants.mouseStrength << std::endl;
 			}
 			if (leftController.gripValue > 0.05) {
 				pbmpmIterConstants.mouseFunction = 1;
                 pbmpmIterConstants.mouseStrength = maxForceStrength * leftController.gripValue;
-                std::cout << "Trigger Value: " << pbmpmIterConstants.mouseStrength << std::endl;
+                //std::cout << "Trigger Value: " << pbmpmIterConstants.mouseStrength << std::endl;
             }
 
             pbmpmIterConstants.mousePosition = XMFLOAT4(leftController.position.x,
