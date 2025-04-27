@@ -31,6 +31,7 @@ public:
 	void drawGrid();
 	void drawSpawners();
 	void drawSolidObjects();
+	void drawLasers(XMMATRIX* leftLaser);
 
 	void releaseResources();
 
@@ -74,6 +75,7 @@ private:
 	ObjectScene objectSceneSpawners;
 	RenderPipeline objectRPSolid;
 	ObjectScene objectSceneSolid;
+	ObjectScene laserScene;
 
 	// Fluid Mesh
 	RenderPipeline fluidRP;

@@ -4,6 +4,9 @@
 ObjectScene::ObjectScene(DXContext* context, RenderPipeline* pipeline, std::vector<SimShape>& shapes, int renderWireframe)
 	: Drawable(context, pipeline), shapes(shapes)
 {
+    if (renderWireframe == 0) {
+        constructSceneSolid();
+    }
     if (renderWireframe == 1) {
         constructSceneGrid();
     }
@@ -11,7 +14,7 @@ ObjectScene::ObjectScene(DXContext* context, RenderPipeline* pipeline, std::vect
 		constructSceneSpawners();
 	}
     else {
-        constructSceneSolid();
+        constructLasers();
     }
 }
 
@@ -96,8 +99,8 @@ void ObjectScene::constructSceneSolid() {
 
     XMFLOAT4X4 groundModelMatrix;
     XMStoreFloat4x4(&groundModelMatrix, XMMatrixMultiply(
-        XMMatrixScaling(1.1f * GRID_WIDTH * scaleFactor, 1.f * scaleFactor, 1.1f * GRID_DEPTH * scaleFactor),
-        XMMatrixTranslation(-0.05f * GRID_WIDTH * scaleFactor, 0.2f * scaleFactor - playerHeight, -0.05f * GRID_DEPTH * scaleFactor)
+        XMMatrixScaling(1.1f * GRID_WIDTH, 1.f, 1.1f * GRID_DEPTH),
+        XMMatrixTranslation(-0.05f * GRID_WIDTH, 0.2f, -0.05f * GRID_DEPTH)
     ));
     modelMatrices.push_back(groundModelMatrix);
 
@@ -113,8 +116,8 @@ void ObjectScene::constructSceneSolid() {
 
             XMFLOAT4X4 simShapeMatrix;
             XMStoreFloat4x4(&simShapeMatrix, XMMatrixMultiply(
-                XMMatrixScaling(shape.halfSize.x * 2 * scaleFactor, shape.halfSize.y * 2 * scaleFactor, shape.halfSize.z * 2 * scaleFactor),
-                XMMatrixTranslation((shape.position.x - shape.halfSize.x) * scaleFactor, (shape.position.y - shape.halfSize.y) * scaleFactor - playerHeight, (shape.position.z - shape.halfSize.z) * scaleFactor)
+                XMMatrixScaling(shape.halfSize.x * 2, shape.halfSize.y * 2, shape.halfSize.z * 2),
+                XMMatrixTranslation((shape.position.x - shape.halfSize.x), (shape.position.y - shape.halfSize.y), (shape.position.z - shape.halfSize.z))
             ));
             modelMatrices.push_back(simShapeMatrix);
         }
@@ -135,6 +138,21 @@ void ObjectScene::constructSceneSolid() {
         meshes.push_back(newMesh);
         sceneSize += newMesh.getNumTriangles();
     }
+}
+
+void ObjectScene::constructLasers() {
+    //cube for ground
+    std::vector<std::string> inputStrings;
+    inputStrings.push_back("objs\\cube.obj");
+
+    // vector for colors of grid lines
+    std::vector<XMFLOAT3> colors = { XMFLOAT3(LASER_COLOR) };
+
+    //push ground as solid
+    auto string = inputStrings.front();
+    Mesh newMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, XMFLOAT4X4(), false, colors.front());
+    meshes.push_back(newMesh);
+    sceneSize += newMesh.getNumTriangles();
 }
 
 void ObjectScene::draw(Camera* camera) {
@@ -166,6 +184,40 @@ void ObjectScene::draw(Camera* camera) {
         cmdList->SetGraphicsRoot32BitConstants(0, 16, &viewMat, 0);
         cmdList->SetGraphicsRoot32BitConstants(0, 16, &projMat, 16);
         cmdList->SetGraphicsRoot32BitConstants(0, 16, m.getModelMatrix(), 32);
+        cmdList->SetGraphicsRoot32BitConstants(0, 3, m.getColor(), 48);
+        cmdList->DrawIndexedInstanced(m.getNumTriangles() * 3, 1, 0, 0, 0);
+    }
+}
+
+void ObjectScene::drawLasers(Camera* camera, XMMATRIX* leftLaser) {
+    for (Mesh m : meshes) {
+        // == IA ==
+        auto cmdList = renderPipeline->getCommandList();
+        cmdList->IASetVertexBuffers(0, 1, m.getVBV());
+        cmdList->IASetIndexBuffer(m.getIBV());
+
+        if (m.getIsWireframe()) {
+            cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_LINELIST);
+        }
+        else {
+            cmdList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        }
+
+        // == PSO ==
+        cmdList->SetPipelineState(renderPipeline->getPSO());
+        cmdList->SetGraphicsRootSignature(renderPipeline->getRootSignature());
+
+        // == ROOT ==
+        ID3D12DescriptorHeap* descriptorHeaps[] = { renderPipeline->getDescriptorHeap()->GetAddress() };
+        if (instanced) {
+            cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
+        }
+
+        auto viewMat = camera->getViewMat();
+        auto projMat = camera->getProjMat();
+        cmdList->SetGraphicsRoot32BitConstants(0, 16, &viewMat, 0);
+        cmdList->SetGraphicsRoot32BitConstants(0, 16, &projMat, 16);
+        cmdList->SetGraphicsRoot32BitConstants(0, 16, leftLaser, 32);
         cmdList->SetGraphicsRoot32BitConstants(0, 3, m.getColor(), 48);
         cmdList->DrawIndexedInstanced(m.getNumTriangles() * 3, 1, 0, 0, 0);
     }

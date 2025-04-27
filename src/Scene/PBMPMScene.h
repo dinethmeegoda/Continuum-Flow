@@ -16,7 +16,7 @@ const unsigned int GridDispatchSize = 8;
 const unsigned int BukkitSize = 2;
 const unsigned int BukkitHaloSize = 1;
 
-const float PARTICLE_RADIUS = 0.02f;
+const float PARTICLE_RADIUS = 0.4f;
 
 const unsigned int maxParticles = 500000;
 const unsigned int maxTimestampCount = 2048;

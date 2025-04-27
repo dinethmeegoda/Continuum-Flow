@@ -9,6 +9,7 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID, Descr
 	objectSceneSpawners(context, &objectRPWire, pbmpmScene.getSimShapes(), 2), 
 	objectRPSolid("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID, dHeap),
 	objectSceneSolid(context, &objectRPSolid, pbmpmScene.getSimShapes(), 0),
+	laserScene(context, &objectRPWire, pbmpmScene.getSimShapes(), 3),
 	// Fluid Mesh Shader Pipeline Construction
 	fluidRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID, dHeap),
 	fluidBilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::FLUID_BILEVEL_UNIFORM_GRID_COMPUTE_ID, dHeap),
@@ -196,6 +197,10 @@ void Scene::drawSpawners() {
 
 void Scene::drawSolidObjects() {
 	objectSceneSolid.draw(camera);
+}
+
+void Scene::drawLasers(XMMATRIX* leftLaser) {
+	laserScene.drawLasers(camera, leftLaser);
 }
 
 void Scene::releaseResources() {

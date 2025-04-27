@@ -218,7 +218,7 @@ void main(
 		float4 vertexColors[2] = getVertexColors(vertexIndices);
         
         float t = interpolateDensity(density0, density1);
-        float3 vertPosWorld = (cb.minBounds + cb.resolution * lerp(float3(vertexIndices[0]), float3(vertexIndices[1]), t)) * playerScale - float3(0, playerHeight, 0);
+        float3 vertPosWorld = cb.minBounds + cb.resolution * lerp(float3(vertexIndices[0]), float3(vertexIndices[1]), t);
         float4 vertPosClip = mul(cb.viewProj, float4(vertPosWorld, 1.0));
         float3 vertNormal = normalize(lerp(vertexNormals[0], vertexNormals[1], t));
 		float4 vertColor = lerp(vertexColors[0], vertexColors[1], t);

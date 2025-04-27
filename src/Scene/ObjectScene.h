@@ -14,8 +14,10 @@ public:
 	void constructSceneGrid();
 	void constructSceneSpawners();
 	void constructSceneSolid();
+	void constructLasers();
 
 	void draw(Camera* camera);
+	void drawLasers(Camera* camera, XMMATRIX* leftLaser);
 
 	size_t getSceneSize();
 

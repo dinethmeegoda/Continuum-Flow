@@ -282,7 +282,7 @@ private:
     XrSpace m_leftHandSpace{};
 
     void ApplyCameraMovement(float moveX, float moveZ, float velocity, XrView* view);
-    XMFLOAT3 cameraWorldPosition = { 0.0f, playerHeight, 0.0f }; // default player eye height
+    XMFLOAT3 baseCameraPosition;
 
     LeftController &m_lc;
 

@@ -520,8 +520,8 @@ void OpenXRContext::UpdateCameraProjectionMatrix(XrView headsetView) {
         const XrQuaternionf& rot = headsetView.pose.orientation;
 
         // Note: OpenXR uses right-handed system, and DirectXMath expects right-handed if we use RH variants
-        XMVECTOR headOffset = XMVectorSet(pos.x, pos.y, pos.z, 0.0f);
-        XMVECTOR position = XMLoadFloat3(&cameraWorldPosition);
+        XMVECTOR headOffset = XMVectorSet(pos.x * scaleFactor, pos.y * scaleFactor, pos.z * scaleFactor, 0.0f);
+        XMVECTOR position = XMLoadFloat3(&baseCameraPosition);
         XMVECTOR worldPos = XMVectorAdd(position, headOffset);
         XMVECTOR orientation = XMVectorSet(rot.x, rot.y, rot.z, rot.w);
 
@@ -540,6 +540,9 @@ void OpenXRContext::UpdateCameraProjectionMatrix(XrView headsetView) {
 
         // Invert to get view matrix (world -> camera space)
         view = XMMatrixInverse(nullptr, cameraWorld);
+
+		// Store camera position
+		XMStoreFloat3(&m_camera->position, worldPos);
     }
 
     // Store results in camera
@@ -549,7 +552,7 @@ void OpenXRContext::UpdateCameraProjectionMatrix(XrView headsetView) {
 
 OpenXRContext::OpenXRContext(ID3D12GraphicsCommandList6* cmdList, 
     DXContext* context, CommandListID commandListID, Camera* camera, LeftController &lc): 
-    m_cmdList(cmdList), m_dxContext(context), cmdListID(commandListID), m_camera(camera), m_lc(lc) {
+    m_cmdList(cmdList), m_dxContext(context), cmdListID(commandListID), m_camera(camera), m_lc(lc), baseCameraPosition(camera->getPosition()) {
 }
 
 OpenXRContext::~OpenXRContext() {
@@ -973,16 +976,14 @@ void OpenXRContext::ApplyCameraMovement(float moveX, float moveZ, float velocity
     // Note: OpenXR uses right-handed system, and DirectXMath expects right-handed if we use RH variants
     XMVECTOR headOffset = XMVectorSet(pos.x, pos.y, pos.z, 0.0f);
 
-	std::cout << "headset pos: " << pos.x << ", " << pos.y << ", " << pos.z << std::endl;
-
     // Update stored camera position
-    XMVECTOR currentPos = XMLoadFloat3(&cameraWorldPosition);
+    XMVECTOR currentPos = XMLoadFloat3(&baseCameraPosition);
 	//currentPos = XMVectorAdd(currentPos, headOffset);
     currentPos = XMVectorAdd(currentPos, movement);
-    XMStoreFloat3(&cameraWorldPosition, currentPos);
-	m_camera->position = XMFLOAT3(scaleFactorInv * cameraWorldPosition.x, 
+    XMStoreFloat3(&baseCameraPosition, currentPos);
+	/*m_camera->position = XMFLOAT3(scaleFactorInv * cameraWorldPosition.x, 
                                 scaleFactorInv * (cameraWorldPosition.y + pos.y + playerHeight),
-                                scaleFactorInv * cameraWorldPosition.z);
+                                scaleFactorInv * cameraWorldPosition.z);*/
 }
 
 
@@ -1119,8 +1120,8 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
             float moveX = moveState.currentState.x;
             float moveZ = moveState.currentState.y;
 
-            float deltaTime = 0.01;
-            float speedScale = 5;
+            float deltaTime = 0.02;
+            float speedScale = scaleFactor;
             // Use moveX and moveZ to update camera/player movement on X and Z axes
             float velocity = std::sqrt(moveState.currentState.x * moveState.currentState.x +
                 moveState.currentState.y * moveState.currentState.y) * deltaTime * speedScale;
@@ -1150,25 +1151,37 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
             if (triggerState.isActive) {
                 m_lc.triggerValue = triggerState.currentState;
             }
+        }
 
-            XrSpaceLocation leftHandLocation{ XR_TYPE_SPACE_LOCATION };
-            XrSpaceLocationFlags requiredFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
 
-            XrResult result = xrLocateSpace(m_leftHandSpace, m_localSpace, renderLayerInfo.predictedDisplayTime, &leftHandLocation);
-            if (XR_SUCCEEDED(result) && (leftHandLocation.locationFlags & requiredFlags) == requiredFlags) {
-                const XrPosef& pose = leftHandLocation.pose;
+        XrSpaceLocation leftHandLocation{ XR_TYPE_SPACE_LOCATION };
+        XrSpaceLocationFlags requiredFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
 
-                // World-space position of the controller
-                m_lc.position = { (pose.position.x + cameraWorldPosition.x) * scaleFactorInv, (pose.position.y + cameraWorldPosition.y + playerHeight) * scaleFactorInv, (pose.position.z + cameraWorldPosition.z) * scaleFactorInv };
-                
-                // Orientation -> direction (as covered earlier)
-                XMVECTOR orientation = XMVectorSet(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
-                XMVECTOR localForward = XMVectorSet(0, 0, -1, 0);
-                XMVECTOR worldForward = XMVector3Rotate(localForward, orientation);
-                worldForward = XMVector3Normalize(worldForward);
+        XrResult result = xrLocateSpace(m_leftHandSpace, m_localSpace, renderLayerInfo.predictedDisplayTime, &leftHandLocation);
+        if (XR_SUCCEEDED(result) && (leftHandLocation.locationFlags & requiredFlags) == requiredFlags) {
+            const XrPosef& pose = leftHandLocation.pose;
 
-                XMStoreFloat3(&m_lc.forward, worldForward);
-            }
+            auto cameraWorldPosition = baseCameraPosition;
+
+            // World-space position of the controller
+            m_lc.position = { (pose.position.x * scaleFactor + cameraWorldPosition.x), (pose.position.y * scaleFactor + cameraWorldPosition.y), (pose.position.z * scaleFactor + cameraWorldPosition.z) };
+
+            std::cout << "controller pos: " << m_lc.position.x << ", " << m_lc.position.y << ", " << m_lc.position.z << std::endl;
+
+            // Orientation -> direction
+            XMVECTOR orientation = XMVectorSet(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+            XMVECTOR localForward = XMVectorSet(0, 0, -1, 0);
+            XMVECTOR worldForward = XMVector3Rotate(localForward, orientation);
+            worldForward = XMVector3Normalize(worldForward);
+
+            XMStoreFloat3(&m_lc.forward, worldForward);
+
+            // Create a model matrix for a very tall thin cube, then rotate it by the controller's orientation.
+            XMMATRIX modelMatrix = XMMatrixScaling(0.01f, 0.01f, 10.f) *
+                //XMMatrixRotationQuaternion(worldForward) * 
+                XMMatrixTranslation(m_lc.position.x, m_lc.position.y, m_lc.position.z);
+
+            scene.drawLasers(&modelMatrix);
         }
 
         scene.drawSolidObjects();
