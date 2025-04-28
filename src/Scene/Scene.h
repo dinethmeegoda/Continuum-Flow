@@ -11,7 +11,6 @@ class Scene {
 public:
 	Scene() = delete;
 	Scene(Camera* camera, DXContext* context, CommandListID renderID, DescriptorHeap* dHeap);
-
 	RenderPipeline* getObjectWirePipeline();
 	RenderPipeline* getObjectSolidPipeline();
 	RenderPipeline* getPBMPMRenderPipeline();
@@ -76,6 +75,7 @@ private:
 	ObjectScene objectSceneSolid;
 
 	// Fluid Mesh
+	
 	RenderPipeline fluidRP;
 	ComputePipeline fluidBilevelUniformGridCP;
 	ComputePipeline fluidSurfaceBlockDetectionCP;
@@ -138,7 +138,4 @@ private:
 	ComputePipeline snowBufferClearCP;
 	MeshPipeline snowMeshPipeline;
 	MeshShadingScene snowScene;*/
-
-	RenderPipeline* currentRP;
-	ComputePipeline* currentCP;
 };

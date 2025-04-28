@@ -40,9 +40,9 @@ void ShutdownManager::Shutdown() {
     pbmpmDescriptorHeap->releaseResources();
 	pbmpmDescriptorHeap.reset();
 
+    Window::get().shutdown();
+
     context->flush(1);
     context.reset();
     debugLayer.reset();
-
-    Window::get().shutdown();
 }

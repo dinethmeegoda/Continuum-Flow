@@ -48,7 +48,7 @@ int main() {
     //openXR.CreateSwapchains();
 
     //initialize ImGUI
-    //ImGuiIO& io = initImGUI(context);
+    ImGuiIO& io = initImGUI(*context);
 
     //set mouse to use the window
     mouse->SetWindow(Window::get().getHWND());
@@ -152,7 +152,7 @@ int main() {
 
              //compute pbmpm + mesh shader
              //context.startTimingQuery(context.getCommandList(PBMPM_G2P2G_COMPUTE_ID));
-        //     scene.compute(renderModeType != 2);
+             scene->compute(renderModeType != 2);
 
         //	  openXR.PollSystemEvents();
         //     openXR.PollEvents();
@@ -172,7 +172,7 @@ int main() {
 
 
                  //get pipelines
-        auto renderPipeline = scene->getPBMPMRenderPipeline();
+        auto renderPipeline = scene->getObjectSolidPipeline();
         //      auto fluidMeshPipeline = scene.getFluidMeshPipeline();
               //auto elasticMeshPipeline = scene.getElasticMeshPipeline();
               //auto viscoMeshPipeline = scene.getViscoMeshPipeline();
@@ -196,24 +196,23 @@ int main() {
         //if (renderGrid) scene.drawGrid();
         //if (renderSpawn) scene.drawSpawners();
         scene->drawSolidObjects();
-        context->executeCommandList(renderPipeline->getCommandListID());
 
         //particles + imgui render pass
         //Window::get().setRT(renderPipeline->getCommandList());
         //Window::get().setViewport(vp, renderPipeline->getCommandList());
         // Only draw particles if we are not in the mesh shading mode
         if (renderModeType != 0) {
-            //scene.drawPBMPM();
+            scene->drawPBMPM();
         }
 
-        /*//fluid mesh render pass
-        if (scene.renderToggles[0]) {
-            Window::get().setRT(fluidMeshPipeline->getCommandList());
-            Window::get().setViewport(vp, fluidMeshPipeline->getCommandList());
-            if (renderModeType != 2) scene.drawFluid(meshletRenderType, toonShadingLevels);
-            context.executeCommandList(fluidMeshPipeline->getCommandListID());
+        //fluid mesh render pass
+        if (scene->renderToggles[0]) {
+            if (renderModeType != 2) scene->drawFluid(meshletRenderType, toonShadingLevels);
         }
+        context->executeCommandList(renderPipeline->getCommandListID());
+		context->resetCommandList(renderPipeline->getCommandListID());
 
+        /*
         // elastic mesh render pass
         if (scene.renderToggles[1]) {
             Window::get().setRT(elasticMeshPipeline->getCommandList());
@@ -247,34 +246,36 @@ int main() {
         }*/
 
         //set up ImGUI for frame
-  //      ImGui_ImplDX12_NewFrame();
-  //      ImGui_ImplWin32_NewFrame();
-  //      ImGui::NewFrame();
+        Window::get().setRT(renderPipeline->getCommandList());
+        Window::get().setViewport(vp, renderPipeline->getCommandList());
+        ImGui_ImplDX12_NewFrame();
+        ImGui_ImplWin32_NewFrame();
+        ImGui::NewFrame();
 
-  //      //draw ImGUI
-        //drawImGUIWindow(pbmpmIterConstants, io,
-  //          scene.getFluidIsovalue(), 
-  //          scene.getFluidKernelScale(), 
-  //          scene.getFluidKernelRadius(),
-        //	scene.getElasticIsovalue(),
-        //	scene.getElasticKernelScale(),
-        //	scene.getElasticKernelRadius(),
-        //	scene.getSandIsovalue(),
-        //	scene.getSandKernelScale(),
-        //	scene.getSandKernelRadius(),
-  //          scene.getViscoIsovalue(),
-  //          scene.getViscoKernelScale(),
-  //          scene.getViscoKernelRadius(),
-  //          scene.getPBMPMSubstepCount(),
-  //          scene.getNumParticles());
+        //draw ImGUI
+        drawImGUIWindow(pbmpmIterConstants, io,
+            scene->getFluidIsovalue(), 
+            scene->getFluidKernelScale(), 
+            scene->getFluidKernelRadius(),
+        	scene->getElasticIsovalue(),
+        	scene->getElasticKernelScale(),
+        	scene->getElasticKernelRadius(),
+        	scene->getSandIsovalue(),
+        	scene->getSandKernelScale(),
+        	scene->getSandKernelRadius(),
+            scene->getViscoIsovalue(),
+            scene->getViscoKernelScale(),
+            scene->getViscoKernelRadius(),
+            scene->getPBMPMSubstepCount(),
+            scene->getNumParticles());
 
-  //      //render ImGUI
-  //      ImGui::Render();
+        //render ImGUI
+        ImGui::Render();
 
-  //      renderPipeline->getCommandList()->SetDescriptorHeaps(1, &imguiSRVHeap);
-  //      ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), renderPipeline->getCommandList());
+        renderPipeline->getCommandList()->SetDescriptorHeaps(1, &imguiSRVHeap);
+        ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), renderPipeline->getCommandList());
 
-  //      context.executeCommandList(renderPipeline->getCommandListID());
+        context->executeCommandList(renderPipeline->getCommandListID());
 
         // reset the first pipeline so it can end the frame
         context->resetCommandList(renderPipeline->getCommandListID());
@@ -316,10 +317,10 @@ int main() {
         debugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
     }
 
-    //ImGui_ImplDX12_Shutdown();
-    //ImGui_ImplWin32_Shutdown();
-    //ImGui::DestroyContext();
-    //imguiSRVHeap->Release();
+    ImGui_ImplDX12_Shutdown();
+    ImGui_ImplWin32_Shutdown();
+    ImGui::DestroyContext();
+    imguiSRVHeap->Release();
 
     /*openXR.DestroySwapchains();
     openXR.DestroyReferenceSpace();

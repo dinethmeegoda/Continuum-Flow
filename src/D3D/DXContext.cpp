@@ -51,7 +51,7 @@ DXContext::DXContext() {
 
 DXContext::~DXContext() {
     // 1. Make sure GPU is idle first
-    flush(1); // or flush(FRAME_COUNT) if you have multiple frames
+    flush(2); // or flush(FRAME_COUNT) if you have multiple frames
 
     // 2. Reset command lists (optional, but safest)
     for (auto& cmdList : cmdLists) {

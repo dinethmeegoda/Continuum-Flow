@@ -1,7 +1,7 @@
 #include "Scene.h"
 
 Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID, DescriptorHeap* dHeap)
-	:  camera(p_camera),
+	: camera(p_camera),
 	pbmpmRP("PBMPMVertexShader.cso", "PBMPMPixelShader.cso", "PBMPMRootSignature.cso", *context, renderID, dHeap),
 	pbmpmScene(context, &pbmpmRP, renderToggles),
 	objectRPWire("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID, dHeap),
@@ -10,6 +10,7 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID, Descr
 	objectRPSolid("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID, dHeap),
 	objectSceneSolid(context, &objectRPSolid, pbmpmScene.getSimShapes(), 0),
 	// Fluid Mesh Shader Pipeline Construction
+	
 	fluidRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID, dHeap),
 	fluidBilevelUniformGridCP("BilevelUniformGridRootSig.cso", "BilevelUniformGrid.cso", *context, CommandListID::FLUID_BILEVEL_UNIFORM_GRID_COMPUTE_ID, dHeap),
 	fluidSurfaceBlockDetectionCP("SurfaceBlockDetectionRootSig.cso", "SurfaceBlockDetection.cso", *context, CommandListID::FLUID_SURFACE_BLOCK_DETECTION_COMPUTE_ID, dHeap),
@@ -21,7 +22,7 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID, Descr
 	fluidBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::FLUID_BUFFER_CLEAR_COMPUTE_ID, dHeap),
 	fluidDispatchArgDivideCP("DispatchArgDivideRootSig.cso", "DispatchArgDivide.cso", *context, CommandListID::FLUID_DISPATCH_ARG_DIVIDE_COMPUTE_ID, dHeap),
 	fluidScene(context, &fluidRP, &fluidBilevelUniformGridCP, &fluidSurfaceBlockDetectionCP, &fluidSurfaceCellDetectionCP, &fluidSurfaceVertexCompactionCP, 
-		&fluidSurfaceVertexDensityCP, &fluidSurfaceVertexNormalCP, &fluidBufferClearCP, &fluidDispatchArgDivideCP, &fluidMeshPipeline, 0, 0.089, 1.8, 1.032),
+		&fluidSurfaceVertexDensityCP, &fluidSurfaceVertexNormalCP, &fluidBufferClearCP, &fluidDispatchArgDivideCP, &fluidMeshPipeline, 0, 2.522, 0.223, 2.249),
 
 	// Elastic Mesh Shader Pipeline Construction
 	elasticRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID, dHeap),
@@ -63,8 +64,8 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID, Descr
 	viscoBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::VISCO_BUFFER_CLEAR_COMPUTE_ID, dHeap),
 	viscoDispatchArgDivideCP("DispatchArgDivideRootSig.cso", "DispatchArgDivide.cso", *context, CommandListID::VISCO_DISPATCH_ARG_DIVIDE_COMPUTE_ID, dHeap),
 	viscoScene(context, &viscoRP, &viscoBilevelUniformGridCP, &viscoSurfaceBlockDetectionCP, &viscoSurfaceCellDetectionCP, &viscoSurfaceVertexCompactionCP,
-		&viscoSurfaceVertexDensityCP, &viscoSurfaceVertexNormalCP, &viscoBufferClearCP, &viscoDispatchArgDivideCP, &viscoMeshPipeline, 3, 0.010, 4.604, 1.010),
-
+		&viscoSurfaceVertexDensityCP, &viscoSurfaceVertexNormalCP, &viscoBufferClearCP, &viscoDispatchArgDivideCP, &viscoMeshPipeline, 3, 0.010, 4.604, 1.010)
+		
 	// Snow Mesh Shader Pipeline Construction
 	/*snowRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, CommandListID::ELASTIC_RENDER_ID,
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
@@ -88,10 +89,8 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID, Descr
 		D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE),
 	snowScene(context, &snowRP, &snowBilevelUniformGridCP, &snowSurfaceBlockDetectionCP, &snowSurfaceCellDetectionCP, &snowSurfaceVertexCompactionCP,
 		&snowSurfaceVertexDensityCP, &snowSurfaceVertexNormalCP, &snowBufferClearCP, &snowDispatchArgDivideCP, &snowMeshPipeline, 4, 0.010, 7.6, 1.010),*/
-	
-	currentRP(),
-	currentCP()
 {}
+
 
 RenderPipeline* Scene::getObjectWirePipeline() {
 	return &objectRPWire;
@@ -124,7 +123,7 @@ MeshPipeline* Scene::getViscoMeshPipeline() {
 //MeshPipeline* Scene::getSnowMeshPipeline() {
 //	return &snowMeshPipeline;
 //}
-
+	
 void Scene::compute(float isMeshShading) {
 	pbmpmScene.compute();
 	int particles = pbmpmScene.transferAndGetNumParticles();
@@ -153,12 +152,12 @@ void Scene::compute(float isMeshShading) {
 				particles
 			);
 		}
-		/*if (renderToggles[4]) {
-			snowScene.compute(
-				pbmpmScene.getPositionBuffer(),
-				particles
-			);
-		}*/
+		//if (renderToggles[4]) {
+		//	snowScene.compute(
+		//		pbmpmScene.getPositionBuffer(),
+		//		particles
+		//	);
+		//}
 	}
 }
 
