@@ -973,7 +973,7 @@ void OpenXRContext::ApplyCameraMovement(float moveX, float moveZ, float velocity
     // Note: OpenXR uses right-handed system, and DirectXMath expects right-handed if we use RH variants
     XMVECTOR headOffset = XMVectorSet(pos.x, pos.y, pos.z, 0.0f);
 
-	std::cout << "headset pos: " << pos.x << ", " << pos.y << ", " << pos.z << std::endl;
+	//std::cout << "headset pos: " << pos.x << ", " << pos.y << ", " << pos.z << std::endl;
 
     // Update stored camera position
     XMVECTOR currentPos = XMLoadFloat3(&cameraWorldPosition);
@@ -1173,8 +1173,8 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
 
         scene.drawSolidObjects();
         //scene.drawSpawners();
-        //scene.drawPBMPM();
-        //scene.drawFluid(0, 0);
+        scene.drawPBMPM();
+        scene.drawFluid(0, 3);
 
         EndRendering();
 

@@ -7,10 +7,12 @@ int main() {
 	ShutdownManager::Initialize();
 	DXContext* context = ShutdownManager::GetContext();
 	Camera* camera = ShutdownManager::GetCamera();
-	Keyboard* keyboard = ShutdownManager::GetKeyboard();
-	Mouse* mouse = ShutdownManager::GetMouse();
+	//Keyboard* keyboard = ShutdownManager::GetKeyboard();
+	//Mouse* mouse = ShutdownManager::GetMouse();
 	DescriptorHeap* pbmpmDescriptorHeap = ShutdownManager::GetPBMPMDescriptorHeap();
 	Scene* scene = ShutdownManager::GetScene();
+	OpenXRContext* openXR = ShutdownManager::GetOpenXRContext();
+	OpenXRContext::LeftController* leftController = ShutdownManager::GetLeftController();
 
     // Create Left Controller Data Struct
     //OpenXRContext::LeftController leftController;
@@ -48,16 +50,16 @@ int main() {
     //openXR.CreateSwapchains();
 
     //initialize ImGUI
-    ImGuiIO& io = initImGUI(*context);
+    //ImGuiIO& io = initImGUI(*context);
 
     //set mouse to use the window
-    mouse->SetWindow(Window::get().getHWND());
+    //mouse->SetWindow(Window::get().getHWND());
 
     // Get the client area of the window
-    RECT rect;
+    /*RECT rect;
     GetClientRect(Window::get().getHWND(), &rect);
     float clientWidth = static_cast<float>(rect.right - rect.left);
-    float clientHeight = static_cast<float>(rect.bottom - rect.top);
+    float clientHeight = static_cast<float>(rect.bottom - rect.top);*/
 
     PBMPMConstants pbmpmCurrConstants = scene->getPBMPMConstants();
     PBMPMConstants pbmpmIterConstants = pbmpmCurrConstants;
@@ -66,11 +68,11 @@ int main() {
     unsigned int renderOptions = 0;
 
     //bool exitRenderLoop = false, requestRestart = false;
-    //openXR.IsApplicationRunning()
+    //
 
-    while (!Window::get().getShouldClose()) {
+    while (openXR->IsApplicationRunning()) {
         //update window
-        Window::get().update();
+        /*Window::get().update();
         if (Window::get().getShouldResize()) {
             //flush pending buffer operations in swapchain
             context->flush(FRAME_COUNT);
@@ -122,56 +124,52 @@ int main() {
         }
         else {
             pbmpmIterConstants.mouseActivation = 0;
-        }
+        }*/
 
-        //     if (leftController.triggerValue > 0.05 || leftController.gripValue > 0.05) {
-                 //// enable mouse force
-                 //pbmpmIterConstants.mouseActivation = 1;
+             if (leftController->triggerValue > 0.05 || leftController->gripValue > 0.05) {
+                 // enable mouse force
+                 pbmpmIterConstants.mouseActivation = 1;
 
-        //         // Pulling Fluid
-                 //if (leftController.triggerValue > 0.05) {
-        //             pbmpmIterConstants.mouseFunction = 0;
-                 //	pbmpmIterConstants.mouseStrength = maxForceStrength * leftController.triggerValue;
-                 //	//std::cout << "Trigger Value: " << pbmpmIterConstants.mouseStrength << std::endl;
-                 //}
-                 //if (leftController.gripValue > 0.05) {
-                 //	pbmpmIterConstants.mouseFunction = 1;
-        //             pbmpmIterConstants.mouseStrength = maxForceStrength * leftController.gripValue;
-        //             //std::cout << "Trigger Value: " << pbmpmIterConstants.mouseStrength << std::endl;
-        //         }
+                 // Pulling Fluid
+                 if (leftController->triggerValue > 0.05) {
+                     pbmpmIterConstants.mouseFunction = 0;
+                 	pbmpmIterConstants.mouseStrength = maxForceStrength * leftController->triggerValue;
+                 	//std::cout << "Trigger Value: " << pbmpmIterConstants.mouseStrength << std::endl;
+                 }
+                 if (leftController->gripValue > 0.05) {
+                 	pbmpmIterConstants.mouseFunction = 1;
+                     pbmpmIterConstants.mouseStrength = maxForceStrength * leftController->gripValue;
+                     //std::cout << "Trigger Value: " << pbmpmIterConstants.mouseStrength << std::endl;
+                 }
 
-        //         pbmpmIterConstants.mousePosition = XMFLOAT4(leftController.position.x,
-        //             leftController.position.y, leftController.position.z, 1.0);
-                 //pbmpmIterConstants.mouseRayDirection = XMFLOAT4(leftController.forward.x,
-        //             leftController.forward.y, leftController.forward.z, 1.0);
-
-                 //}
-        //     else {
-        //         pbmpmIterConstants.mouseActivation = 0;
-        //     }
+                 pbmpmIterConstants.mousePosition = XMFLOAT4(leftController->position.x,
+                     leftController->position.y, leftController->position.z, 1.0);
+                 pbmpmIterConstants.mouseRayDirection = XMFLOAT4(leftController->forward.x,
+                     leftController->forward.y, leftController->forward.z, 1.0);
+             }
+             else {
+                 pbmpmIterConstants.mouseActivation = 0;
+             }
 
              //compute pbmpm + mesh shader
              //context.startTimingQuery(context.getCommandList(PBMPM_G2P2G_COMPUTE_ID));
              scene->compute(renderModeType != 2);
 
-        //	  openXR.PollSystemEvents();
-        //     openXR.PollEvents();
+        	 openXR->PollSystemEvents();
+             openXR->PollEvents();
 
-        //     if (openXR.IsSessionRunning()) {
-        //         // Render Frame
-                 ////context.startTimingQuery(context.getCommandList(PBMPM_G2P2G_COMPUTE_ID));
-        //         openXR.RenderFrame(scene);
-        //         if (pbmpmIterConstants.mouseActivation == 1 || !PBMPMScene::constantsEqual(pbmpmIterConstants, pbmpmCurrConstants)) {
-        //             scene.updatePBMPMConstants(pbmpmIterConstants);
-        //             pbmpmCurrConstants = pbmpmIterConstants;
-        //         }
-        //     }
-
-             /*openXR.RenderFrame(&context, scene.getViscoMeshPipeline()->getCommandList(), scene.getViscoMeshPipeline()->getCommandListID(), scene,
-                 { scene.getPBMPMRenderPipeline()->getCommandListID(), scene.getObjectSolidPipeline()->getCommandListID(), scene.getObjectWirePipeline()->getCommandListID() });*/
-
+             if (openXR->IsSessionRunning()) {
+                 // Render Frame
+                 //context.startTimingQuery(context.getCommandList(PBMPM_G2P2G_COMPUTE_ID));
+                 openXR->RenderFrame(*scene);
+                 if (pbmpmIterConstants.mouseActivation == 1 || !PBMPMScene::constantsEqual(pbmpmIterConstants, pbmpmCurrConstants)) {
+                     scene->updatePBMPMConstants(pbmpmIterConstants);
+                     pbmpmCurrConstants = pbmpmIterConstants;
+                 }
+             }
 
                  //get pipelines
+        /*
         auto renderPipeline = scene->getObjectSolidPipeline();
         //      auto fluidMeshPipeline = scene.getFluidMeshPipeline();
               //auto elasticMeshPipeline = scene.getElasticMeshPipeline();
@@ -210,7 +208,7 @@ int main() {
             if (renderModeType != 2) scene->drawFluid(meshletRenderType, toonShadingLevels);
         }
         context->executeCommandList(renderPipeline->getCommandListID());
-		context->resetCommandList(renderPipeline->getCommandListID());
+		context->resetCommandList(renderPipeline->getCommandListID());*/
 
         /*
         // elastic mesh render pass
@@ -244,7 +242,7 @@ int main() {
             if (renderModeType != 2) scene.drawSnow(meshletRenderType, toonShadingLevels);
             context.executeCommandList(snowMeshPipeline->getCommandListID());
         }*/
-
+        /*
         //set up ImGUI for frame
         Window::get().setRT(renderPipeline->getCommandList());
         Window::get().setViewport(vp, renderPipeline->getCommandList());
@@ -285,7 +283,7 @@ int main() {
         context->executeCommandList(renderPipeline->getCommandListID());
 
         Window::get().present();
-        context->resetCommandList(renderPipeline->getCommandListID());
+        context->resetCommandList(renderPipeline->getCommandListID());*/
         //if (scene.renderToggles[0]) {
         //	context.resetCommandList(fluidMeshPipeline->getCommandListID());
         //}
@@ -303,7 +301,7 @@ int main() {
         //}*/
 
   //      context.resetCommandList(objectWirePipeline->getCommandListID());
-  //      context.resetCommandList(objectSolidPipeline->getCommandListID());
+  //      context.resetCommandList(objectSolidPipeline->getCommandListID());*/
     }
 
     // Now you can safely call ReportLiveDeviceObjects
@@ -317,16 +315,10 @@ int main() {
         debugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
     }
 
-    ImGui_ImplDX12_Shutdown();
+    /*ImGui_ImplDX12_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
-    imguiSRVHeap->Release();
-
-    /*openXR.DestroySwapchains();
-    openXR.DestroyReferenceSpace();
-    openXR.DestroySession();
-    openXR.DestroyDebugMessenger();
-    openXR.DestroyInstance();*/
+    imguiSRVHeap->Release();*/
 
     return 0;
 }
