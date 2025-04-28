@@ -38,7 +38,7 @@ void MeshPipeline::createPSOD() {
     psod.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 }
 
-void MeshPipeline::createPipelineState(ComPointer<ID3D12Device6> device) {
+void MeshPipeline::createPipelineState(ComPointer<ID3D12Device6>& device) {
     CD3DX12_PIPELINE_MESH_STATE_STREAM psoStream = CD3DX12_PIPELINE_MESH_STATE_STREAM(psod);
     D3D12_PIPELINE_STATE_STREAM_DESC streamDesc = { sizeof(psoStream), &psoStream };
     HRESULT hr = device->CreatePipelineState(&streamDesc, IID_PPV_ARGS(&pso));

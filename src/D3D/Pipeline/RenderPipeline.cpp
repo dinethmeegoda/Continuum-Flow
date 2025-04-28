@@ -90,6 +90,6 @@ void RenderPipeline::createPSOD() {
     gfxPsod.Flags = D3D12_PIPELINE_STATE_FLAG_NONE;
 }
 
-void RenderPipeline::createPipelineState(ComPointer<ID3D12Device6> device) {
+void RenderPipeline::createPipelineState(ComPointer<ID3D12Device6>& device) {
 	device->CreateGraphicsPipelineState(&gfxPsod, IID_PPV_ARGS(&pso));
 }

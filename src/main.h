@@ -5,9 +5,8 @@
 #include "Support/Window.h"
 #include "Support/Shader.h"
 
-#include "Debug/DebugLayer.h"
+#include "Support/ShutdownManager.h"
 
-#include "D3D/DXContext.h"
 #include "D3D/Pipeline/RenderPipeline.h"
 #include "D3D/Pipeline/MeshPipeline.h"
 #include "D3D/Pipeline/ComputePipeline.h"

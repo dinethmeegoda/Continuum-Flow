@@ -1,4 +1,5 @@
 #include "DXContext.h"
+#include <iostream>
 
 DXContext::DXContext() {
 
@@ -49,25 +50,47 @@ DXContext::DXContext() {
 }
 
 DXContext::~DXContext() {
+    // 1. Make sure GPU is idle first
+    flush(1); // or flush(FRAME_COUNT) if you have multiple frames
+
+    // 2. Reset command lists (optional, but safest)
     for (auto& cmdList : cmdLists) {
-        cmdList.Release();
+        if (cmdList) {
+            cmdList->Close();  // Close if not already closed (D3D12 expects closed command lists before release)
+        }
     }
 
+    // 3. Release command lists
+    for (auto& cmdList : cmdLists) {
+        if (cmdList) {
+            cmdList.Release();
+        }
+    }
+
+    // 4. Release command allocators
     for (auto& cmdAllocator : cmdAllocators) {
-        cmdAllocator.Release();
+        if (cmdAllocator) {
+            cmdAllocator.Release();
+        }
     }
 
-    if (fenceEvent)
-    {
+    // 5. Release query heap and buffer
+    if (queryHeap) queryHeap.Release();
+    if (queryResultBuffer) queryResultBuffer.Release();
+
+    // 6. Release fence
+    if (fence) fence.Release();
+
+    // 7. Close fence event
+    if (fenceEvent) {
         CloseHandle(fenceEvent);
+        fenceEvent = nullptr;
     }
-    fence.Release();
-    cmdQueue.Release();
-    device.Release();
-    dxgiFactory.Release();
 
-    queryHeap->Release();
-    queryResultBuffer->Release();
+    // 8. Release device, command queue, factory
+    if (cmdQueue) cmdQueue.Release();
+    if (device) device.Release();
+    if (dxgiFactory) dxgiFactory.Release();
 }
 
 void DXContext::signalAndWait() {

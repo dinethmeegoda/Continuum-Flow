@@ -16,7 +16,7 @@ void ComputePipeline::createPSOD()
 
 }
 
-void ComputePipeline::createPipelineState(ComPointer<ID3D12Device6> device)
+void ComputePipeline::createPipelineState(ComPointer<ID3D12Device6>& device)
 {
 	HRESULT hr = device->CreateComputePipelineState(&psoDesc, IID_PPV_ARGS(&pso));
 	if (FAILED(hr)) {

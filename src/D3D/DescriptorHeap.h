@@ -9,7 +9,7 @@
 class DescriptorHeap
 {
 public:
-	DescriptorHeap(DXContext &context, D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int numberOfDescriptors,
+	DescriptorHeap(DXContext* context, D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int numberOfDescriptors,
 		D3D12_DESCRIPTOR_HEAP_FLAGS flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
 	ComPointer<ID3D12DescriptorHeap>& Get();

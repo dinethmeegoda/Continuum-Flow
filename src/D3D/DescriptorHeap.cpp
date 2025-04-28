@@ -3,10 +3,10 @@
 #include <cassert>
 #include <stdexcept>
 
-DescriptorHeap::DescriptorHeap(DXContext &context, D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int numberOfDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
+DescriptorHeap::DescriptorHeap(DXContext* context, D3D12_DESCRIPTOR_HEAP_TYPE type, unsigned int numberOfDescriptors, D3D12_DESCRIPTOR_HEAP_FLAGS flags)
 	: descriptorCount(numberOfDescriptors)
 {
-	ComPointer<ID3D12Device6> device = context.getDevice();
+	ComPointer<ID3D12Device6> device = context->getDevice();
 	D3D12_DESCRIPTOR_HEAP_DESC description = {};
 	description.NumDescriptors = numberOfDescriptors;
 	description.Type = type;

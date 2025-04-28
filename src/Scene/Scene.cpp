@@ -207,8 +207,12 @@ void Scene::releaseResources() {
 	elasticScene.releaseResources();
 	viscoScene.releaseResources();
 	sandScene.releaseResources();
-	pbmpmScene.releaseResources();
 	pbmpmRP.releaseResources();
+	fluidRP.releaseResources();
+	elasticRP.releaseResources();
+	sandRP.releaseResources();
+	viscoRP.releaseResources();
+	//snowRP.releaseResources();
 	//snowScene.releaseResources();
 }
 

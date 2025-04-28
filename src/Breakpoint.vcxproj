@@ -42,6 +42,7 @@
     <ClCompile Include="Scene\Drawable.cpp" />
     <ClCompile Include="Scene\Scene.cpp" />
     <ClCompile Include="Support\Shader.cpp" />
+    <ClCompile Include="Support\ShutdownManager.cpp" />
     <ClCompile Include="Support\Window.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -79,6 +80,7 @@
     <ClInclude Include="Scene\Scene.h" />
     <ClInclude Include="Support\ComPointer.h" />
     <ClInclude Include="Support\Shader.h" />
+    <ClInclude Include="Support\ShutdownManager.h" />
     <ClInclude Include="Support\Window.h" />
     <ClInclude Include="Support\WinInclude.h" />
     <ClInclude Include="Shaders\constants.h" />

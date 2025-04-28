@@ -205,6 +205,8 @@ void StructuredBuffer::passDataToGPU(DXContext& context, ID3D12GraphicsCommandLi
         CloseHandle(eventHandle);
     }
 
+    fence.Release();
+
     context.resetCommandList(cmdId);
 }
 
@@ -334,6 +336,8 @@ void StructuredBuffer::copyDataFromGPU(DXContext& context, void* outputData, ID3
         WaitForSingleObject(eventHandle, INFINITE);
         CloseHandle(eventHandle);
     }
+
+    fence.Release();
 
     context.resetCommandList(cmdId);
 

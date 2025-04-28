@@ -577,9 +577,18 @@ void MeshShadingScene::releaseResources() {
     surfaceVertexNormalBuffer.releaseResources();
 	surfaceVertexColorBuffer.releaseResources();
 
-    /*fence.Release();
-    commandSignature->Release();
-    meshCommandSignature->Release();*/
+    if (commandSignature) {
+        commandSignature->Release();
+        commandSignature = nullptr;
+    }
+    if (meshCommandSignature) {
+        meshCommandSignature->Release();
+        meshCommandSignature = nullptr;
+    }
+    /*if (fence) {
+        fence->Release();
+        fence = nullptr;
+    }*/
 }
 
 void MeshShadingScene::transitionBuffers(ID3D12GraphicsCommandList6* cmdList, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState) {

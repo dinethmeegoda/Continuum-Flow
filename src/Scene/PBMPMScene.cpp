@@ -836,9 +836,18 @@ void PBMPMScene::releaseResources() {
 	bukkitSystem.particleAllocator.releaseResources();
 	bukkitSystem.indexStart.releaseResources();
 
-	/*commandSignature->Release();
-	renderCommandSignature->Release();
-	fence.Release();*/
+	if (commandSignature) {
+		commandSignature->Release();
+		commandSignature = nullptr;
+	}
+	if (renderCommandSignature) {
+		renderCommandSignature->Release();
+		renderCommandSignature = nullptr;
+	}
+	/*if (fence) {
+		fence->Release();
+		fence = nullptr;
+	}*/
 }
 
 void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {

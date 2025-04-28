@@ -15,7 +15,7 @@ public:
 
 	Shader& getComputeShader() { return computeShader; }
 	void createPSOD() override;
-	void createPipelineState(ComPointer<ID3D12Device6> device) override;
+	void createPipelineState(ComPointer<ID3D12Device6>& device) override;
 
 private:
 	Shader computeShader;

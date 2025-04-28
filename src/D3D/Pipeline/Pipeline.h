@@ -14,7 +14,7 @@ public:
 	~Pipeline() = default;
 
 	virtual void createPSOD() = 0;
-	virtual void createPipelineState(ComPointer<ID3D12Device6> device) = 0;
+	virtual void createPipelineState(ComPointer<ID3D12Device6>& device) = 0;
 
 	ComPointer<ID3D12RootSignature>& getRootSignature();
 	DescriptorHeap* getDescriptorHeap();

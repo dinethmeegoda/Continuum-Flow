@@ -22,4 +22,5 @@ DescriptorHeap* Pipeline::getDescriptorHeap()
 void Pipeline::releaseResources()
 {
 	rootSignature.Release();
+	pso.Release();
 }

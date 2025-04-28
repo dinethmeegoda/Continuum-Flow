@@ -217,6 +217,10 @@ void Window::shutdown() {
 
     rtvDescHeap.Release();
 
+	dsvDescHeap.Release();
+
+	depthStencilBuffer.Release();
+
     swapChain.Release();
 
     if (window) {
@@ -226,6 +230,11 @@ void Window::shutdown() {
     if (wndClass) {
         UnregisterClassW((LPCWSTR)wndClass, GetModuleHandleW(nullptr));
     }
+
+#ifdef _DEBUG
+    d3d12Debug.Release();
+    dxgiDebug.Release();
+#endif
 }
 
 void Window::updateTitle(std::wstring text) {
