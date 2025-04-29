@@ -34,41 +34,39 @@ MeshShadingScene::MeshShadingScene(DXContext* context,
     constructScene();
 }
 
-//void MeshShadingScene::preDrawBufferTransition() {
-//    auto cmdList = fluidMeshPipeline->getCommandList();
-//
-//    // Transition surfaceHalfBlockDispatch to an SRV
-//    D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
-//        surfaceHalfBlockDispatch.getBuffer(),
-//        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-//        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-//    );
-//
-//    // Transition surfaceVertexNormalBuffer to an SRV
-//    D3D12_RESOURCE_BARRIER surfaceVertexNormalBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
-//        surfaceVertexNormalBuffer.getBuffer(),
-//        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-//        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-//    );
-//
-//    // Transition surfaceVertDensityDispatch to a UAV (this is purely for resetting the buffer)
-//    D3D12_RESOURCE_BARRIER surfaceVertDensityDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
-//        surfaceVertDensityDispatch.getBuffer(),
-//        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-//        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-//    );
-//
-//    // Transition surfaceHalfBlockDispatch to indirect argument buffer
-//    D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
-//        surfaceHalfBlockDispatch.getBuffer(),
-//        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-//        D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
-//    );
-//
-//    D3D12_RESOURCE_BARRIER barriers[4] = { surfaceVertDensityDispatchBarrier, surfaceHalfBlockDispatchBarrier, 
-//        surfaceVertexNormalBufferBarrier, surfaceHalfBlockDispatchBarrier2 };
-//    cmdList->ResourceBarrier(3, barriers);
-//}
+void MeshShadingScene::preDrawBufferTransition() {
+    auto cmdList = fluidMeshPipeline->getCommandList();
+
+    // Transition surfaceHalfBlockDispatch to an SRV
+    D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        surfaceHalfBlockDispatch.getBuffer(),
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+        D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
+    );
+
+    // Transition surfaceVertexNormalBuffer to an SRV
+    D3D12_RESOURCE_BARRIER surfaceVertexNormalBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        surfaceVertexNormalBuffer.getBuffer(),
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+    );
+
+    // Transition surfaceVertDensityDispatch to a UAV (this is purely for resetting the buffer)
+    D3D12_RESOURCE_BARRIER surfaceVertDensityDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+        surfaceVertDensityDispatch.getBuffer(),
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+    );
+
+    D3D12_RESOURCE_BARRIER barriers[3] = { surfaceVertDensityDispatchBarrier, surfaceHalfBlockDispatchBarrier, 
+        surfaceVertexNormalBufferBarrier};
+    cmdList->ResourceBarrier(3, barriers);
+
+    context->executeCommandList(fluidMeshPipeline->getCommandListID());
+    context->signalAndWaitForFence(fence, fenceValue);
+
+    context->resetCommandList(fluidMeshPipeline->getCommandListID());
+}
 
 // In this pipeline, drawing is done via a mesh shader
 void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigned int toonShadingLevels) {
@@ -92,37 +90,6 @@ void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigne
     ID3D12DescriptorHeap* descriptorHeaps[] = { bilevelUniformGridCP->getDescriptorHeap()->Get() };
     cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-    //// Transition surfaceHalfBlockDispatch to an SRV
-    //D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
-    //    surfaceHalfBlockDispatch.getBuffer(),
-    //    D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-    //    D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-    //);
-
-    // Transition surfaceHalfBlockDispatch to indirect argument buffer
-    D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        surfaceHalfBlockDispatch.getBuffer(),
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-        D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
-    );
-
-    // Transition surfaceVertexNormalBuffer to an SRV
-    D3D12_RESOURCE_BARRIER surfaceVertexNormalBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        surfaceVertexNormalBuffer.getBuffer(),
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
-    );
-
-    // Transition surfaceVertDensityDispatch to a UAV (this is purely for resetting the buffer)
-    D3D12_RESOURCE_BARRIER surfaceVertDensityDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
-        surfaceVertDensityDispatch.getBuffer(),
-        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
-        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
-    );
-    
-    D3D12_RESOURCE_BARRIER barriers[3] = { surfaceVertDensityDispatchBarrier, surfaceHalfBlockDispatchBarrier, surfaceVertexNormalBufferBarrier };
-    cmdList->ResourceBarrier(3, barriers);
-
     // Set graphics root descriptor table
     cmdList->SetGraphicsRootDescriptorTable(0, surfaceBlockIndicesBuffer.getSRVGPUDescriptorHandle());
     cmdList->SetGraphicsRootDescriptorTable(1, surfaceVertDensityBuffer.getSRVGPUDescriptorHandle());
@@ -132,38 +99,44 @@ void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigne
     cmdList->SetGraphicsRootUnorderedAccessView(5, surfaceVertDensityDispatch.getGPUVirtualAddress());
     cmdList->SetGraphicsRoot32BitConstants(6, 32, &meshShadingConstants, 0);
 
-    //cmdList->ResourceBarrier(1, &surfaceHalfBlockDispatchBarrier2);
-
     // Draws
     cmdList->ExecuteIndirect(meshCommandSignature, 1, surfaceHalfBlockDispatch.getBuffer(), 0, nullptr, 0);
 
+    /*context->executeCommandList(fluidMeshPipeline->getCommandListID());
+    context->signalAndWaitForFence(fence, fenceValue);
+
+    context->resetCommandList(fluidMeshPipeline->getCommandListID());*/
+    
+    // copy vertexNormalBuffer to CPU side array for debugging
+    //std::vector<XMFLOAT3> vertexNormals((gridConstants.gridDim.x + 1) * (gridConstants.gridDim.y + 1) * (gridConstants.gridDim.z + 1));
+    //surfaceHalfBlockDispatch.copyDataFromGPU(*context, vertexNormals.data(), cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, fluidMeshPipeline->getCommandListID());
+}
+
+void MeshShadingScene::postDrawBufferTransition() {
+    auto cmdList = fluidMeshPipeline->getCommandList();
     // TODO Temporary: just so these two buffers can be transitioned along with everything else
-    D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier3 = CD3DX12_RESOURCE_BARRIER::Transition(
+    D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceHalfBlockDispatch.getBuffer(),
         D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT,
-        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
     );
 
-    D3D12_RESOURCE_BARRIER surfaceVertDensityDispatchBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
+    D3D12_RESOURCE_BARRIER surfaceVertDensityDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceVertDensityDispatch.getBuffer(),
         D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
     );
 
-    D3D12_RESOURCE_BARRIER barriers2[2] = { surfaceHalfBlockDispatchBarrier3, surfaceVertDensityDispatchBarrier2 };
-    cmdList->ResourceBarrier(2, barriers2);
+    D3D12_RESOURCE_BARRIER barriers[2] = { surfaceHalfBlockDispatchBarrier, surfaceVertDensityDispatchBarrier };
+    cmdList->ResourceBarrier(2, barriers);
     // End temporary
 
-    transitionBuffers(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+    transitionBuffers(cmdList, D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
 
     context->executeCommandList(fluidMeshPipeline->getCommandListID());
     context->signalAndWaitForFence(fence, fenceValue);
 
     context->resetCommandList(fluidMeshPipeline->getCommandListID());
-    
-    // copy vertexNormalBuffer to CPU side array for debugging
-    //std::vector<XMFLOAT3> vertexNormals((gridConstants.gridDim.x + 1) * (gridConstants.gridDim.y + 1) * (gridConstants.gridDim.z + 1));
-    //surfaceHalfBlockDispatch.copyDataFromGPU(*context, vertexNormals.data(), cmdList, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, fluidMeshPipeline->getCommandListID());
 
     resetBuffers();
 }

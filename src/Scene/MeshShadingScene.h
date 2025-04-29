@@ -58,6 +58,8 @@ public:
         StructuredBuffer* positionsBuffer,
         int numParticles
     );
+    void preDrawBufferTransition();
+    void postDrawBufferTransition();
     void draw(Camera* camera, unsigned int renderMeshlets, unsigned int renderOptions);
     void constructScene();
     void computeBilevelUniformGrid();

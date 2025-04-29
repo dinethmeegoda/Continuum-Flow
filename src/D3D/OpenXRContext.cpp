@@ -1042,6 +1042,8 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
     // Resize the layer projection views to match the view count. The layer projection views are used in the layer projection.
     renderLayerInfo.layerProjectionViews.resize(viewCount, { XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW });
 
+    scene.preDrawFluid();
+
     // Per view in the view configuration:
     for (uint32_t i = 0; i < viewCount; i++) {
         SwapchainInfo& colorSwapchainInfo = m_colorSwapchainInfos[i];
@@ -1184,6 +1186,8 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
         OPENXR_CHECK(xrReleaseSwapchainImage(colorSwapchainInfo.swapchain, &releaseInfo), "Failed to release Image back to the Color Swapchain");
         OPENXR_CHECK(xrReleaseSwapchainImage(depthSwapchainInfo.swapchain, &releaseInfo), "Failed to release Image back to the Depth Swapchain");
     }
+
+    scene.postDrawFluid();
 
     // Fill out the XrCompositionLayerProjection structure for usage with xrEndFrame().
     renderLayerInfo.layerProjection.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT | XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;

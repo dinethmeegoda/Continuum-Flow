@@ -36,6 +36,9 @@ public:
 	PBMPMConstants getPBMPMConstants() { return pbmpmScene.getConstants(); }
 	void updatePBMPMConstants(PBMPMConstants& newConstants);
 
+	void preDrawFluid() { fluidScene.preDrawBufferTransition(); }
+	void postDrawFluid() { fluidScene.postDrawBufferTransition(); }
+
 	float* getFluidIsovalue() { return fluidScene.getIsovalue(); }
 	float* getFluidKernelScale() { return fluidScene.getKernelScale(); }
 	float* getFluidKernelRadius() { return fluidScene.getKernelRadius(); }
