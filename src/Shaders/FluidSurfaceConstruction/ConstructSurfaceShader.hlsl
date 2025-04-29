@@ -82,7 +82,6 @@ static const float3 baseColor = float3(0.7, 0.9, 1);
 [RootSignature(ROOTSIG)]
 float4 main(PSInput input) : SV_Target
 {
-    return input.color;
 	// Unpacked values from render options, currently (material enum, toon shading levels, 0, 0)
 	uint4 constants = unpackBytes(cb.renderOptions);
 

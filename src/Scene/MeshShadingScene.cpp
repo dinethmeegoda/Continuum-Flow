@@ -34,6 +34,42 @@ MeshShadingScene::MeshShadingScene(DXContext* context,
     constructScene();
 }
 
+//void MeshShadingScene::preDrawBufferTransition() {
+//    auto cmdList = fluidMeshPipeline->getCommandList();
+//
+//    // Transition surfaceHalfBlockDispatch to an SRV
+//    D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+//        surfaceHalfBlockDispatch.getBuffer(),
+//        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+//        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+//    );
+//
+//    // Transition surfaceVertexNormalBuffer to an SRV
+//    D3D12_RESOURCE_BARRIER surfaceVertexNormalBufferBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+//        surfaceVertexNormalBuffer.getBuffer(),
+//        D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+//        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+//    );
+//
+//    // Transition surfaceVertDensityDispatch to a UAV (this is purely for resetting the buffer)
+//    D3D12_RESOURCE_BARRIER surfaceVertDensityDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+//        surfaceVertDensityDispatch.getBuffer(),
+//        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,
+//        D3D12_RESOURCE_STATE_UNORDERED_ACCESS
+//    );
+//
+//    // Transition surfaceHalfBlockDispatch to indirect argument buffer
+//    D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
+//        surfaceHalfBlockDispatch.getBuffer(),
+//        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE | D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+//        D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
+//    );
+//
+//    D3D12_RESOURCE_BARRIER barriers[4] = { surfaceVertDensityDispatchBarrier, surfaceHalfBlockDispatchBarrier, 
+//        surfaceVertexNormalBufferBarrier, surfaceHalfBlockDispatchBarrier2 };
+//    cmdList->ResourceBarrier(3, barriers);
+//}
+
 // In this pipeline, drawing is done via a mesh shader
 void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigned int toonShadingLevels) {
     gridConstants.kernelScale = kernelScale;
@@ -56,11 +92,18 @@ void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigne
     ID3D12DescriptorHeap* descriptorHeaps[] = { bilevelUniformGridCP->getDescriptorHeap()->Get() };
     cmdList->SetDescriptorHeaps(_countof(descriptorHeaps), descriptorHeaps);
 
-    // Transition surfaceHalfBlockDispatch to an SRV
+    //// Transition surfaceHalfBlockDispatch to an SRV
+    //D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
+    //    surfaceHalfBlockDispatch.getBuffer(),
+    //    D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
+    //    D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+    //);
+
+    // Transition surfaceHalfBlockDispatch to indirect argument buffer
     D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier = CD3DX12_RESOURCE_BARRIER::Transition(
         surfaceHalfBlockDispatch.getBuffer(),
         D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE
+        D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
     );
 
     // Transition surfaceVertexNormalBuffer to an SRV
@@ -89,14 +132,7 @@ void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigne
     cmdList->SetGraphicsRootUnorderedAccessView(5, surfaceVertDensityDispatch.getGPUVirtualAddress());
     cmdList->SetGraphicsRoot32BitConstants(6, 32, &meshShadingConstants, 0);
 
-    // Transition surfaceHalfBlockDispatch to indirect argument buffer
-    D3D12_RESOURCE_BARRIER surfaceHalfBlockDispatchBarrier2 = CD3DX12_RESOURCE_BARRIER::Transition(
-        surfaceHalfBlockDispatch.getBuffer(),
-        D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE|D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
-        D3D12_RESOURCE_STATE_INDIRECT_ARGUMENT
-    );
-
-    cmdList->ResourceBarrier(1, &surfaceHalfBlockDispatchBarrier2);
+    //cmdList->ResourceBarrier(1, &surfaceHalfBlockDispatchBarrier2);
 
     // Draws
     cmdList->ExecuteIndirect(meshCommandSignature, 1, surfaceHalfBlockDispatch.getBuffer(), 0, nullptr, 0);

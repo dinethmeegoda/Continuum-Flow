@@ -545,6 +545,7 @@ void OpenXRContext::UpdateCameraProjectionMatrix(XrView headsetView) {
     // Store results in camera
     XMStoreFloat4x4(&m_camera->viewMat, view);
     XMStoreFloat4x4(&m_camera->projMat, proj);
+	XMStoreFloat4x4(&m_camera->viewProjMat, XMMatrixMultiply(view, proj));
 }
 
 OpenXRContext::OpenXRContext(ID3D12GraphicsCommandList6* cmdList, 
@@ -1174,7 +1175,7 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
         scene.drawSolidObjects();
         //scene.drawSpawners();
         scene.drawPBMPM();
-        scene.drawFluid(0, 3);
+        scene.drawFluid(1, 3);
 
         EndRendering();
 
