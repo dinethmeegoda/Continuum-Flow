@@ -127,7 +127,7 @@ int main() {
         }*/
 
              if (leftController->triggerValue > 0.05 || leftController->gripValue > 0.05) {
-                 // enable mouse force
+                 // enable interaction force
                  pbmpmIterConstants.mouseActivation = 1;
 
                  // Pulling Fluid

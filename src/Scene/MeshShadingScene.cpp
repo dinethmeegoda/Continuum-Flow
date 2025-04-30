@@ -77,8 +77,8 @@ void MeshShadingScene::draw(Camera* camera, unsigned int renderMeshlets, unsigne
     int renderOptions = packBytes(material, toonShadingLevels, 0, 0);
 
 	// Print the camera's position, forward, right, and up vectors
-	std::cout << "Camera Position: " << camera->getPosition().x << ", " << camera->getPosition().y << ", " << camera->getPosition().z << std::endl;
-	std::cout << "Camera Forward: " << camera->getForward().x << ", " << camera->getForward().y << ", " << camera->getForward().z << std::endl;
+	//std::cout << "Camera Position: " << camera->getPosition().x << ", " << camera->getPosition().y << ", " << camera->getPosition().z << std::endl;
+	//std::cout << "Camera Forward: " << camera->getForward().x << ", " << camera->getForward().y << ", " << camera->getForward().z << std::endl;
 
     auto cmdList = fluidMeshPipeline->getCommandList();
     MeshShadingConstants meshShadingConstants = { camera->getViewProjMat(), gridConstants.gridDim, gridConstants.resolution, gridConstants.minBounds,
@@ -146,7 +146,7 @@ float getRandomFloatInRange(float min, float max) {
 }
 
 void MeshShadingScene::constructScene() {
-    int blocksPerEdge = 16;
+    int blocksPerEdge = 24;
     float cellWidth = (float)std::max(std::max(GRID_WIDTH, GRID_HEIGHT), GRID_DEPTH) / ((float)blocksPerEdge * (float)CELLS_PER_BLOCK_EDGE);
     gridConstants = { 0,
                      {blocksPerEdge * CELLS_PER_BLOCK_EDGE + 1, blocksPerEdge * CELLS_PER_BLOCK_EDGE + 1, blocksPerEdge * CELLS_PER_BLOCK_EDGE + 1},
