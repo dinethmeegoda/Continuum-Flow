@@ -4,9 +4,9 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID, Descr
 	: camera(p_camera),
 	pbmpmRP("PBMPMVertexShader.cso", "PBMPMPixelShader.cso", "PBMPMRootSignature.cso", *context, renderID, dHeap),
 	pbmpmScene(context, &pbmpmRP, renderToggles),
-	objectRPWire("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID, dHeap),
-	objectSceneGrid(context, &objectRPWire, pbmpmScene.getSimShapes(), 1), 
-	objectSceneSpawners(context, &objectRPWire, pbmpmScene.getSimShapes(), 2), 
+	//objectRPWire("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID, dHeap),
+	//objectSceneGrid(context, &objectRPWire, pbmpmScene.getSimShapes(), 1), 
+	//objectSceneSpawners(context, &objectRPWire, pbmpmScene.getSimShapes(), 2), 
 	objectRPSolid("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID, dHeap),
 	objectSceneSolid(context, &objectRPSolid, pbmpmScene.getSimShapes(), 0),
 	// Fluid Mesh Shader Pipeline Construction
@@ -92,9 +92,9 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID, Descr
 {}
 
 
-RenderPipeline* Scene::getObjectWirePipeline() {
-	return &objectRPWire;
-}
+//RenderPipeline* Scene::getObjectWirePipeline() {
+//	return &objectRPWire;
+//}
 
 RenderPipeline* Scene::getObjectSolidPipeline() {
 	return &objectRPSolid;
@@ -185,21 +185,21 @@ void Scene::drawVisco(unsigned int renderMeshlets, unsigned int renderOptions) {
 //	snowScene.draw(camera, renderMeshlets, renderOptions);
 //}
 
-void Scene::drawGrid() {
-	objectSceneGrid.draw(camera);
-}
+//void Scene::drawGrid() {
+//	objectSceneGrid.draw(camera);
+//}
+//
+//void Scene::drawSpawners() {
+//	objectSceneSpawners.draw(camera);
+//}
 
-void Scene::drawSpawners() {
-	objectSceneSpawners.draw(camera);
-}
-
-void Scene::drawSolidObjects() {
-	objectSceneSolid.draw(camera);
+void Scene::drawSolidObjects(XMFLOAT3& leftPos, XMVECTOR& leftRot) {
+	objectSceneSolid.draw(camera, leftPos, leftRot);
 }
 
 void Scene::releaseResources() {
-	objectSceneGrid.releaseResources();
-	objectSceneSpawners.releaseResources();
+	//objectSceneGrid.releaseResources();
+	//objectSceneSpawners.releaseResources();
 	objectSceneSolid.releaseResources();
 	pbmpmScene.releaseResources();
 	fluidScene.releaseResources();
@@ -213,8 +213,4 @@ void Scene::releaseResources() {
 	viscoRP.releaseResources();
 	//snowRP.releaseResources();
 	//snowScene.releaseResources();
-}
-
-void Scene::updatePBMPMConstants(PBMPMConstants& newConstants) {
-	pbmpmScene.updateConstants(newConstants);
 }

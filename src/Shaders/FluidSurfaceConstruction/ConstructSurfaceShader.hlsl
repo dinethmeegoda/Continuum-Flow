@@ -29,7 +29,7 @@ float3 radiance(float3 dir)
 {
     // Paper uses a sky model for the radiance
     // Return a constant sky-like color
-    return float3(0.53, 0.81, 0.92); // Light sky blue
+    return float3(0.23, 0.61, 0.92); // Light sky blue
 }
 
 float fresnelSchlick(float VdotH, float F0) {
@@ -77,7 +77,7 @@ float3 planeRayIntersect(float3 origin, float3 direction)
     return origin - direction * (origin.y / direction.y);
 }
 
-static const float3 baseColor = float3(0.7, 0.9, 1);
+static const float3 baseColor = float3(0.00, 0.00, 0.112);
 
 [RootSignature(ROOTSIG)]
 float4 main(PSInput input) : SV_Target
@@ -95,8 +95,10 @@ float4 main(PSInput input) : SV_Target
         // Realistic
 		// If water, then do the fancy reflection/refraction
         if (constants.x == 0.0) {
+            // refract
+			float3 camPos = cb.cameraPos * 0.05 - float3(0, 0.5, 0);
             float3 pos = input.worldPos;
-            float3 dir = normalize(pos - cb.cameraPos);
+            float3 dir = normalize(pos - camPos);
 
             float ior = 1.33;
             float eta = 1.0 / ior;
@@ -110,14 +112,13 @@ float4 main(PSInput input) : SV_Target
             float3 refractDir = refract(dir, input.normal, eta);
             float3 refraction;
 
-            float3 meshPos = planeRayIntersect(cb.cameraPos, dir);
+            float3 meshPos = planeRayIntersect(camPos, dir);
             float dist = distance(pos, meshPos);
             float3 trans = clamp(exp(-remapTo01(dist, 1.0, 30.0)), 0.0, 1.0) * baseColor;
             refraction = trans * float3(GROUND_PLANE_COLOR); // plane background color
 
             float3 baseColor = refraction * (1.0 - fr) + reflection * fr;
-
-            return float4(baseColor, 0.8);
+            return float4(gammaCorrect(baseColor), 1.0);
         }
 		// Otherwise, do lambertian shading
         else {

@@ -8,8 +8,8 @@ cbuffer simConstants : register(b0) {
 	PBMPMConstants g_simConstants;
 };
 
-cbuffer mouseConstants : register(b1) {
-    MouseConstants g_mouseConstants;
+cbuffer interactionConstants : register(b1) {
+    InteractionConstants g_interactionConstants;
 };
 
 // Define the constant buffer with an array of SimShapes
@@ -630,28 +630,28 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 float3 lightColor = lightColorTable[material];
                 g_materials[myParticleIndex].xyz = lerp(darkColor, lightColor, displacementRatio);
                 
-                // Mouse Iteraction
-                if (g_mouseConstants.mouseActivation == 1) {
+                // Left Controller Iteraction
+                if (g_interactionConstants.leftActivation == 1) {
                     float t;
-                    bool intersected = intersectRaySphere(g_mouseConstants.mousePosition.xyz, g_mouseConstants.mouseRayDirection.xyz, p, g_mouseConstants.mouseRadius, t);
-                    float3 offset = p - float3(g_mouseConstants.mousePosition.xyz);
+                    bool intersected = intersectRaySphere(g_interactionConstants.leftPosition, g_interactionConstants.leftRayDirection, p, g_interactionConstants.interactionRadius, t);
+                    float3 offset = p - float3(g_interactionConstants.leftPosition);
                     float lenOffset = max(length(offset), 0.0001);
                     if (intersected)
                     {
                         float3 normOffset = offset / lenOffset;
 
-						if (g_mouseConstants.mouseFunction == 0) // Push
+						if (g_interactionConstants.leftFunction == 0) // Push
                         {
-                            displacement += normOffset * g_mouseConstants.mouseActivation * g_mouseConstants.mouseStrength * g_simConstants.deltaTime * 3.f;
+                            displacement += normOffset * g_interactionConstants.leftActivation * g_interactionConstants.leftStrength * g_simConstants.deltaTime * 3.f;
                         }
-                        else if (g_mouseConstants.mouseFunction == 1) // Grab
+                        else if (g_interactionConstants.leftFunction == 1) // Grab
                         {
-                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz;
-                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * 2.0;
+                            float3 isect_pos = g_interactionConstants.leftPosition + g_interactionConstants.leftRayDirection;
+                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_interactionConstants.leftStrength * 2.0;
                         }
-                        else if (g_mouseConstants.mouseFunction == 2) // Pull
+                        else if (g_interactionConstants.leftFunction == 2) // Pull
 						{
-                            float3 isect_pos = g_mouseConstants.mousePosition.xyz + g_mouseConstants.mouseRayDirection.xyz * t * 2.0;
+                            float3 isect_pos = g_interactionConstants.leftPosition + g_interactionConstants.leftRayDirection * t * 2.0;
 
                             float distance = length(p - isect_pos);
 
@@ -665,7 +665,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                             // Fade from 0.5 (close) to 2.0 (far)
                             float multiplier = lerp(0.5, 2.0, t);
 
-                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_mouseConstants.mouseStrength * multiplier;
+                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_interactionConstants.leftStrength * multiplier;
 						}
                     }
                 }

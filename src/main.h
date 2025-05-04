@@ -100,8 +100,8 @@ void drawImGUIWindow(PBMPMConstants& pbmpmConstants, ImGuiIO& io,
         ImGui::SliderInt("Iteration Count", (int*)&pbmpmConstants.iterationCount, 1, 10);
         ImGui::SliderInt("Substep Count", (int*)substepCount, 1, 20);
 
-        ImGui::SliderFloat("Mouse Radius", &pbmpmConstants.mouseRadius, 0.1f, 10.f);
-        ImGui::SliderFloat("Mouse Strength", &pbmpmConstants.mouseStrength, 0.f, 40.f);
+        //ImGui::SliderFloat("Mouse Radius", &pbmpmConstants.mouseRadius, 0.1f, 10.f);
+        //ImGui::SliderFloat("Mouse Strength", &pbmpmConstants.mouseStrength, 0.f, 40.f);
 
         ImGui::Checkbox("Use Grid Volume for Liquid", (bool*)&useGridVolume);
         pbmpmConstants.useGridVolumeForLiquid = useGridVolume;

@@ -8,12 +8,8 @@ cbuffer simConstants : register(b0) {
 	PBMPMConstants g_simConstants;
 };
 
-cbuffer mouseConstants : register(b1) {
-    MouseConstants g_mouseConstants;
-};
-
 // Define the constant buffer with an array of SimShapes
-cbuffer shapes : register(b2)
+cbuffer shapes : register(b1)
 {
     SimShape g_shapes[MaxSimShapes]; // Adjust the size of the array as needed
 };

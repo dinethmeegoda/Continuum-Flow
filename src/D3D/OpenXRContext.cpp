@@ -980,6 +980,7 @@ void OpenXRContext::ApplyCameraMovement(float moveX, float moveZ, float velocity
     XMVECTOR currentPos = XMLoadFloat3(&cameraWorldPosition);
 	//currentPos = XMVectorAdd(currentPos, headOffset);
     currentPos = XMVectorAdd(currentPos, movement);
+
     XMStoreFloat3(&cameraWorldPosition, currentPos);
 	m_camera->position = XMFLOAT3(scaleFactorInv * cameraWorldPosition.x, 
                                 scaleFactorInv * (cameraWorldPosition.y + pos.y + playerHeight),
@@ -1131,6 +1132,7 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
         }
 
         // Check Left Trigger
+        XMVECTOR leftQuaternion;
 
         XrActionStateFloat triggerState{ XR_TYPE_ACTION_STATE_FLOAT };
         XrActionStateGetInfo getTriggerInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
@@ -1144,6 +1146,33 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
 
         OPENXR_CHECK(xrGetActionStateFloat(m_session, &getGripInfo, &gripState), "Failed to get grip trigger state");
 
+        XrSpaceLocation leftHandLocation{ XR_TYPE_SPACE_LOCATION };
+        XrSpaceLocationFlags requiredFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
+
+        XrResult result = xrLocateSpace(m_leftHandSpace, m_localSpace, renderLayerInfo.predictedDisplayTime, &leftHandLocation);
+        if (XR_SUCCEEDED(result) && (leftHandLocation.locationFlags & requiredFlags) == requiredFlags) {
+            const XrPosef& pose = leftHandLocation.pose;
+
+            // World-space position of the controller
+            m_lc.position = { (pose.position.x + cameraWorldPosition.x), (pose.position.y + cameraWorldPosition.y), (pose.position.z + cameraWorldPosition.z)};
+
+			// Set the quaternion from pose into the vector
+			leftQuaternion = XMVectorSet(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+
+            // Step 1: Define a 90° rotation around the controller's *local X-axis*
+            XMVECTOR localX = XMVector3Rotate(XMVectorSet(-1, 0, 0, 0), leftQuaternion); // local X axis in world space
+            XMVECTOR rot90AroundLocalX = XMQuaternionRotationAxis(localX, XMConvertToRadians(90.0f));
+
+            // Step 2: Combine the rotation with the original orientation
+            XMVECTOR rotatedQuat = XMQuaternionMultiply(leftQuaternion, rot90AroundLocalX);
+
+            // Step 3: Apply the new rotation to a reference direction (e.g., "forward")
+            XMVECTOR forwardLocal = XMVectorSet(0, 0, -1, 0); // In controller local space, -Z is usually "forward"
+            XMVECTOR forwardWorld = XMVector3Rotate(forwardLocal, rotatedQuat);
+
+            XMStoreFloat3(&m_lc.forward, XMVector3Normalize(forwardWorld));
+        }
+
         // Consider it pressed if over threshold
         if (triggerState.isActive || gripState.isActive) {
 
@@ -1153,28 +1182,9 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
             if (triggerState.isActive) {
                 m_lc.triggerValue = triggerState.currentState;
             }
-
-            XrSpaceLocation leftHandLocation{ XR_TYPE_SPACE_LOCATION };
-            XrSpaceLocationFlags requiredFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
-
-            XrResult result = xrLocateSpace(m_leftHandSpace, m_localSpace, renderLayerInfo.predictedDisplayTime, &leftHandLocation);
-            if (XR_SUCCEEDED(result) && (leftHandLocation.locationFlags & requiredFlags) == requiredFlags) {
-                const XrPosef& pose = leftHandLocation.pose;
-
-                // World-space position of the controller
-                m_lc.position = { (pose.position.x + cameraWorldPosition.x) * scaleFactorInv, (pose.position.y + cameraWorldPosition.y + playerHeight) * scaleFactorInv, (pose.position.z + cameraWorldPosition.z) * scaleFactorInv };
-                
-                // Orientation -> direction (as covered earlier)
-                XMVECTOR orientation = XMVectorSet(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
-                XMVECTOR localForward = XMVectorSet(0, 0, -1, 0);
-                XMVECTOR worldForward = XMVector3Rotate(localForward, orientation);
-                worldForward = XMVector3Normalize(worldForward);
-
-                XMStoreFloat3(&m_lc.forward, worldForward);
-            }
         }
 
-        scene.drawSolidObjects();
+        scene.drawSolidObjects(m_lc.position, leftQuaternion);
         //scene.drawSpawners();
         //scene.drawPBMPM();
         scene.drawFluid(0, 3);
@@ -1218,7 +1228,7 @@ void OpenXRContext::CreateActions() {
     moveActionInfo.subactionPaths = &m_leftHandPath;
     OPENXR_CHECK(xrCreateAction(m_actionSet, &moveActionInfo, &m_moveAction), "Failed to create move action");
 
-    // === Index Trigger Action (Float Input) ===
+    // === Left Index Trigger Action (Float Input) ===
     XrActionCreateInfo triggerActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
     triggerActionInfo.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
     strcpy_s(triggerActionInfo.actionName, "left_trigger");
@@ -1227,7 +1237,7 @@ void OpenXRContext::CreateActions() {
     triggerActionInfo.subactionPaths = &m_leftHandPath;
     OPENXR_CHECK(xrCreateAction(m_actionSet, &triggerActionInfo, &m_triggerAction), "Failed to create trigger action");
 
-    // === Middle Trigger (Grip) Action (Float Input) ===
+    // === Left Middle Trigger (Grip) Action (Float Input) ===
     XrActionCreateInfo gripActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
     gripActionInfo.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
     strcpy_s(gripActionInfo.actionName, "left_grip");
@@ -1236,7 +1246,7 @@ void OpenXRContext::CreateActions() {
     gripActionInfo.subactionPaths = &m_leftHandPath;
     OPENXR_CHECK(xrCreateAction(m_actionSet, &gripActionInfo, &m_gripTriggerAction), "Failed to create grip action");
 
-    // === Pose Action (for controller tracking) ===
+    // === Left Pose Action (for controller tracking) ===
     XrActionCreateInfo poseActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
     poseActionInfo.actionType = XR_ACTION_TYPE_POSE_INPUT;
     strcpy_s(poseActionInfo.actionName, "left_hand_pose");

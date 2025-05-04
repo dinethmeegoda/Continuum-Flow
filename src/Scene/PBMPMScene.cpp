@@ -30,9 +30,9 @@ PBMPMScene::PBMPMScene(DXContext* context, RenderPipeline* pipeline, bool* rende
 }
 
 void PBMPMScene::createBukkitSystem() {
-	int bukkitCountX = (int)std::ceil(constants.gridSize.x / BukkitSize);
-	int bukkitCountY = (int)std::ceil(constants.gridSize.y / BukkitSize);
-	int bukkitCountZ = (int)std::ceil(constants.gridSize.z / BukkitSize);
+	int bukkitCountX = (int)std::ceil(simulationConstants.gridSize.x / BukkitSize);
+	int bukkitCountY = (int)std::ceil(simulationConstants.gridSize.y / BukkitSize);
+	int bukkitCountZ = (int)std::ceil(simulationConstants.gridSize.z / BukkitSize);
 
 	std::vector<int> count;
 	count.resize(bukkitCountX * bukkitCountY * bukkitCountZ);
@@ -98,12 +98,12 @@ void PBMPMScene::createBukkitSystem() {
 
 void PBMPMScene::updateSimUniforms(unsigned int iteration) {
 	// DO MOUSE UPDATING HERE
-	constants.simFrame = substepIndex;
-	constants.bukkitCount = bukkitSystem.count;
-	constants.bukkitCountX = bukkitSystem.countX;
-	constants.bukkitCountY = bukkitSystem.countY;
-	constants.bukkitCountZ = bukkitSystem.countZ;
-	constants.iteration = iteration;
+	simulationConstants.simFrame = substepIndex;
+	simulationConstants.bukkitCount = bukkitSystem.count;
+	simulationConstants.bukkitCountX = bukkitSystem.countX;
+	simulationConstants.bukkitCountY = bukkitSystem.countY;
+	simulationConstants.bukkitCountZ = bukkitSystem.countZ;
+	simulationConstants.iteration = iteration;
 }
 
 void PBMPMScene::resetBuffers(bool resetGrids) {
@@ -161,7 +161,7 @@ void PBMPMScene::resetBuffers(bool resetGrids) {
 	// Reset grid buffers
 	if (resetGrids) {
 		for (int i = 0; i < 3; i++) {
-			UINT numGridInts = constants.gridSize.x * constants.gridSize.y * constants.gridSize.z * 5; // The total number of elements in the buffers
+			UINT numGridInts = simulationConstants.gridSize.x * simulationConstants.gridSize.y * simulationConstants.gridSize.z * 5; // The total number of elements in the buffers
 			bufferClearPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 1, &numGridInts, 0);
 			bufferClearPipeline.getCommandList()->SetComputeRootDescriptorTable(1, gridBuffers[i].getUAVGPUDescriptorHandle());
 			bufferClearPipeline.getCommandList()->Dispatch((numGridInts + THREAD_GROUP_SIZE - 1) / THREAD_GROUP_SIZE, 1, 1);
@@ -185,10 +185,10 @@ void PBMPMScene::resetBuffers(bool resetGrids) {
 	context->resetCommandList(bukkitInsertPipeline.getCommandListID());
 }
 
-void PBMPMScene::doEmission(StructuredBuffer* gridBuffer, MouseConstants& mc) {
-	unsigned int threadGroupCountX = (unsigned int)std::floor((constants.gridSize.x + GridDispatchSize - 1) / GridDispatchSize);
-	unsigned int threadGroupCountY = (unsigned int)std::floor((constants.gridSize.y + GridDispatchSize - 1) / GridDispatchSize);
-	unsigned int threadGroupCountZ = (unsigned int)std::floor((constants.gridSize.z + GridDispatchSize - 1) / GridDispatchSize);
+void PBMPMScene::doEmission(StructuredBuffer* gridBuffer, InteractionConstants& mc) {
+	unsigned int threadGroupCountX = (unsigned int)std::floor((simulationConstants.gridSize.x + GridDispatchSize - 1) / GridDispatchSize);
+	unsigned int threadGroupCountY = (unsigned int)std::floor((simulationConstants.gridSize.y + GridDispatchSize - 1) / GridDispatchSize);
+	unsigned int threadGroupCountZ = (unsigned int)std::floor((simulationConstants.gridSize.z + GridDispatchSize - 1) / GridDispatchSize);
 
 	auto emissionCmd = emissionPipeline.getCommandList();
 	auto indirectCmd = setIndirectArgsPipeline.getCommandList();
@@ -209,13 +209,12 @@ void PBMPMScene::doEmission(StructuredBuffer* gridBuffer, MouseConstants& mc) {
 	emissionCmd->ResourceBarrier(1, &massVolumeBufferBarrier);
 
 	// Set Root Descriptors
-	emissionCmd->SetComputeRoot32BitConstants(0, 22, &constants, 0);
-	emissionCmd->SetComputeRoot32BitConstants(1, 12, &mc, 0);
-	emissionCmd->SetComputeRootConstantBufferView(2, shapeBuffer.getGPUVirtualAddress());
-	emissionCmd->SetComputeRootDescriptorTable(3, particleBuffer.getUAVGPUDescriptorHandle());
-	emissionCmd->SetComputeRootDescriptorTable(4, gridBuffer->getSRVGPUDescriptorHandle());
-	emissionCmd->SetComputeRootDescriptorTable(5, positionBuffer.getUAVGPUDescriptorHandle());
-	emissionCmd->SetComputeRootDescriptorTable(6, massVolumeBuffer.getUAVGPUDescriptorHandle());
+	emissionCmd->SetComputeRoot32BitConstants(0, 22, &simulationConstants, 0);
+	emissionCmd->SetComputeRootConstantBufferView(1, shapeBuffer.getGPUVirtualAddress());
+	emissionCmd->SetComputeRootDescriptorTable(2, particleBuffer.getUAVGPUDescriptorHandle());
+	emissionCmd->SetComputeRootDescriptorTable(3, gridBuffer->getSRVGPUDescriptorHandle());
+	emissionCmd->SetComputeRootDescriptorTable(4, positionBuffer.getUAVGPUDescriptorHandle());
+	emissionCmd->SetComputeRootDescriptorTable(5, massVolumeBuffer.getUAVGPUDescriptorHandle());
 
 	emissionCmd->Dispatch(threadGroupCountX, threadGroupCountY, threadGroupCountZ);
 
@@ -275,7 +274,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitCountPipeline.getCommandList()->ResourceBarrier(1, &particlePositionsBarrier);
 
 	// Properly set the Descriptors & Resource Transitions
-	bukkitCountPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 22, &constants, 0);
+	bukkitCountPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 22, &simulationConstants, 0);
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(1, particleCount.getSRVGPUDescriptorHandle());
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(2, particleBuffer.getSRVGPUDescriptorHandle());
 	bukkitCountPipeline.getCommandList()->SetComputeRootDescriptorTable(3, positionBuffer.getSRVGPUDescriptorHandle());
@@ -313,7 +312,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitAllocatePipeline.getCommandList()->ResourceBarrier(1, &bukkitCountBarrier);
 
 	// Properly set the Descriptors & Resource Transitions
-	bukkitAllocatePipeline.getCommandList()->SetComputeRoot32BitConstants(0, 34, &constants, 0);
+	bukkitAllocatePipeline.getCommandList()->SetComputeRoot32BitConstants(0, 34, &simulationConstants, 0);
 	bukkitAllocatePipeline.getCommandList()->SetComputeRootDescriptorTable(1, bukkitSystem.countBuffer.getSRVGPUDescriptorHandle());
 	bukkitAllocatePipeline.getCommandList()->SetComputeRootDescriptorTable(2, bukkitSystem.threadData.getUAVGPUDescriptorHandle());
 
@@ -351,7 +350,7 @@ void PBMPMScene::bukkitizeParticles() {
 	bukkitInsertPipeline.getCommandList()->ResourceBarrier(2, barriers);
 
 	// Properly set the Descriptors
-	bukkitInsertPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 34, &constants, 0);
+	bukkitInsertPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 34, &simulationConstants, 0);
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(1, particleBuffer.getSRVGPUDescriptorHandle());
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(2, bukkitSystem.countBuffer2.getUAVGPUDescriptorHandle());
 	bukkitInsertPipeline.getCommandList()->SetComputeRootDescriptorTable(3, bukkitSystem.indexStart.getSRVGPUDescriptorHandle());
@@ -456,11 +455,18 @@ void PBMPMScene::createShapes() {
 void PBMPMScene::constructScene() {
 	auto computeId = g2p2gPipeline.getCommandListID();
 	
-	constants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 2.5f, 0.2f, 0.01f,
+	// Default Simulation Constants
+	simulationConstants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 2.5f, 0.2f, 0.01f,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 3, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.25f, 2.3f, 1.2f, 1.5f, 0.5f,
-		// Mouse Defaults
-		{0, 0, 0, 0}, {0, 0, 0, 0}, 0, 4, 0, 10, 
+		1, 3, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.25f, 2.3f, 1.2f, 1.5f, 0.5f
+	};
+
+	// Default Interaction Constants
+	interactionConstants = {
+		{0, 0, 0}, 0, {0, 0, 0}, 0, 10, // Left Controller Vars
+		{0, 0, 0}, 0, {0, 0, 0}, 0, 10, // Right Controller Vars
+		4, // Radius
+		0 // Padding
 	};
 	
 	// Create Vertex & Index Buffer
@@ -557,7 +563,7 @@ void PBMPMScene::constructScene() {
 	createBukkitSystem();
 
 	std::vector<int> gridBufferData;
-	gridBufferData.resize(constants.gridSize.x * constants.gridSize.y * constants.gridSize.z * 5); //LOOK : 4 or 5?
+	gridBufferData.resize(simulationConstants.gridSize.x * simulationConstants.gridSize.y * simulationConstants.gridSize.z * 5); //LOOK : 4 or 5?
 
 	for (int i = 0; i < 3; i++) {
 		gridBuffers[i] = StructuredBuffer(gridBufferData.data(), (unsigned int)gridBufferData.size(), sizeof(int));
@@ -633,13 +639,6 @@ void PBMPMScene::constructScene() {
 }
 
 void PBMPMScene::compute() {
-	/*auto now = std::chrono::system_clock::now();
-	auto duration = now.time_since_epoch();
-	startTime += (unsigned int)std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();*/
-
-	// Create Mouse Constants from PBMPM Constants
-	MouseConstants mouseConstants = { constants.mousePosition, constants.mouseRayDirection,
-		constants.mouseActivation, constants.mouseRadius, constants.mouseFunction, constants.mouseStrength };
 
 	int bufferIdx = 0;
 	
@@ -648,15 +647,15 @@ void PBMPMScene::compute() {
 	for (unsigned int substepIdx = 0; substepIdx < substepCount; substepIdx++) {
 
 		// Update simulation uniforms
-		constants.iteration = 0;
+		simulationConstants.iteration = 0;
 		updateSimUniforms(0);
 		
 		StructuredBuffer* currentGrid = &gridBuffers[0];
 		StructuredBuffer* nextGrid = &gridBuffers[1];
 		StructuredBuffer* nextNextGrid = &gridBuffers[2];
 
-		for (unsigned int iterationIdx = 0; iterationIdx < constants.iterationCount; iterationIdx++) {
-			constants.iteration = iterationIdx;
+		for (unsigned int iterationIdx = 0; iterationIdx < simulationConstants.iterationCount; iterationIdx++) {
+			simulationConstants.iteration = iterationIdx;
 
 			updateSimUniforms(iterationIdx);
 
@@ -679,8 +678,8 @@ void PBMPMScene::compute() {
 			cmdList->SetPipelineState(g2p2gPipeline.getPSO());
 			cmdList->SetComputeRootSignature(g2p2gPipeline.getRootSignature());
 
-			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 24, &constants, 0);
-			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(1, 12, &mouseConstants, 0);
+			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(0, 24, &simulationConstants, 0);
+			g2p2gPipeline.getCommandList()->SetComputeRoot32BitConstants(1, 20, &interactionConstants, 0);
 			g2p2gPipeline.getCommandList()->SetComputeRootConstantBufferView(2, shapeBuffer.getGPUVirtualAddress());
 
 			ID3D12DescriptorHeap* computeDescriptorHeaps[] = { g2p2gPipeline.getDescriptorHeap()->Get() };
@@ -732,7 +731,7 @@ void PBMPMScene::compute() {
 
 			std::cout << "Compute Time: " << ms << " ms (" << fps << " FPS)" << std::endl;*/
 		}
-		doEmission(currentGrid, mouseConstants);
+		doEmission(currentGrid, interactionConstants);
 		bukkitizeParticles();
 
 		substepIndex++;
@@ -848,48 +847,6 @@ void PBMPMScene::releaseResources() {
 		fence->Release();
 		fence = nullptr;
 	}*/
-}
-
-void PBMPMScene::updateConstants(PBMPMConstants& newConstants) {
-	constants.gravityStrength = newConstants.gravityStrength;
-	constants.liquidRelaxation = newConstants.liquidRelaxation;
-	constants.liquidViscosity = newConstants.liquidViscosity;
-	constants.fixedPointMultiplier = newConstants.fixedPointMultiplier;
-	constants.useGridVolumeForLiquid = newConstants.useGridVolumeForLiquid;
-	constants.particlesPerCellAxis = newConstants.particlesPerCellAxis;
-	constants.frictionAngle = newConstants.frictionAngle;
-	constants.borderFriction = newConstants.borderFriction;
-	constants.elasticRelaxation = newConstants.elasticRelaxation;
-	constants.elasticityRatio = newConstants.elasticityRatio;
-	constants.iterationCount = newConstants.iterationCount;
-	constants.sandRatio = newConstants.sandRatio;
-	constants.sandRelaxation = newConstants.sandRelaxation;
-
-	constants.mousePosition = newConstants.mousePosition;
-	constants.mouseRayDirection = newConstants.mouseRayDirection;
-	constants.mouseActivation = newConstants.mouseActivation;
-	constants.mouseRadius = newConstants.mouseRadius;
-	constants.mouseFunction = newConstants.mouseFunction;
-	constants.mouseStrength = newConstants.mouseStrength;
-}
-
-bool PBMPMScene::constantsEqual(PBMPMConstants& one, PBMPMConstants& two) {
-	return one.gravityStrength == two.gravityStrength &&
-		one.liquidRelaxation == two.liquidRelaxation &&
-		one.liquidViscosity == two.liquidViscosity &&
-		one.fixedPointMultiplier == two.fixedPointMultiplier &&
-		one.useGridVolumeForLiquid == two.useGridVolumeForLiquid &&
-		one.particlesPerCellAxis == two.particlesPerCellAxis &&
-		one.frictionAngle == two.frictionAngle &&
-		one.borderFriction == two.borderFriction &&
-		one.elasticRelaxation == two.elasticRelaxation &&
-		one.elasticityRatio == two.elasticityRatio &&
-		one.sandRelaxation == two.sandRelaxation &&
-		one.sandRatio == two.sandRatio &&
-		one.iterationCount == two.iterationCount &&
-		one.mouseActivation == two.mouseActivation &&
-		one.mouseRadius == two.mouseRadius &&
-		one.mouseStrength == two.mouseStrength;
 }
 
 int PBMPMScene::transferAndGetNumParticles() {

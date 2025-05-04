@@ -11,7 +11,7 @@ class Scene {
 public:
 	Scene() = delete;
 	Scene(Camera* camera, DXContext* context, CommandListID renderID, DescriptorHeap* dHeap);
-	RenderPipeline* getObjectWirePipeline();
+	//RenderPipeline* getObjectWirePipeline();
 	RenderPipeline* getObjectSolidPipeline();
 	RenderPipeline* getPBMPMRenderPipeline();
 	MeshPipeline* getFluidMeshPipeline();
@@ -27,14 +27,14 @@ public:
 	void drawSand(unsigned int renderMeshlets, unsigned int renderOptions);
 	void drawVisco(unsigned int renderMeshlets, unsigned int renderOptions);
 	//void drawSnow(unsigned int renderMeshlets, unsigned int renderOptions);
-	void drawGrid();
-	void drawSpawners();
-	void drawSolidObjects();
+	//void drawGrid();
+	//void drawSpawners();
+	void drawSolidObjects(XMFLOAT3& leftPos, XMVECTOR& leftRot);
 
 	void releaseResources();
 
-	PBMPMConstants getPBMPMConstants() { return pbmpmScene.getConstants(); }
-	void updatePBMPMConstants(PBMPMConstants& newConstants);
+	PBMPMConstants* getPBMPMConstants() { return pbmpmScene.getConstants(); }
+	InteractionConstants* getPBMPMInteractionConstants() { return pbmpmScene.getInteractionConstants(); }
 
 	void preDrawFluid() { fluidScene.preDrawBufferTransition(); }
 	void postDrawFluid() { fluidScene.postDrawBufferTransition(); }
@@ -71,9 +71,9 @@ private:
 	RenderPipeline pbmpmRP;
 	PBMPMScene pbmpmScene;
 
-	RenderPipeline objectRPWire;
-	ObjectScene objectSceneGrid;
-	ObjectScene objectSceneSpawners;
+	//RenderPipeline objectRPWire;
+	//ObjectScene objectSceneGrid;
+	//ObjectScene objectSceneSpawners;
 	RenderPipeline objectRPSolid;
 	ObjectScene objectSceneSolid;
 

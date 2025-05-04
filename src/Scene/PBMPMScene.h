@@ -50,24 +50,25 @@ struct PBMPMConstants {
 
 	float sandRelaxation;
 	float sandRatio;
-
-	// Not passed to GPU as part of this struct
-	XMFLOAT4 mousePosition;
-	XMFLOAT4 mouseRayDirection;
-	unsigned int mouseActivation;
-	float mouseRadius;
-	unsigned int mouseFunction;
-	float mouseStrength;
 };
 
-struct MouseConstants {
+struct InteractionConstants {
 	// Struct used to pass to GPU
-	XMFLOAT4 mousePosition;
-	XMFLOAT4 mouseRayDirection;
-	unsigned int mouseActivation;
-	float mouseRadius;
-	unsigned int mouseFunction;
-	float mouseStrength;
+	XMFLOAT3 leftPosition;
+	unsigned int leftActivation;
+	XMFLOAT3 leftRayDirection;
+	unsigned int leftFunction;
+	float leftStrength;
+
+	XMFLOAT3 rightPosition;
+	unsigned int rightActivation;
+	XMFLOAT3 rightRayDirection;
+	unsigned int rightFunction;
+	float rightStrength;
+
+	float interactionRadius;
+
+	int padding;
 };
 
 struct SimShape {
@@ -127,16 +128,13 @@ public:
 
 	void releaseResources();
 
-	void updateConstants(PBMPMConstants& newConstants);
-
-	static bool constantsEqual(PBMPMConstants& one, PBMPMConstants& two);
-
 	StructuredBuffer* getPositionBuffer() { return &positionBuffer; }
 
 	int transferAndGetNumParticles();
 	unsigned int getNumParticles() { return numParticles; }
 
-	PBMPMConstants getConstants() { return constants; }
+	PBMPMConstants* getConstants() { return &simulationConstants; }
+	InteractionConstants* getInteractionConstants() { return &interactionConstants; }
 
 	std::vector<SimShape>& getSimShapes() { return shapes; }
 
@@ -154,7 +152,8 @@ private:
 	ComputePipeline emissionPipeline;
 	ComputePipeline setIndirectArgsPipeline;
 
-	PBMPMConstants constants;
+	PBMPMConstants simulationConstants;
+	InteractionConstants interactionConstants;
 	BukkitSystem bukkitSystem;
 
 	XMMATRIX modelMat;
@@ -197,7 +196,7 @@ private:
 
 	void bukkitizeParticles();
 
-	void doEmission(StructuredBuffer* gridBuffer, MouseConstants& mc);
+	void doEmission(StructuredBuffer* gridBuffer, InteractionConstants& mc);
 
 	void createShapes();
 
