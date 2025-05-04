@@ -193,8 +193,8 @@ void Scene::drawVisco(unsigned int renderMeshlets, unsigned int renderOptions) {
 //	objectSceneSpawners.draw(camera);
 //}
 
-void Scene::drawSolidObjects(XMFLOAT3& leftPos, XMVECTOR& leftRot) {
-	objectSceneSolid.draw(camera, leftPos, leftRot);
+void Scene::drawSolidObjects(XMFLOAT3& leftPos, XMVECTOR& leftRot, XMFLOAT3& rightPos, XMVECTOR& rightRot) {
+	objectSceneSolid.draw(camera, leftPos, leftRot, rightPos, rightRot);
 }
 
 void Scene::releaseResources() {

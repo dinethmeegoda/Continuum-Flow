@@ -29,7 +29,7 @@ public:
 	//void drawSnow(unsigned int renderMeshlets, unsigned int renderOptions);
 	//void drawGrid();
 	//void drawSpawners();
-	void drawSolidObjects(XMFLOAT3& leftPos, XMVECTOR& leftRot);
+	void drawSolidObjects(XMFLOAT3& leftPos, XMVECTOR& leftRot, XMFLOAT3& rightPos, XMVECTOR& rightRot);
 
 	void releaseResources();
 

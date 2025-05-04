@@ -549,8 +549,8 @@ void OpenXRContext::UpdateCameraProjectionMatrix(XrView headsetView) {
 }
 
 OpenXRContext::OpenXRContext(ID3D12GraphicsCommandList6* cmdList, 
-    DXContext* context, CommandListID commandListID, Camera* camera, LeftController &lc): 
-    m_cmdList(cmdList), m_dxContext(context), cmdListID(commandListID), m_camera(camera), m_lc(lc) {
+    DXContext* context, CommandListID commandListID, Camera* camera, Controller &lc, Controller &rc): 
+    m_cmdList(cmdList), m_dxContext(context), cmdListID(commandListID), m_camera(camera), m_lc(lc), m_rc(rc) {
 }
 
 OpenXRContext::~OpenXRContext() {
@@ -1131,26 +1131,25 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
             ApplyCameraMovement(moveX, moveZ, velocity, &views[i]); // Adjust velocity as needed
         }
 
-        // Check Left Trigger
+        // Check Left Controls
         XMVECTOR leftQuaternion;
+        XrActionStateFloat leftTriggerState{ XR_TYPE_ACTION_STATE_FLOAT };
+        XrActionStateGetInfo getLeftTriggerInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+        getLeftTriggerInfo.action = m_leftTriggerAction;
 
-        XrActionStateFloat triggerState{ XR_TYPE_ACTION_STATE_FLOAT };
-        XrActionStateGetInfo getTriggerInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
-        getTriggerInfo.action = m_triggerAction;
+        OPENXR_CHECK(xrGetActionStateFloat(m_session, &getLeftTriggerInfo, &leftTriggerState), "Failed to get left trigger state");
 
-        OPENXR_CHECK(xrGetActionStateFloat(m_session, &getTriggerInfo, &triggerState), "Failed to get trigger state");
+        XrActionStateFloat leftGripState{ XR_TYPE_ACTION_STATE_FLOAT };
+        XrActionStateGetInfo getLeftGripInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+        getLeftGripInfo.action = m_leftGripAction;
 
-        XrActionStateFloat gripState{ XR_TYPE_ACTION_STATE_FLOAT };
-        XrActionStateGetInfo getGripInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
-        getGripInfo.action = m_gripTriggerAction;
-
-        OPENXR_CHECK(xrGetActionStateFloat(m_session, &getGripInfo, &gripState), "Failed to get grip trigger state");
+        OPENXR_CHECK(xrGetActionStateFloat(m_session, &getLeftGripInfo, &leftGripState), "Failed to get left grip state");
 
         XrSpaceLocation leftHandLocation{ XR_TYPE_SPACE_LOCATION };
         XrSpaceLocationFlags requiredFlags = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
 
-        XrResult result = xrLocateSpace(m_leftHandSpace, m_localSpace, renderLayerInfo.predictedDisplayTime, &leftHandLocation);
-        if (XR_SUCCEEDED(result) && (leftHandLocation.locationFlags & requiredFlags) == requiredFlags) {
+        XrResult resultLeft = xrLocateSpace(m_leftHandSpace, m_localSpace, renderLayerInfo.predictedDisplayTime, &leftHandLocation);
+        if (XR_SUCCEEDED(resultLeft) && (leftHandLocation.locationFlags & requiredFlags) == requiredFlags) {
             const XrPosef& pose = leftHandLocation.pose;
 
             // World-space position of the controller
@@ -1174,17 +1173,68 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
         }
 
         // Consider it pressed if over threshold
-        if (triggerState.isActive || gripState.isActive) {
+        if (leftTriggerState.isActive || leftGripState.isActive) {
 
-            if (gripState.isActive) {
-				m_lc.gripValue = gripState.currentState;
+            if (leftGripState.isActive) {
+				m_lc.gripValue = leftGripState.currentState;
             }
-            if (triggerState.isActive) {
-                m_lc.triggerValue = triggerState.currentState;
+            if (leftTriggerState.isActive) {
+                m_lc.triggerValue = leftTriggerState.currentState;
             }
         }
 
-        scene.drawSolidObjects(m_lc.position, leftQuaternion);
+		// Check Right Controls
+		XMVECTOR rightQuaternion;
+		XrActionStateFloat rightTriggerState{ XR_TYPE_ACTION_STATE_FLOAT };
+		XrActionStateGetInfo getRightTriggerInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+		getRightTriggerInfo.action = m_rightTriggerAction;
+
+		OPENXR_CHECK(xrGetActionStateFloat(m_session, &getRightTriggerInfo, &rightTriggerState), "Failed to get trigger state");
+
+		XrActionStateFloat rightGripState{ XR_TYPE_ACTION_STATE_FLOAT };
+		XrActionStateGetInfo getRightGripInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+		getRightGripInfo.action = m_rightGripAction;
+
+		OPENXR_CHECK(xrGetActionStateFloat(m_session, &getRightGripInfo, &rightGripState), "Failed to get right grip state");
+
+		XrSpaceLocation rightHandLocation{ XR_TYPE_SPACE_LOCATION };
+		XrSpaceLocationFlags requiredFlagsRight = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
+
+		XrResult resultRight = xrLocateSpace(m_rightHandSpace, m_localSpace, renderLayerInfo.predictedDisplayTime, &rightHandLocation);
+        if (XR_SUCCEEDED(resultRight) && (rightHandLocation.locationFlags & requiredFlagsRight) == requiredFlagsRight) {
+			const XrPosef& pose = rightHandLocation.pose;
+
+			// World-space position of the controller
+			m_rc.position = { (pose.position.x + cameraWorldPosition.x), (pose.position.y + cameraWorldPosition.y), (pose.position.z + cameraWorldPosition.z) };
+
+			// Set the quaternion from pose into the vector
+			rightQuaternion = XMVectorSet(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+
+			// Step 1: Define a 90° rotation around the controller's *local X-axis*
+			XMVECTOR localX = XMVector3Rotate(XMVectorSet(-1, 0, 0, 0), rightQuaternion); // local X axis in world space
+			XMVECTOR rot90AroundLocalX = XMQuaternionRotationAxis(localX, XMConvertToRadians(90.0f));
+
+			// Step 2: Combine the rotation with the original orientation
+			XMVECTOR rotatedQuat = XMQuaternionMultiply(rightQuaternion, rot90AroundLocalX);
+
+			// Step 3: Apply the new rotation to a reference direction (e.g., "forward")
+			XMVECTOR forwardLocal = XMVectorSet(0, 0, -1, 0); // In controller local space, -Z is usually "forward"
+			XMVECTOR forwardWorld = XMVector3Rotate(forwardLocal, rotatedQuat);
+
+			XMStoreFloat3(&m_rc.forward, XMVector3Normalize(forwardWorld));
+        }
+
+		// Consider it pressed if over threshold
+        if (rightTriggerState.isActive || rightGripState.isActive) {
+            if (rightGripState.isActive) {
+				m_rc.gripValue = rightGripState.currentState;
+            }
+			if (rightTriggerState.isActive) {
+				m_rc.triggerValue = rightTriggerState.currentState;
+			}
+        }
+
+        scene.drawSolidObjects(m_lc.position, leftQuaternion, m_rc.position, rightQuaternion);
         //scene.drawSpawners();
         //scene.drawPBMPM();
         scene.drawFluid(0, 3);
@@ -1219,6 +1269,9 @@ void OpenXRContext::CreateActions() {
     // === Define Subaction Path for Left Hand ===
     OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left", &m_leftHandPath), "Failed to get left hand path");
 
+	// === Define Subaction Path for Right Hand ===
+	OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right", &m_rightHandPath), "Failed to get right hand path");
+
     // === Movement Action (Vector2f) ===
     XrActionCreateInfo moveActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
     moveActionInfo.actionType = XR_ACTION_TYPE_VECTOR2F_INPUT;
@@ -1228,6 +1281,15 @@ void OpenXRContext::CreateActions() {
     moveActionInfo.subactionPaths = &m_leftHandPath;
     OPENXR_CHECK(xrCreateAction(m_actionSet, &moveActionInfo, &m_moveAction), "Failed to create move action");
 
+	// === Camera Rotation Action (Vector2f) ===
+    XrActionCreateInfo rotateActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
+    rotateActionInfo.actionType = XR_ACTION_TYPE_VECTOR2F_INPUT;
+    strcpy_s(rotateActionInfo.actionName, "rotate");
+    strcpy_s(rotateActionInfo.localizedActionName, "Rotate Camera");
+    rotateActionInfo.countSubactionPaths = 1;
+    rotateActionInfo.subactionPaths = &m_rightHandPath;
+    OPENXR_CHECK(xrCreateAction(m_actionSet, &rotateActionInfo, &m_rotateAction), "Failed to create rotate action");
+
     // === Left Index Trigger Action (Float Input) ===
     XrActionCreateInfo triggerActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
     triggerActionInfo.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
@@ -1235,7 +1297,16 @@ void OpenXRContext::CreateActions() {
     strcpy_s(triggerActionInfo.localizedActionName, "Left Trigger");
     triggerActionInfo.countSubactionPaths = 1;
     triggerActionInfo.subactionPaths = &m_leftHandPath;
-    OPENXR_CHECK(xrCreateAction(m_actionSet, &triggerActionInfo, &m_triggerAction), "Failed to create trigger action");
+    OPENXR_CHECK(xrCreateAction(m_actionSet, &triggerActionInfo, &m_leftTriggerAction), "Failed to create left trigger action");
+
+	// === Right Index Trigger Action (Float Input) ===
+	XrActionCreateInfo rightTriggerActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
+	rightTriggerActionInfo.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
+	strcpy_s(rightTriggerActionInfo.actionName, "right_trigger");
+	strcpy_s(rightTriggerActionInfo.localizedActionName, "Right Trigger");
+	rightTriggerActionInfo.countSubactionPaths = 1;
+	rightTriggerActionInfo.subactionPaths = &m_rightHandPath;
+	OPENXR_CHECK(xrCreateAction(m_actionSet, &rightTriggerActionInfo, &m_rightTriggerAction), "Failed to create right trigger action");
 
     // === Left Middle Trigger (Grip) Action (Float Input) ===
     XrActionCreateInfo gripActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
@@ -1244,7 +1315,16 @@ void OpenXRContext::CreateActions() {
     strcpy_s(gripActionInfo.localizedActionName, "Left Grip");
     gripActionInfo.countSubactionPaths = 1;
     gripActionInfo.subactionPaths = &m_leftHandPath;
-    OPENXR_CHECK(xrCreateAction(m_actionSet, &gripActionInfo, &m_gripTriggerAction), "Failed to create grip action");
+    OPENXR_CHECK(xrCreateAction(m_actionSet, &gripActionInfo, &m_leftGripAction), "Failed to create left grip action");
+
+	// === Right Middle Trigger (Grip) Action (Float Input) ===
+	XrActionCreateInfo rightGripActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
+	rightGripActionInfo.actionType = XR_ACTION_TYPE_FLOAT_INPUT;
+	strcpy_s(rightGripActionInfo.actionName, "right_grip");
+	strcpy_s(rightGripActionInfo.localizedActionName, "Right Grip");
+	rightGripActionInfo.countSubactionPaths = 1;
+	rightGripActionInfo.subactionPaths = &m_rightHandPath;
+	OPENXR_CHECK(xrCreateAction(m_actionSet, &rightGripActionInfo, &m_rightGripAction), "Failed to create right grip action");
 
     // === Left Pose Action (for controller tracking) ===
     XrActionCreateInfo poseActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
@@ -1255,18 +1335,37 @@ void OpenXRContext::CreateActions() {
     poseActionInfo.subactionPaths = &m_leftHandPath;
     OPENXR_CHECK(xrCreateAction(m_actionSet, &poseActionInfo, &m_leftHandPoseAction), "Failed to create left hand pose action");
 
+	// === Right Pose Action (for controller tracking) ===
+	XrActionCreateInfo rightPoseActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
+	rightPoseActionInfo.actionType = XR_ACTION_TYPE_POSE_INPUT;
+	strcpy_s(rightPoseActionInfo.actionName, "right_hand_pose");
+	strcpy_s(rightPoseActionInfo.localizedActionName, "Right Hand Pose");
+	rightPoseActionInfo.countSubactionPaths = 1;
+	rightPoseActionInfo.subactionPaths = &m_rightHandPath;
+	OPENXR_CHECK(xrCreateAction(m_actionSet, &rightPoseActionInfo, &m_rightHandPoseAction), "Failed to create right hand pose action");
+
     // === Suggest Bindings ===
-    XrPath thumbstickPath, triggerValuePath, gripValuePath, gripPosePath;
-    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/thumbstick", &thumbstickPath), "Failed to get thumbstick path");
-    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/trigger/value", &triggerValuePath), "Failed to get trigger path");
-    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/squeeze/value", &gripValuePath), "Failed to get squeeze (grip) path");
-    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/grip/pose", &gripPosePath), "Failed to get grip pose path");
+    XrPath leftThumbstickPath, leftTriggerValuePath, leftGripValuePath, leftGripPosePath,
+		rightThumbstickPath, rightTriggerValuePath, rightGripValuePath, rightGripPosePath;
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/thumbstick", &leftThumbstickPath), "Failed to get thumbstick path");
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/trigger/value", &leftTriggerValuePath), "Failed to get trigger path");
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/squeeze/value", &leftGripValuePath), "Failed to get squeeze (grip) path");
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/grip/pose", &leftGripPosePath), "Failed to get grip pose path");
+
+	OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right/input/thumbstick", &rightThumbstickPath), "Failed to get thumbstick path");
+	OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right/input/trigger/value", &rightTriggerValuePath), "Failed to get trigger path");
+	OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right/input/squeeze/value", &rightGripValuePath), "Failed to get squeeze (grip) path");
+	OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right/input/grip/pose", &rightGripPosePath), "Failed to get grip pose path");
 
     XrActionSuggestedBinding bindings[] = {
-        { m_moveAction, thumbstickPath },
-        { m_triggerAction, triggerValuePath },
-        { m_gripTriggerAction, gripValuePath },
-        { m_leftHandPoseAction, gripPosePath }
+        { m_moveAction, leftThumbstickPath },
+        { m_leftTriggerAction, leftTriggerValuePath },
+        { m_leftGripAction, leftGripValuePath },
+        { m_leftHandPoseAction, leftGripPosePath },
+		{ m_rotateAction, rightThumbstickPath },
+		{ m_rightTriggerAction, rightTriggerValuePath },
+		{ m_rightGripAction, rightGripValuePath },
+		{ m_rightHandPoseAction, rightGripPosePath }
     };
 
     XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };
@@ -1283,11 +1382,17 @@ void OpenXRContext::CreateActions() {
     OPENXR_CHECK(xrAttachSessionActionSets(m_session, &attachInfo), "Failed to attach action set");
 
     // === Create Action Space for Pose Tracking ===
-    XrActionSpaceCreateInfo spaceCreateInfo{ XR_TYPE_ACTION_SPACE_CREATE_INFO };
-    spaceCreateInfo.action = m_leftHandPoseAction;
-    spaceCreateInfo.subactionPath = m_leftHandPath;
-    spaceCreateInfo.poseInActionSpace = { {0,0,0,1}, {0,0,0} }; // Identity pose
-    OPENXR_CHECK(xrCreateActionSpace(m_session, &spaceCreateInfo, &m_leftHandSpace), "Failed to create left hand space");
+    XrActionSpaceCreateInfo leftSpaceCreateInfo{ XR_TYPE_ACTION_SPACE_CREATE_INFO };
+    leftSpaceCreateInfo.action = m_leftHandPoseAction;
+    leftSpaceCreateInfo.subactionPath = m_leftHandPath;
+    leftSpaceCreateInfo.poseInActionSpace = { {0,0,0,1}, {0,0,0} }; // Identity pose
+    OPENXR_CHECK(xrCreateActionSpace(m_session, &leftSpaceCreateInfo, &m_leftHandSpace), "Failed to create left hand space");
+
+	XrActionSpaceCreateInfo rightSpaceCreateInfo{ XR_TYPE_ACTION_SPACE_CREATE_INFO };
+	rightSpaceCreateInfo.action = m_rightHandPoseAction;
+	rightSpaceCreateInfo.subactionPath = m_rightHandPath;
+	rightSpaceCreateInfo.poseInActionSpace = { {0,0,0,1}, {0,0,0} }; // Identity pose
+	OPENXR_CHECK(xrCreateActionSpace(m_session, &rightSpaceCreateInfo, &m_rightHandSpace), "Failed to create right hand space");
 }
 
 

@@ -165,14 +165,14 @@ private:
     void SetScissors(Rect2D* scissors, size_t count);
 
 public:
-    struct LeftController {
+    struct Controller {
         float triggerValue = 0.0f;
 		float gripValue = 0.0f;
         XMFLOAT3 position = { 0.0f, 0.0f, 0.0f };
         XMFLOAT3 forward = { 0.0f, 0.0f, 1.0f };
     };
     OpenXRContext(ID3D12GraphicsCommandList6* cmdList, DXContext* context, 
-        CommandListID id, Camera* c, LeftController &lc);
+        CommandListID id, Camera* c, Controller &lc, Controller &rc);
     ~OpenXRContext();
 
     void CreateInstance();
@@ -274,16 +274,26 @@ private:
 
     XrActionSet m_actionSet{};
     XrAction m_moveAction{};
-    XrAction m_triggerAction{};
-    XrAction m_gripTriggerAction{}; // NEW for middle (grip) trigger
+	XrAction m_rotateAction{};
+
+    XrAction m_leftTriggerAction{};
+    XrAction m_leftGripAction{};
     XrPath m_leftHandPath{};
+
+	XrAction m_rightTriggerAction{};
+	XrAction m_rightGripAction{};
+	XrPath m_rightHandPath{};
 
     XrAction m_leftHandPoseAction{};
     XrSpace m_leftHandSpace{};
 
+	XrAction m_rightHandPoseAction{};
+	XrSpace m_rightHandSpace{};
+
     void ApplyCameraMovement(float moveX, float moveZ, float velocity, XrView* view);
     XMFLOAT3 cameraWorldPosition = { 0.0f, playerHeight, 0.0f }; // default player eye height
 
-    LeftController &m_lc;
+    Controller &m_lc;
+	Controller &m_rc;
 
 };

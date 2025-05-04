@@ -9,7 +9,8 @@ std::unique_ptr<Camera> ShutdownManager::camera;
 //std::unique_ptr<Mouse> ShutdownManager::mouse;
 std::unique_ptr<DescriptorHeap> ShutdownManager::pbmpmDescriptorHeap;
 std::unique_ptr<OpenXRContext> ShutdownManager::openxrContext;
-std::unique_ptr<OpenXRContext::LeftController> ShutdownManager::leftController;
+std::unique_ptr<OpenXRContext::Controller> ShutdownManager::leftController;
+std::unique_ptr<OpenXRContext::Controller> ShutdownManager::rightController;
 std::unique_ptr<XrGraphicsBindingD3D12KHR> ShutdownManager::graphicsBinding;
 
 void ShutdownManager::Initialize() {
@@ -26,11 +27,12 @@ void ShutdownManager::Initialize() {
     //    std::cout << "could not initialize window\n";
     //    Window::get().shutdown();
     //}
-    leftController = std::make_unique<OpenXRContext::LeftController>();
+    leftController = std::make_unique<OpenXRContext::Controller>();
+	rightController = std::make_unique<OpenXRContext::Controller>();
     graphicsBinding = std::make_unique<XrGraphicsBindingD3D12KHR>();
 
 	openxrContext = std::make_unique<OpenXRContext>(scene.get()->getObjectSolidPipeline()->getCommandList(),
-        context.get(), OPENXR_CMDLIST_ID, camera.get(), *leftController.get());
+        context.get(), OPENXR_CMDLIST_ID, camera.get(), *leftController.get(), *rightController.get());
 	context->resetCommandList(OPENXR_CMDLIST_ID);
 
     // Open XR Setup
@@ -77,6 +79,7 @@ void ShutdownManager::Shutdown() {
 
 	graphicsBinding.reset();
 	leftController.reset();
+	rightController.reset();
 
     context->flush(1);
     context.reset();

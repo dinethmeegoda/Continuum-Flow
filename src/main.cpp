@@ -9,7 +9,7 @@ int main() {
 	DescriptorHeap* pbmpmDescriptorHeap = ShutdownManager::GetPBMPMDescriptorHeap();
 	Scene* scene = ShutdownManager::GetScene();
 	OpenXRContext* openXR = ShutdownManager::GetOpenXRContext();
-	OpenXRContext::LeftController* leftController = ShutdownManager::GetLeftController();
+	OpenXRContext::Controller* leftController = ShutdownManager::GetLeftController();
 
     PBMPMConstants* pbmpmCurrConstants = scene->getPBMPMConstants();
 	InteractionConstants* pbmpmInteractionConstants = scene->getPBMPMInteractionConstants();

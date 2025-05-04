@@ -144,11 +144,16 @@ void ObjectScene::constructSceneSolid() {
     }
 
     Mesh laserMesh = Mesh((std::filesystem::current_path() / string).string(), context, renderPipeline->getCommandList(), renderPipeline, identityMatrix, false, XMFLOAT3(0.84, 0.21, 0.14));
+    // Left Laser
     meshes.push_back(laserMesh);
     sceneSize += laserMesh.getNumTriangles();
+
+	// Right Laser
+	meshes.push_back(laserMesh);
+	sceneSize += laserMesh.getNumTriangles();
 }
 
-void ObjectScene::draw(Camera* camera, XMFLOAT3& leftPos, XMVECTOR& leftRot) {
+void ObjectScene::draw(Camera* camera, XMFLOAT3& leftPos, XMVECTOR& leftRot, XMFLOAT3& rightPos, XMVECTOR& rightRot) {
     for (int i = 0; i < meshes.size(); i++) {
 		Mesh& m = meshes.at(i);
         // == IA ==
@@ -177,11 +182,11 @@ void ObjectScene::draw(Camera* camera, XMFLOAT3& leftPos, XMVECTOR& leftRot) {
         auto projMat = camera->getProjMat();
         cmdList->SetGraphicsRoot32BitConstants(0, 16, &viewMat, 0);
         cmdList->SetGraphicsRoot32BitConstants(0, 16, &projMat, 16);
-		if (i < meshes.size() - 1) {
+		if (i < meshes.size() - 2) {
 			cmdList->SetGraphicsRoot32BitConstants(0, 16, m.getModelMatrix(), 32);
 		}
-        else {
-			// laser
+        else if (i == meshes.size() - 2){
+			// left laser
             XMFLOAT4X4 laserModelMatrix = *m.getModelMatrix();
             XMMATRIX modelMatrix =
                 XMMatrixScaling(0.01f, -5.0f, 0.01f) *                 // 1. Scale the cube
@@ -191,6 +196,17 @@ void ObjectScene::draw(Camera* camera, XMFLOAT3& leftPos, XMVECTOR& leftRot) {
             XMStoreFloat4x4(&laserModelMatrix, modelMatrix);
 			cmdList->SetGraphicsRoot32BitConstants(0, 16, &laserModelMatrix, 32);
 		}
+        else {
+			// right laser
+			XMFLOAT4X4 laserModelMatrix = *m.getModelMatrix();
+			XMMATRIX modelMatrix =
+				XMMatrixScaling(0.01f, -5.0f, 0.01f) *                 // 1. Scale the cube
+				XMMatrixRotationQuaternion(rightRot) *                  // 2. Rotate around center
+				XMMatrixTranslation(rightPos.x, rightPos.y, rightPos.z);  // 3. Move to world position
+
+			XMStoreFloat4x4(&laserModelMatrix, modelMatrix);
+            cmdList->SetGraphicsRoot32BitConstants(0, 16, &laserModelMatrix, 32);
+        }
         cmdList->SetGraphicsRoot32BitConstants(0, 3, m.getColor(), 48);
         cmdList->DrawIndexedInstanced(m.getNumTriangles() * 3, 1, 0, 0, 0);
     }
