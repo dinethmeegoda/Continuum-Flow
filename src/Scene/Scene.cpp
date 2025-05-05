@@ -22,7 +22,7 @@ Scene::Scene(Camera* p_camera, DXContext* context, CommandListID renderID, Descr
 	fluidBufferClearCP("bufferClearRootSignature.cso", "bufferClearComputeShader.cso", *context, CommandListID::FLUID_BUFFER_CLEAR_COMPUTE_ID, dHeap),
 	fluidDispatchArgDivideCP("DispatchArgDivideRootSig.cso", "DispatchArgDivide.cso", *context, CommandListID::FLUID_DISPATCH_ARG_DIVIDE_COMPUTE_ID, dHeap),
 	fluidScene(context, &fluidRP, &fluidBilevelUniformGridCP, &fluidSurfaceBlockDetectionCP, &fluidSurfaceCellDetectionCP, &fluidSurfaceVertexCompactionCP, 
-		&fluidSurfaceVertexDensityCP, &fluidSurfaceVertexNormalCP, &fluidBufferClearCP, &fluidDispatchArgDivideCP, &fluidMeshPipeline, 0, 0.488, 1.606, 1.709),
+		&fluidSurfaceVertexDensityCP, &fluidSurfaceVertexNormalCP, &fluidBufferClearCP, &fluidDispatchArgDivideCP, &fluidMeshPipeline, 0, 1.967, 0.983, 2.606),
 
 	// Elastic Mesh Shader Pipeline Construction
 	elasticRP("VertexShader.cso", "PixelShader.cso", "RootSignature.cso", *context, renderID, dHeap),

@@ -42,6 +42,10 @@ public:
 	float* getFluidIsovalue() { return fluidScene.getIsovalue(); }
 	float* getFluidKernelScale() { return fluidScene.getKernelScale(); }
 	float* getFluidKernelRadius() { return fluidScene.getKernelRadius(); }
+
+	void setFluidIsovalue(float isovalue) { fluidScene.setIsovalue(isovalue); }
+	void setFluidKernelScale(float kernelScale) { fluidScene.setKernelScale(kernelScale); }
+	void setFluidKernelRadius(float kernelRadius) { fluidScene.setKernelRadius(kernelRadius); }
 	
 	float* getElasticIsovalue() { return elasticScene.getIsovalue(); }
 	float* getElasticKernelScale() { return elasticScene.getKernelScale(); }

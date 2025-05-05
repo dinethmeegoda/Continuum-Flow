@@ -74,6 +74,10 @@ public:
     float* getKernelScale() { return &kernelScale; }
     float* getKernelRadius() { return &kernelRadius; }
 
+	void setIsovalue(float isovalue) { this->isovalue = isovalue; }
+	void setKernelScale(float kernelScale) { this->kernelScale = kernelScale; }
+	void setKernelRadius(float kernelRadius) { this->kernelRadius = kernelRadius; }
+
 private:
     void transitionBuffers(ID3D12GraphicsCommandList6* cmdList, D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState);
     void resetBuffers();

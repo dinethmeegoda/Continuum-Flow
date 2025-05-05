@@ -85,13 +85,13 @@ float4 main(PSInput input) : SV_Target
 	// Unpacked values from render options, currently (material enum, toon shading levels, 0, 0)
 	uint4 constants = unpackBytes(cb.renderOptions);
 
-    float3 lightDir = float3(-0.5, -1, 1); // Directional light direction
+    float3 lightDir = float3(0.5, -1, -1); // Directional light direction
 
-    if (cb.renderMeshlets == 1) {
+    if (cb.renderMeshlets == 2) {
         return float4(getMeshletColor(input.meshletIndex), 1.0);
     }
     
-    else if (cb.renderMeshlets == 0) {
+    else if (cb.renderMeshlets == 1) {
         // Realistic
 		// If water, then do the fancy reflection/refraction
         if (constants.x == 0.0) {
@@ -133,7 +133,7 @@ float4 main(PSInput input) : SV_Target
 		}
     }
 
-    else if (cb.renderMeshlets == 2) {
+    else if (cb.renderMeshlets == 0) {
         // Toon Shading
         float3 lightColor = float3(1.2, 1.2, 1.2);          // White light
 

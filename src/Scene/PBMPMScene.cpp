@@ -456,9 +456,9 @@ void PBMPMScene::constructScene() {
 	auto computeId = g2p2gPipeline.getCommandListID();
 	
 	// Default Simulation Constants
-	simulationConstants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 2.5f, 0.2f, 0.01f,
+	simulationConstants = { {GRID_WIDTH, GRID_HEIGHT, GRID_DEPTH}, 0.01f, 2.5f, 0.2f, 0.006f,
 		(unsigned int)std::ceil(std::pow(10, 7)),
-		1, 3, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.25f, 2.3f, 1.2f, 1.5f, 0.5f
+		1, 3, 30, 5, 0, 0, 0, 0, 0, 0, 5, 0.08f, 2.3f, 1.2f, 1.5f, 0.5f
 	};
 
 	// Default Interaction Constants
