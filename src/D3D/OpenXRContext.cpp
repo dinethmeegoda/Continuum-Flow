@@ -1137,7 +1137,7 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
                 float joystickX = rotateState.currentState.x;
                 float deltaYaw = -joystickX * rotationSpeed * deltaTime;
 
-                m_cameraYaw += deltaYaw;
+                //m_cameraYaw += deltaYaw;
             }
         }
 
@@ -1169,7 +1169,7 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
 
 			// Rotate the position vector by the camera yaw before doing any transformations
 			XMVECTOR positionVec = XMVectorSet(pose.position.x, pose.position.y, pose.position.z, 0.0f);
-            positionVec = XMVector3Transform(positionVec, XMMatrixRotationY(m_cameraYaw));
+            //positionVec = XMVector3Transform(positionVec, XMMatrixRotationY(m_cameraYaw));
             XMFLOAT3 rotatedVec;
 			XMStoreFloat3(&rotatedVec, positionVec);
 
@@ -1189,7 +1189,7 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
             // Step 3: Apply the new rotation to a reference direction (e.g., "forward")
             XMVECTOR forwardLocal = XMVectorSet(0, 0, -1, 0); // In controller local space, -Z is usually "forward"
             XMVECTOR forwardWorld = XMVector3Rotate(forwardLocal, rotatedQuat);
-			forwardWorld = XMVector3Transform(forwardWorld, XMMatrixRotationY(m_cameraYaw));
+			//forwardWorld = XMVector3Transform(forwardWorld, XMMatrixRotationY(m_cameraYaw));
 
             XMStoreFloat3(&m_lc.forward, XMVector3Normalize(forwardWorld));
         }
@@ -1228,7 +1228,7 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
 
             // Rotate the position vector by the camera yaw before doing any transformations
             XMVECTOR positionVec = XMVectorSet(pose.position.x, pose.position.y, pose.position.z, 0.0f);
-            positionVec = XMVector3Transform(positionVec, XMMatrixRotationY(m_cameraYaw));
+            //positionVec = XMVector3Transform(positionVec, XMMatrixRotationY(m_cameraYaw));
             XMFLOAT3 rotatedVec;
             XMStoreFloat3(&rotatedVec, positionVec);
 
@@ -1248,7 +1248,7 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
             // Step 3: Apply the new rotation to a reference direction (e.g., "forward")
             XMVECTOR forwardLocal = XMVectorSet(0, 0, -1, 0); // In controller local space, -Z is usually "forward"
             XMVECTOR forwardWorld = XMVector3Rotate(forwardLocal, rotatedQuat);
-            forwardWorld = XMVector3Transform(forwardWorld, XMMatrixRotationY(m_cameraYaw));
+            //forwardWorld = XMVector3Transform(forwardWorld, XMMatrixRotationY(m_cameraYaw));
 
             XMStoreFloat3(&m_rc.forward, XMVector3Normalize(forwardWorld));
         }
@@ -1299,7 +1299,7 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
             renderMode = (renderMode + 1) % 3;
         }
 
-        scene.drawSolidObjects(m_lc.position, leftQuaternion, m_rc.position, rightQuaternion, m_cameraYaw);
+        scene.drawSolidObjects(m_lc.position, leftQuaternion, m_rc.position, rightQuaternion, 0);
         
         // 0 is mesh only, 1 is mesh + particles, 2 is particles only
         if (renderMode == 1 || renderMode == 2) {
