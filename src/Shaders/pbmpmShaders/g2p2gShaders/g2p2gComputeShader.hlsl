@@ -630,7 +630,7 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
                 float3 lightColor = lightColorTable[material];
                 g_materials[myParticleIndex].xyz = lerp(darkColor, lightColor, displacementRatio);
                 
-                // Left Controller Iteraction
+                // Left Controller Interaction
                 if (g_interactionConstants.leftActivation == 1) {
                     float t;
                     bool intersected = intersectRaySphere(g_interactionConstants.leftPosition, g_interactionConstants.leftRayDirection, p, g_interactionConstants.interactionRadius, t);
@@ -669,6 +669,47 @@ void main(uint indexInGroup : SV_GroupIndex, uint3 groupId : SV_GroupID)
 						}
                     }
                 }
+
+				// Right Controller Interaction
+                if (g_interactionConstants.rightActivation == 1) {
+                    float t;
+                    bool intersected = intersectRaySphere(g_interactionConstants.rightPosition, g_interactionConstants.rightRayDirection, p, g_interactionConstants.interactionRadius, t);
+                    float3 offset = p - float3(g_interactionConstants.rightPosition);
+                    float lenOffset = max(length(offset), 0.0001);
+                    if (intersected)
+                    {
+                        float3 normOffset = offset / lenOffset;
+
+                        if (g_interactionConstants.rightFunction == 0) // Push
+                        {
+                            displacement += normOffset * g_interactionConstants.rightActivation * g_interactionConstants.rightStrength * g_simConstants.deltaTime * 3.f;
+                        }
+                        else if (g_interactionConstants.rightFunction == 1) // Grab
+                        {
+                            float3 isect_pos = g_interactionConstants.rightPosition + g_interactionConstants.rightRayDirection;
+                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_interactionConstants.rightStrength * 2.0;
+                        }
+                        else if (g_interactionConstants.rightFunction == 2) // Pull
+                        {
+                            float3 isect_pos = g_interactionConstants.rightPosition + g_interactionConstants.rightRayDirection * t * 2.0;
+
+                            float distance = length(p - isect_pos);
+
+                            // Define the range where fading happens
+                            float fadeStart = 2.0;  // closer than this starts reducing
+                            float fadeEnd = 20.0; // farther than this = full strength (2.0)
+
+                            // Compute a weight from 0 (close) to 1 (far)
+                            float t = saturate((distance - fadeStart) / (fadeEnd - fadeStart));
+
+                            // Fade from 0.5 (close) to 2.0 (far)
+                            float multiplier = lerp(0.5, 2.0, t);
+
+                            displacement = -(p - isect_pos) * g_simConstants.deltaTime * g_interactionConstants.rightStrength * multiplier;
+                        }
+                    }
+                }
+
 
                 // Gravity Acceleration is normalized to the vertical size of the window
                 displacement.y -= float(g_simConstants.gridSize.y) * g_simConstants.gravityStrength * g_simConstants.deltaTime * g_simConstants.deltaTime;

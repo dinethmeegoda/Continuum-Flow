@@ -525,8 +525,10 @@ void OpenXRContext::UpdateCameraProjectionMatrix(XrView headsetView) {
         XMVECTOR worldPos = XMVectorAdd(position, headOffset);
         XMVECTOR orientation = XMVectorSet(rot.x, rot.y, rot.z, rot.w);
 
+		XMMATRIX cameraWorld = XMMatrixRotationY(m_cameraYaw) * XMMatrixTranslationFromVector(worldPos);
+
         // Transform from local (camera) space to world
-        XMMATRIX cameraWorld = XMMatrixRotationQuaternion(orientation) * XMMatrixTranslationFromVector(worldPos);
+        cameraWorld = XMMatrixRotationQuaternion(orientation) * cameraWorld;
 
         // Transform basis vectors from camera space to world space
         XMVECTOR forward = XMVector3Normalize(XMVector3TransformNormal(XMVectorSet(0, 0, -1, 0), cameraWorld));
@@ -1100,10 +1102,6 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
         SetViewports(&viewport, 1);
         SetScissors(&scissor, 1);
 
-        // Compute the view-projection transform.
-        // All matrices (including OpenXR's) are column-major, right-handed.
-        UpdateCameraProjectionMatrix(views[i]);
-
         // Move
         XrActiveActionSet activeActionSet{};
         activeActionSet.actionSet = m_actionSet;
@@ -1123,13 +1121,30 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
             float moveX = moveState.currentState.x;
             float moveZ = moveState.currentState.y;
 
-            float deltaTime = 0.01;
-            float speedScale = 5;
             // Use moveX and moveZ to update camera/player movement on X and Z axes
             float velocity = std::sqrt(moveState.currentState.x * moveState.currentState.x +
                 moveState.currentState.y * moveState.currentState.y) * deltaTime * speedScale;
             ApplyCameraMovement(moveX, moveZ, velocity, &views[i]); // Adjust velocity as needed
         }
+
+        XrActionStateVector2f rotateState{ XR_TYPE_ACTION_STATE_VECTOR2F };
+        XrActionStateGetInfo rotateGetInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+        rotateGetInfo.action = m_rotateAction;
+        OPENXR_CHECK(xrGetActionStateVector2f(m_session, &rotateGetInfo, &rotateState), "Failed to get rotate state");
+
+        if (rotateState.isActive) {
+            if (rotateState.isActive) {
+                float joystickX = rotateState.currentState.x;
+                float deltaYaw = -joystickX * rotationSpeed * deltaTime;
+
+                m_cameraYaw += deltaYaw;
+            }
+        }
+
+
+        // Compute the view-projection transform.
+        // All matrices (including OpenXR's) are column-major, right-handed.
+        UpdateCameraProjectionMatrix(views[i]);
 
         // Check Left Controls
         XMVECTOR leftQuaternion;
@@ -1152,11 +1167,17 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
         if (XR_SUCCEEDED(resultLeft) && (leftHandLocation.locationFlags & requiredFlags) == requiredFlags) {
             const XrPosef& pose = leftHandLocation.pose;
 
-            // World-space position of the controller
-            m_lc.position = { (pose.position.x + cameraWorldPosition.x), (pose.position.y + cameraWorldPosition.y), (pose.position.z + cameraWorldPosition.z)};
+			// Rotate the position vector by the camera yaw before doing any transformations
+			XMVECTOR positionVec = XMVectorSet(pose.position.x, pose.position.y, pose.position.z, 0.0f);
+            positionVec = XMVector3Transform(positionVec, XMMatrixRotationY(m_cameraYaw));
+            XMFLOAT3 rotatedVec;
+			XMStoreFloat3(&rotatedVec, positionVec);
 
-			// Set the quaternion from pose into the vector
-			leftQuaternion = XMVectorSet(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+            // World-space position of the controller
+            m_lc.position = { (rotatedVec.x + cameraWorldPosition.x), (rotatedVec.y + cameraWorldPosition.y), (rotatedVec.z + cameraWorldPosition.z) };
+
+            // Set the quaternion from pose into the vector
+            leftQuaternion = XMVectorSet(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
 
             // Step 1: Define a 90° rotation around the controller's *local X-axis*
             XMVECTOR localX = XMVector3Rotate(XMVectorSet(-1, 0, 0, 0), leftQuaternion); // local X axis in world space
@@ -1168,6 +1189,7 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
             // Step 3: Apply the new rotation to a reference direction (e.g., "forward")
             XMVECTOR forwardLocal = XMVectorSet(0, 0, -1, 0); // In controller local space, -Z is usually "forward"
             XMVECTOR forwardWorld = XMVector3Rotate(forwardLocal, rotatedQuat);
+			forwardWorld = XMVector3Transform(forwardWorld, XMMatrixRotationY(m_cameraYaw));
 
             XMStoreFloat3(&m_lc.forward, XMVector3Normalize(forwardWorld));
         }
@@ -1176,68 +1198,119 @@ bool OpenXRContext::RenderLayer(RenderLayerInfo& renderLayerInfo, Scene& scene)
         if (leftTriggerState.isActive || leftGripState.isActive) {
 
             if (leftGripState.isActive) {
-				m_lc.gripValue = leftGripState.currentState;
+                m_lc.gripValue = leftGripState.currentState;
             }
             if (leftTriggerState.isActive) {
                 m_lc.triggerValue = leftTriggerState.currentState;
             }
         }
 
-		// Check Right Controls
-		XMVECTOR rightQuaternion;
-		XrActionStateFloat rightTriggerState{ XR_TYPE_ACTION_STATE_FLOAT };
-		XrActionStateGetInfo getRightTriggerInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
-		getRightTriggerInfo.action = m_rightTriggerAction;
+        // Check Right Controls
+        XMVECTOR rightQuaternion;
+        XrActionStateFloat rightTriggerState{ XR_TYPE_ACTION_STATE_FLOAT };
+        XrActionStateGetInfo getRightTriggerInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+        getRightTriggerInfo.action = m_rightTriggerAction;
 
-		OPENXR_CHECK(xrGetActionStateFloat(m_session, &getRightTriggerInfo, &rightTriggerState), "Failed to get trigger state");
+        OPENXR_CHECK(xrGetActionStateFloat(m_session, &getRightTriggerInfo, &rightTriggerState), "Failed to get trigger state");
 
-		XrActionStateFloat rightGripState{ XR_TYPE_ACTION_STATE_FLOAT };
-		XrActionStateGetInfo getRightGripInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
-		getRightGripInfo.action = m_rightGripAction;
+        XrActionStateFloat rightGripState{ XR_TYPE_ACTION_STATE_FLOAT };
+        XrActionStateGetInfo getRightGripInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+        getRightGripInfo.action = m_rightGripAction;
 
-		OPENXR_CHECK(xrGetActionStateFloat(m_session, &getRightGripInfo, &rightGripState), "Failed to get right grip state");
+        OPENXR_CHECK(xrGetActionStateFloat(m_session, &getRightGripInfo, &rightGripState), "Failed to get right grip state");
 
-		XrSpaceLocation rightHandLocation{ XR_TYPE_SPACE_LOCATION };
-		XrSpaceLocationFlags requiredFlagsRight = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
+        XrSpaceLocation rightHandLocation{ XR_TYPE_SPACE_LOCATION };
+        XrSpaceLocationFlags requiredFlagsRight = XR_SPACE_LOCATION_POSITION_VALID_BIT | XR_SPACE_LOCATION_ORIENTATION_VALID_BIT;
 
-		XrResult resultRight = xrLocateSpace(m_rightHandSpace, m_localSpace, renderLayerInfo.predictedDisplayTime, &rightHandLocation);
+        XrResult resultRight = xrLocateSpace(m_rightHandSpace, m_localSpace, renderLayerInfo.predictedDisplayTime, &rightHandLocation);
         if (XR_SUCCEEDED(resultRight) && (rightHandLocation.locationFlags & requiredFlagsRight) == requiredFlagsRight) {
-			const XrPosef& pose = rightHandLocation.pose;
+            const XrPosef& pose = rightHandLocation.pose;
 
-			// World-space position of the controller
-			m_rc.position = { (pose.position.x + cameraWorldPosition.x), (pose.position.y + cameraWorldPosition.y), (pose.position.z + cameraWorldPosition.z) };
+            // Rotate the position vector by the camera yaw before doing any transformations
+            XMVECTOR positionVec = XMVectorSet(pose.position.x, pose.position.y, pose.position.z, 0.0f);
+            positionVec = XMVector3Transform(positionVec, XMMatrixRotationY(m_cameraYaw));
+            XMFLOAT3 rotatedVec;
+            XMStoreFloat3(&rotatedVec, positionVec);
 
-			// Set the quaternion from pose into the vector
-			rightQuaternion = XMVectorSet(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
+            // World-space position of the controller
+            m_rc.position = { (rotatedVec.x + cameraWorldPosition.x), (rotatedVec.y + cameraWorldPosition.y), (rotatedVec.z + cameraWorldPosition.z) };
 
-			// Step 1: Define a 90° rotation around the controller's *local X-axis*
-			XMVECTOR localX = XMVector3Rotate(XMVectorSet(-1, 0, 0, 0), rightQuaternion); // local X axis in world space
-			XMVECTOR rot90AroundLocalX = XMQuaternionRotationAxis(localX, XMConvertToRadians(90.0f));
+            // Set the quaternion from pose into the vector
+            rightQuaternion = XMVectorSet(pose.orientation.x, pose.orientation.y, pose.orientation.z, pose.orientation.w);
 
-			// Step 2: Combine the rotation with the original orientation
-			XMVECTOR rotatedQuat = XMQuaternionMultiply(rightQuaternion, rot90AroundLocalX);
+            // Step 1: Define a 90° rotation around the controller's *local X-axis*
+            XMVECTOR localX = XMVector3Rotate(XMVectorSet(-1, 0, 0, 0), rightQuaternion); // local X axis in world space
+            XMVECTOR rot90AroundLocalX = XMQuaternionRotationAxis(localX, XMConvertToRadians(90.0f));
 
-			// Step 3: Apply the new rotation to a reference direction (e.g., "forward")
-			XMVECTOR forwardLocal = XMVectorSet(0, 0, -1, 0); // In controller local space, -Z is usually "forward"
-			XMVECTOR forwardWorld = XMVector3Rotate(forwardLocal, rotatedQuat);
+            // Step 2: Combine the rotation with the original orientation
+            XMVECTOR rotatedQuat = XMQuaternionMultiply(rightQuaternion, rot90AroundLocalX);
 
-			XMStoreFloat3(&m_rc.forward, XMVector3Normalize(forwardWorld));
+            // Step 3: Apply the new rotation to a reference direction (e.g., "forward")
+            XMVECTOR forwardLocal = XMVectorSet(0, 0, -1, 0); // In controller local space, -Z is usually "forward"
+            XMVECTOR forwardWorld = XMVector3Rotate(forwardLocal, rotatedQuat);
+            forwardWorld = XMVector3Transform(forwardWorld, XMMatrixRotationY(m_cameraYaw));
+
+            XMStoreFloat3(&m_rc.forward, XMVector3Normalize(forwardWorld));
         }
 
-		// Consider it pressed if over threshold
+        // Consider it pressed if over threshold
         if (rightTriggerState.isActive || rightGripState.isActive) {
             if (rightGripState.isActive) {
-				m_rc.gripValue = rightGripState.currentState;
+                m_rc.gripValue = rightGripState.currentState;
             }
-			if (rightTriggerState.isActive) {
-				m_rc.triggerValue = rightTriggerState.currentState;
-			}
+            if (rightTriggerState.isActive) {
+                m_rc.triggerValue = rightTriggerState.currentState;
+            }
         }
 
-        scene.drawSolidObjects(m_lc.position, leftQuaternion, m_rc.position, rightQuaternion);
-        //scene.drawSpawners();
-        //scene.drawPBMPM();
-        scene.drawFluid(0, 3);
+        // Check Buttons
+
+		// Checking A button to toggle gravity
+		XrActionStateBoolean aButtonState{ XR_TYPE_ACTION_STATE_BOOLEAN };
+		XrActionStateGetInfo getAButtonInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+		getAButtonInfo.action = m_aButtonClickAction;
+
+		OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getAButtonInfo, &aButtonState), "Failed to get A button state");
+        if (aButtonState.changedSinceLastSync && aButtonState.currentState) {
+			enableGravity = !enableGravity;
+        }
+
+        // Checking X button to change Mesh Rendering Mode
+        XrActionStateBoolean xButtonState{ XR_TYPE_ACTION_STATE_BOOLEAN };
+        XrActionStateGetInfo getXButtonInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+        getXButtonInfo.action = m_xButtonClickAction;
+
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getXButtonInfo, &xButtonState), "Failed to get X button state");
+
+        if (xButtonState.changedSinceLastSync && xButtonState.currentState) {
+            // Increment Mesh Shading Mode by 1 unless it is above 2, then loop it back to 0
+            meshShadingMode = (meshShadingMode + 1) % 3;
+        }
+
+        // Checking Y button to change Mesh/Particle Rendering Mode
+        XrActionStateBoolean yButtonState{ XR_TYPE_ACTION_STATE_BOOLEAN };
+        XrActionStateGetInfo getYButtonInfo{ XR_TYPE_ACTION_STATE_GET_INFO };
+        getYButtonInfo.action = m_yButtonClickAction;
+
+        OPENXR_CHECK(xrGetActionStateBoolean(m_session, &getYButtonInfo, &yButtonState), "Failed to get Y button state");
+
+        if (yButtonState.changedSinceLastSync && yButtonState.currentState) {
+            // Increment Mesh Shading Mode by 1 unless it is above 2, then loop it back to 0
+            renderMode = (renderMode + 1) % 3;
+        }
+
+        scene.drawSolidObjects(m_lc.position, leftQuaternion, m_rc.position, rightQuaternion, m_cameraYaw);
+        
+        // 0 is mesh only, 1 is mesh + particles, 2 is particles only
+        if (renderMode == 1 || renderMode == 2) {
+            // Draws Particles
+            scene.drawPBMPM();
+        }
+
+        if (renderMode == 0 || renderMode == 1) {
+            // Draws Mesh
+            scene.drawFluid(meshShadingMode, 3);
+        }
 
         EndRendering();
 
@@ -1271,6 +1344,11 @@ void OpenXRContext::CreateActions() {
 
 	// === Define Subaction Path for Right Hand ===
 	OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right", &m_rightHandPath), "Failed to get right hand path");
+
+	// === Define Subaction Path for Buttons ===
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/x/click", &m_xButtonClickPath), "Failed to get X button path");
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/y/click", &m_yButtonClickPath), "Failed to get Y button path");
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right/input/a/click", &m_aButtonClickPath), "Failed to get A button path");
 
     // === Movement Action (Vector2f) ===
     XrActionCreateInfo moveActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
@@ -1344,6 +1422,33 @@ void OpenXRContext::CreateActions() {
 	rightPoseActionInfo.subactionPaths = &m_rightHandPath;
 	OPENXR_CHECK(xrCreateAction(m_actionSet, &rightPoseActionInfo, &m_rightHandPoseAction), "Failed to create right hand pose action");
 
+	// === X Button Action (for controller tracking) ===
+	XrActionCreateInfo xButtonActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
+	xButtonActionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+	strcpy_s(xButtonActionInfo.actionName, "x_button_click");
+	strcpy_s(xButtonActionInfo.localizedActionName, "X Button Click");
+	xButtonActionInfo.countSubactionPaths = 1;
+	xButtonActionInfo.subactionPaths = &m_leftHandPath;
+	OPENXR_CHECK(xrCreateAction(m_actionSet, &xButtonActionInfo, &m_xButtonClickAction), "Failed to create X button action");
+
+    // === Y Button Action (for controller tracking) ===
+    XrActionCreateInfo yButtonActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
+    yButtonActionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+    strcpy_s(yButtonActionInfo.actionName, "y_button_click");
+    strcpy_s(yButtonActionInfo.localizedActionName, "Y Button Click");
+    yButtonActionInfo.countSubactionPaths = 1;
+    yButtonActionInfo.subactionPaths = &m_leftHandPath;
+    OPENXR_CHECK(xrCreateAction(m_actionSet, &yButtonActionInfo, &m_yButtonClickAction), "Failed to create Y button action");
+
+	// === A Button Action (for controller tracking) ===
+	XrActionCreateInfo aButtonActionInfo{ XR_TYPE_ACTION_CREATE_INFO };
+	aButtonActionInfo.actionType = XR_ACTION_TYPE_BOOLEAN_INPUT;
+	strcpy_s(aButtonActionInfo.actionName, "a_button_click");
+	strcpy_s(aButtonActionInfo.localizedActionName, "A Button Click");
+	aButtonActionInfo.countSubactionPaths = 1;
+	aButtonActionInfo.subactionPaths = &m_rightHandPath;
+	OPENXR_CHECK(xrCreateAction(m_actionSet, &aButtonActionInfo, &m_aButtonClickAction), "Failed to create A button action");
+
     // === Suggest Bindings ===
     XrPath leftThumbstickPath, leftTriggerValuePath, leftGripValuePath, leftGripPosePath,
 		rightThumbstickPath, rightTriggerValuePath, rightGripValuePath, rightGripPosePath;
@@ -1351,11 +1456,14 @@ void OpenXRContext::CreateActions() {
     OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/trigger/value", &leftTriggerValuePath), "Failed to get trigger path");
     OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/squeeze/value", &leftGripValuePath), "Failed to get squeeze (grip) path");
     OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/grip/pose", &leftGripPosePath), "Failed to get grip pose path");
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/x/click", &m_xButtonClickPath), "Failed to get X button string path");
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/left/input/y/click", &m_yButtonClickPath), "Failed to get Y button string path");
 
 	OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right/input/thumbstick", &rightThumbstickPath), "Failed to get thumbstick path");
 	OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right/input/trigger/value", &rightTriggerValuePath), "Failed to get trigger path");
 	OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right/input/squeeze/value", &rightGripValuePath), "Failed to get squeeze (grip) path");
 	OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right/input/grip/pose", &rightGripPosePath), "Failed to get grip pose path");
+    OPENXR_CHECK(xrStringToPath(m_xrInstance, "/user/hand/right/input/a/click", &m_aButtonClickPath), "Failed to get A button string path");
 
     XrActionSuggestedBinding bindings[] = {
         { m_moveAction, leftThumbstickPath },
@@ -1365,7 +1473,10 @@ void OpenXRContext::CreateActions() {
 		{ m_rotateAction, rightThumbstickPath },
 		{ m_rightTriggerAction, rightTriggerValuePath },
 		{ m_rightGripAction, rightGripValuePath },
-		{ m_rightHandPoseAction, rightGripPosePath }
+		{ m_rightHandPoseAction, rightGripPosePath },
+        { m_xButtonClickAction, m_xButtonClickPath },
+		{ m_yButtonClickAction, m_yButtonClickPath },
+		{ m_aButtonClickAction, m_aButtonClickPath },
     };
 
     XrInteractionProfileSuggestedBinding suggestedBindings{ XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING };

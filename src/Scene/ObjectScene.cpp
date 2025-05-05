@@ -153,7 +153,7 @@ void ObjectScene::constructSceneSolid() {
 	sceneSize += laserMesh.getNumTriangles();
 }
 
-void ObjectScene::draw(Camera* camera, XMFLOAT3& leftPos, XMVECTOR& leftRot, XMFLOAT3& rightPos, XMVECTOR& rightRot) {
+void ObjectScene::draw(Camera* camera, XMFLOAT3& leftPos, XMVECTOR& leftRot, XMFLOAT3& rightPos, XMVECTOR& rightRot, float yaw) {
     for (int i = 0; i < meshes.size(); i++) {
 		Mesh& m = meshes.at(i);
         // == IA ==
@@ -191,7 +191,8 @@ void ObjectScene::draw(Camera* camera, XMFLOAT3& leftPos, XMVECTOR& leftRot, XMF
             XMMATRIX modelMatrix =
                 XMMatrixScaling(0.01f, -5.0f, 0.01f) *                 // 1. Scale the cube
                 XMMatrixRotationQuaternion(leftRot) *                  // 2. Rotate around center
-                XMMatrixTranslation(leftPos.x, leftPos.y, leftPos.z);  // 3. Move to world position
+                XMMatrixRotationY(yaw) *				               // 3. Rotate around Y axis for yaw
+                XMMatrixTranslation(leftPos.x, leftPos.y, leftPos.z);  // 4. Move to world position
 
             XMStoreFloat4x4(&laserModelMatrix, modelMatrix);
 			cmdList->SetGraphicsRoot32BitConstants(0, 16, &laserModelMatrix, 32);
@@ -200,9 +201,10 @@ void ObjectScene::draw(Camera* camera, XMFLOAT3& leftPos, XMVECTOR& leftRot, XMF
 			// right laser
 			XMFLOAT4X4 laserModelMatrix = *m.getModelMatrix();
 			XMMATRIX modelMatrix =
-				XMMatrixScaling(0.01f, -5.0f, 0.01f) *                 // 1. Scale the cube
-				XMMatrixRotationQuaternion(rightRot) *                  // 2. Rotate around center
-				XMMatrixTranslation(rightPos.x, rightPos.y, rightPos.z);  // 3. Move to world position
+				XMMatrixScaling(0.01f, -5.0f, 0.01f) *                    // 1. Scale the cube
+				XMMatrixRotationQuaternion(rightRot) *                    // 2. Rotate around center
+                XMMatrixRotationY(yaw) *				                  // 3. Rotate around Y axis for yaw
+				XMMatrixTranslation(rightPos.x, rightPos.y, rightPos.z);  // 4. Move to world position
 
 			XMStoreFloat4x4(&laserModelMatrix, modelMatrix);
             cmdList->SetGraphicsRoot32BitConstants(0, 16, &laserModelMatrix, 32);

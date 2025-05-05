@@ -65,8 +65,8 @@ struct InteractionConstants {
     float leftStrength;
 
 	float3 rightPosition;
-	float3 rightRayDirection;
 	unsigned int rightActivation;
+    float3 rightRayDirection;
 	unsigned int rightFunction;
 	float rightStrength;
 

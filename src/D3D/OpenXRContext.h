@@ -14,6 +14,12 @@
 
 #define DEBUG_BREAK __debugbreak()
 
+static float yaw = 0.0f;
+static float deltaTime = 0.01f;
+static float speedScale = 5;
+static float pitch = 0.0f;
+static float rotationSpeed = 2.0f; // Adjust to preference
+
 // XR_DOCS_TAG_BEGIN_Helper_Functions0
 inline void OpenXRDebugBreak() {
     std::cerr << "Breakpoint here to debug." << std::endl;
@@ -210,6 +216,10 @@ public:
 
     void CreateActions();
 
+	int getRenderMode() const { return renderMode; }
+
+    bool enableGravity = true;
+
 private:
     XrDebugUtilsMessengerEXT CreateOpenXRDebugUtilsMessenger(XrInstance m_xrInstance);
     void DestroyOpenXRDebugUtilsMessenger(XrInstance m_xrInstance, XrDebugUtilsMessengerEXT debugUtilsMessenger);
@@ -290,10 +300,23 @@ private:
 	XrAction m_rightHandPoseAction{};
 	XrSpace m_rightHandSpace{};
 
+	XrAction m_xButtonClickAction{};
+    XrPath m_xButtonClickPath{};
+
+	XrAction m_yButtonClickAction{};
+	XrPath m_yButtonClickPath{};
+
+	XrAction m_aButtonClickAction{};
+	XrPath m_aButtonClickPath{};
+
     void ApplyCameraMovement(float moveX, float moveZ, float velocity, XrView* view);
     XMFLOAT3 cameraWorldPosition = { 0.0f, playerHeight, 0.0f }; // default player eye height
 
     Controller &m_lc;
 	Controller &m_rc;
 
+	int meshShadingMode = 0;
+    int renderMode = 0;
+
+    float m_cameraYaw = 0.0f; // Only yaw, not a quaternion
 };

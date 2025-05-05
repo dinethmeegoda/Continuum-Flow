@@ -15,7 +15,7 @@ public:
 	void constructSceneSpawners();
 	void constructSceneSolid();
 
-	void draw(Camera* camera, XMFLOAT3& leftPos, XMVECTOR& leftRot, XMFLOAT3& rightPos, XMVECTOR& rightRot);
+	void draw(Camera* camera, XMFLOAT3& leftPos, XMVECTOR& leftRot, XMFLOAT3& rightPos, XMVECTOR& rightRot, float yaw);
 
 	size_t getSceneSize();
 
